@@ -1,0 +1,11 @@
+{
+  "name": "aurelius",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "App de aprendizaje bilingüe EN/ES — organismo propio, separado de Hexelion. Andamiaje i18n.",
+  "scripts": {
+    "demo": "tsx src/i18n/demo.ts",
+    "typecheck": "tsc --noEmit"
+  }
+}
