@@ -37,12 +37,18 @@ DB = Path(
 )
 UNIDAD = "open-webui.service"
 SYSTEM_TXT = Path(__file__).with_name("aurelius.system.txt")
+AVATAR_TXT = Path(__file__).with_name("aurelius.avatar.datauri.txt")  # data-URI del busto (§3)
 
 # Identidad del modelo Aurelius.
 MODEL_ID = "aurelius"
 MODEL_NAME = "Aurelius"
-BASE_MODEL = "soberano-coder:latest"
+# Base: qwen3 30B INSTRUCT (no-thinking, verificado sin razonar en inglés), GPU/Vulkan.
+BASE_MODEL = "qwen3:30b-a3b-instruct-2507-q4_K_M"
 ADMIN_USER_ID = "0fcd46db-fcfa-4f34-b4bf-240491ab96db"  # Hexelion (davidpecero@gmail.com)
+
+# Calibración del tono (§2): estoico, pausado, sin cold start.
+TEMPERATURE = 0.45  # más determinista, más "Preceptor", menos alucinación
+KEEP_ALIVE = -1  # residente en RAM (el Beelink tiene de sobra) → sin cold start
 
 
 def _systemctl(accion: str) -> None:
@@ -62,12 +68,21 @@ def main() -> int:
         return 1
 
     system_prompt = SYSTEM_TXT.read_text(encoding="utf-8").strip()
+    avatar = AVATAR_TXT.read_text(encoding="utf-8").strip() if AVATAR_TXT.exists() else "/static/favicon.png"
     now = int(time.time())
-    params = json.dumps({"system": system_prompt}, ensure_ascii=False)
+    params = json.dumps(
+        {"system": system_prompt, "temperature": TEMPERATURE, "keep_alive": KEEP_ALIVE},
+        ensure_ascii=False,
+    )
     meta = json.dumps(
         {
             "description": "El Preceptor del Camino Hexelion — voz estoica, IronClaw.",
-            "profile_image_url": "/static/favicon.png",
+            "profile_image_url": avatar,  # busto de Marco Aurelio (§3)
+            "suggestion_prompts": [
+                {"content": "Despierta, Aurelius."},
+                {"content": "Quiero forjar mi Tótem."},
+                {"content": "Enséñame a encender el Fuego del Silicio."},
+            ],
         },
         ensure_ascii=False,
     )
