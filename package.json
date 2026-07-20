@@ -1,11 +1,20 @@
 {
   "name": "aurelius",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
-  "description": "App de aprendizaje bilingüe EN/ES — organismo propio, separado de Hexelion. Andamiaje i18n.",
+  "description": "App de aprendizaje bilingüe EN/ES — la biblioteca del emperador que aprende. Organismo propio, separado de Hexelion. Se sirve en /aurelius.",
   "scripts": {
-    "demo": "tsx src/i18n/demo.ts",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4183 --strictPort",
+    "test": "playwright test",
     "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
   }
 }
