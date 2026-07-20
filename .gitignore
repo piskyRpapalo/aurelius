@@ -4,4 +4,4 @@ dist/
 .DS_Store
 
 # archivos de descarga redundantes (screen.png + DESIGN.md ya extraídos)
-src/Assets/*.zip
+src/assets/*.zip
