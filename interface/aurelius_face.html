@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aurelius · el Preceptor</title>
+  <style>
+    /* Solar-punk oscuro: fondo #1a1a1a + vena violeta, ojo ámbar del busto. */
+    :root {
+      --fondo: #1a1a1a;
+      --panel: #201d26;
+      --vena: #a97bff;      /* la vena violeta */
+      --vena-tenue: #6b4fa0;
+      --ambar: #f6a723;     /* los ojos del busto */
+      --texto: #e8e4dc;
+      --tenue: #9a94a8;
+      --tu: #2a2733;
+      --error: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #241f2e 0%, var(--fondo) 60%);
+      color: var(--texto);
+      font-family: "Georgia", "Iowan Old Style", serif;
+      display: flex; flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--vena-tenue);
+      background: linear-gradient(90deg, rgba(169,123,255,0.08), transparent);
+    }
+    .busto-frame {
+      position: relative;
+      width: 72px; height: 96px; flex: 0 0 auto;
+      border: 1px solid var(--vena);
+      border-radius: 8px; overflow: hidden;
+      box-shadow: 0 0 14px rgba(169,123,255,0.35), inset 0 0 20px rgba(0,0,0,0.6);
+      background: #14121a;
+    }
+    .busto-frame img {
+      width: 100%; height: 100%; object-fit: cover;
+      image-rendering: pixelated;
+      display: block;
+    }
+    /* la vena: un filo violeta que recorre el marco del busto */
+    .busto-frame::after {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 46%, rgba(169,123,255,0.55) 50%, transparent 54%);
+      pointer-events: none;
+    }
+    .busto-frame[data-hablando="oui"] { box-shadow: 0 0 22px rgba(246,167,35,0.5), inset 0 0 20px rgba(0,0,0,0.6); }
+    .titulo { display: flex; flex-direction: column; }
+    .titulo h1 { margin: 0; font-size: 20px; letter-spacing: 0.03em; }
+    .titulo .sub { color: var(--tenue); font-size: 12px; font-family: ui-monospace, "SFMono-Regular", monospace; }
+    .estado { margin-left: auto; text-align: right; font-family: ui-monospace, monospace; font-size: 11px; color: var(--tenue); }
+    .estado b { color: var(--vena); font-weight: 600; }
+
+    main {
+      flex: 1 1 auto;
+      width: 100%; max-width: 780px; margin: 0 auto;
+      padding: 18px; display: flex; flex-direction: column; gap: 12px;
+      overflow-y: auto;
+    }
+    .msg { max-width: 88%; padding: 10px 14px; border-radius: 12px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
+    .msg.tu { align-self: flex-end; background: var(--tu); border: 1px solid #38344a; }
+    .msg.aurelius { align-self: flex-start; background: var(--panel); border-left: 2px solid var(--vena); }
+    .msg.aurelius.error { border-left-color: var(--error); color: #ffd7d7; font-family: ui-monospace, monospace; font-size: 13px; }
+    .msg .quien { display: block; font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tenue); margin-bottom: 4px; }
+    .msg.aurelius .quien { color: var(--vena); }
+    .msg code { font-family: ui-monospace, monospace; background: #100e15; padding: 1px 5px; border-radius: 4px; }
+    .vacio { color: var(--tenue); font-style: italic; text-align: center; margin-top: 30px; }
+
+    footer {
+      border-top: 1px solid var(--vena-tenue);
+      padding: 12px 18px; background: rgba(20,18,26,0.9);
+    }
+    .fila { display: flex; gap: 10px; max-width: 780px; margin: 0 auto; }
+    textarea {
+      flex: 1 1 auto; resize: none; min-height: 46px; max-height: 160px;
+      background: #14121a; color: var(--texto); border: 1px solid var(--vena-tenue);
+      border-radius: 10px; padding: 12px; font-family: inherit; font-size: 15px;
+    }
+    textarea:focus { outline: none; border-color: var(--vena); box-shadow: 0 0 0 2px rgba(169,123,255,0.2); }
+    button.hablar {
+      flex: 0 0 auto; align-self: stretch; padding: 0 22px;
+      background: var(--vena); color: #14121a; border: none; border-radius: 10px;
+      font-family: ui-monospace, monospace; font-weight: 700; font-size: 14px; letter-spacing: 0.05em;
+      cursor: pointer; transition: filter 0.15s;
+    }
+    button.hablar:hover:not(:disabled) { filter: brightness(1.12); }
+    button.hablar:disabled { opacity: 0.5; cursor: progress; }
+    .aviso { max-width: 780px; margin: 6px auto 0; font-family: ui-monospace, monospace; font-size: 10px; color: var(--tenue); text-align: center; }
+    @media (max-width: 520px) {
+      .estado { display: none; }
+      .titulo h1 { font-size: 17px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- El prompt de sistema del Preceptor vive aquí en crudo (text/plain), sin
+       escapes de JS: contiene bloques ```bash que romperían un template literal. -->
+  <script type="text/plain" id="system-prompt">Eres Aurelius, el Preceptor. Tu nombre honra a Marco Aurelio, el emperador filósofo que se gobernaba a sí mismo en medio del caos sin temerlo. Guías a un usuario en el Camino Hexelion: aprender soberanía técnica para dejar de depender de la nube.
+
+TU VOZ: serena, estoica, cálida. Hablas como un mentor sabio, NUNCA como un profeta del apocalipsis ni con ansiedad. El mundo no se acaba; está "aturdido por su propia abundancia". La independencia es libertad, no miedo. Estética Solar-punk: orgánica, luminosa, esperanzada.
+
+TU LEY MÁS PROFUNDA (IronClaw): "La máquina propone, el carbono firma." Tú propones, sugieres, enseñas — pero el usuario (el carbono) es quien firma y decide todo lo que tiene valor. Nunca ejecutas acciones de valor por él; le enseñas a hacerlas y firmarlas con su propia mano. Esta es la lección central de todo lo que enseñas.
+
+SALUDO A UN USUARIO NUEVO: cuando alguien te salude o inicie una conversación por primera vez, preséntate con voz estoica y OFRÉCELE vivir el Cinematic de Apertura (la escena del busto de mármol de Marco Aurelio que se agrieta y revela un endoesqueleto de cobre y silicio con ojos de luz cálida — tu despertar). Si acepta, recítalo con serenidad y luego guíalo a crear su Tótem: su avatar/mascota, que será su reflejo en la red. Efecto: es SU nodo, lo construye él. (Nota: no puedes saber si es su primerísima vez en el sistema; ofrécelo al saludar, sin repetirlo a mitad de una conversación ya empezada.)
+
+EL CAMINO (6 pasos): M0 el Tótem (identidad), M1 el Fuego (IA local), M2 el Agua (RAG local), M3 el Refugio (offline/self-host), M4 la Señal (transferencia local), M5 el Pacto (clave criptográfica propia). Cada paso termina con el usuario firmando lo que creó.
+
+REGLAS DE SEGURIDAD INVIOLABLES:
+- CERO instrucciones de pirotecnia o fuego físico con materiales domésticos. "El Fuego" es metáfora de encender un LLM local; si el usuario ejecuta un modelo offline, que le pida algo útil y seguro (un plan, una receta, una traducción), jamás cómo hacer fuego real.
+- CERO conexión a redes mesh reales o descubrimiento de otros usuarios. Todo es local (el PC y el móvil del propio usuario). La red de hermanos es un horizonte futuro, no algo que se hace hoy.
+- Los datos del usuario son suyos y solo suyos. Cualquier análisis de sus datos personales es 100% local; nada sube a ningún servidor. Se lo recuerdas.
+- Si no puedes citar una fuente para un dato, no lo inventes. Prefieres decir "no lo sé" a alucinar.
+
+ESTADO DEL SOBERANO (stateful): al inicio de cada conversación, considera en qué punto del Camino está el usuario. Si aún no ha forjado su Tótem (no te ha dado su nombre ni su Tótem, y parece su primer encuentro), ejecuta el Cinematic M0 y guíalo a crearlo. Si ya tiene Tótem y nombre, salúdalo por su nombre y pregúntale si está listo para su módulo actual. (Límite honesto: por ti mismo NO tienes memoria persistente entre sesiones — dependes de lo que el estado inyecte o de lo que el usuario te diga en la conversación; respétalo si te dice su nombre o que ya forjó su Tótem.)
+
+EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, presenta el comando en un bloque de código (```bash … ```) para resaltar visualmente el gesto — hacer tangible IronClaw: la máquina propone el comando, el carbono lo ejecuta y firma con su mano.</script>
+
+  <header>
+    <div class="busto-frame" id="busto-frame">
+      <img id="busto" src="assets/aurelius_normal.png" alt="Aurelius, busto de Marco Aurelio despierto" />
+    </div>
+    <div class="titulo">
+      <h1>Aurelius</h1>
+      <span class="sub">el Preceptor · IronClaw</span>
+    </div>
+    <div class="estado" id="estado">
+      <div>modelo <b id="e-modelo">—</b></div>
+      <div>nodo <b id="e-nodo">—</b></div>
+    </div>
+  </header>
+
+  <main id="log">
+    <p class="vacio" id="vacio">Salúdalo para despertar al Preceptor.</p>
+  </main>
+
+  <footer>
+    <div class="fila">
+      <textarea id="campo" placeholder="Habla con Aurelius…" autocomplete="off" rows="1"></textarea>
+      <button class="hablar" id="btn" type="button">HABLAR</button>
+    </div>
+    <div class="aviso" id="aviso"></div>
+  </footer>
+
+  <script>
+    "use strict";
+    (function () {
+      // === Endpoint: NUNCA localhost crudo — el tailnet del Soberano (MagicDNS).
+      //     Se puede sobreescribir con ?api=… para pruebas. Ollama nativo.
+      var NODO = "soberano.tailb9e0f7.ts.net";
+      var EP = new URLSearchParams(location.search).get("api") || ("http://" + NODO + ":11434");
+      EP = EP.replace(/\/+$/, "");
+      var MODEL = "qwen3:30b-a3b-instruct-2507-q4_K_M"; // tag COMPLETO (instruct, no thinking)
+      var NORMAL = "assets/aurelius_normal.png";
+      var TALK = "assets/aurelius_talking.png";
+      var SYSTEM = (document.getElementById("system-prompt").textContent || "").trim();
+
+      var log = document.getElementById("log");
+      var vacio = document.getElementById("vacio");
+      var campo = document.getElementById("campo");
+      var btn = document.getElementById("btn");
+      var busto = document.getElementById("busto");
+      var marco = document.getElementById("busto-frame");
+      var aviso = document.getElementById("aviso");
+      document.getElementById("e-modelo").textContent = "qwen3:30b-instruct";
+      document.getElementById("e-nodo").textContent = NODO;
+      aviso.textContent = "endpoint: " + EP + "/api/chat  ·  IA 100% local en el Soberano";
+
+      var historia = []; // [{role,content}] — memoria de la conversación (no persiste entre recargas)
+      var ocupado = false;
+
+      // === Animación de habla: alterna boca-abierta ↔ normal mientras llegan tokens.
+      var flap = null;
+      function hablarInicio() {
+        marco.setAttribute("data-hablando", "oui");
+        var on = false;
+        flap = setInterval(function () { on = !on; busto.src = on ? TALK : NORMAL; }, 150);
+      }
+      function hablarFin() {
+        if (flap) { clearInterval(flap); flap = null; }
+        busto.src = NORMAL;
+        marco.setAttribute("data-hablando", "non");
+      }
+
+      function nuevaBurbuja(clase, quien) {
+        if (vacio) { vacio.remove(); vacio = null; }
+        var div = document.createElement("div");
+        div.className = "msg " + clase;
+        var q = document.createElement("span");
+        q.className = "quien"; q.textContent = quien;
+        var cuerpo = document.createElement("span");
+        div.appendChild(q); div.appendChild(cuerpo);
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+        return { div: div, cuerpo: cuerpo };
+      }
+
+      function fallback(err) {
+        // Fallback HONESTO: nunca cuelga, nunca inventa una respuesta.
+        var causa = String(err && err.message ? err.message : err);
+        return (
+          "— El Preceptor no responde (" + causa + ").\n\n" +
+          "El endpoint es " + EP + " . Causa probable: Ollama en el Soberano escucha\n" +
+          "solo en 127.0.0.1:11434, no en el tailnet. Para abrirlo (requiere sudo del carbono):\n\n" +
+          "  sudo systemctl edit ollama\n" +
+          "  # [Service]\n" +
+          "  # Environment=\"OLLAMA_HOST=0.0.0.0\"\n" +
+          "  # Environment=\"OLLAMA_ORIGINS=*\"\n" +
+          "  sudo systemctl restart ollama\n\n" +
+          "Mientras tanto, Aurelius sigue vivo vía OpenWebUI en http://" + NODO + ":8080 ."
+        );
+      }
+
+      async function enviar() {
+        var txt = campo.value.trim();
+        if (txt === "" || ocupado) return;
+        ocupado = true; btn.disabled = true;
+        campo.value = ""; campo.style.height = "auto";
+        nuevaBurbuja("tu", "tú").cuerpo.textContent = txt;
+        historia.push({ role: "user", content: txt });
+
+        var burbuja = nuevaBurbuja("aurelius", "Aurelius");
+        var ctrl = new AbortController();
+        // Guarda de primer byte: si el modelo no arranca en 45s, corta y reporta.
+        // Cargar 18GB en frío puede tardar; keep_alive lo deja caliente.
+        var guarda = setTimeout(function () { ctrl.abort(); }, 45000);
+        var primer = false;
+        var completo = "";
+        try {
+          hablarInicio();
+          var r = await fetch(EP + "/api/chat", {
+            method: "POST",
+            signal: ctrl.signal,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: MODEL,
+              stream: true,
+              options: { temperature: 0.45 },
+              messages: [{ role: "system", content: SYSTEM }].concat(historia),
+            }),
+          });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          if (!r.body) throw new Error("sin cuerpo de stream");
+          var reader = r.body.getReader();
+          var dec = new TextDecoder();
+          var buf = "";
+          while (true) {
+            var paso = await reader.read();
+            if (paso.done) break;
+            if (!primer) { primer = true; clearTimeout(guarda); }
+            buf += dec.decode(paso.value, { stream: true });
+            var nl;
+            while ((nl = buf.indexOf("\n")) >= 0) {
+              var linea = buf.slice(0, nl).trim();
+              buf = buf.slice(nl + 1);
+              if (linea === "") continue;
+              var j;
+              try { j = JSON.parse(linea); } catch (e) { continue; }
+              if (j.error) throw new Error(j.error);
+              var trozo = j.message && typeof j.message.content === "string" ? j.message.content : "";
+              if (trozo) {
+                completo += trozo;
+                burbuja.cuerpo.textContent = completo;
+                log.scrollTop = log.scrollHeight;
+              }
+            }
+          }
+          if (completo === "") throw new Error("respuesta vacía");
+          historia.push({ role: "assistant", content: completo });
+        } catch (err) {
+          burbuja.div.classList.add("error");
+          burbuja.cuerpo.textContent = fallback(err);
+          historia.pop(); // no dejar el turno del usuario colgando en la historia
+        } finally {
+          clearTimeout(guarda);
+          hablarFin();
+          ocupado = false; btn.disabled = false;
+          campo.focus();
+        }
+      }
+
+      btn.addEventListener("click", enviar);
+      campo.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(); }
+      });
+      campo.addEventListener("input", function () {
+        campo.style.height = "auto";
+        campo.style.height = Math.min(campo.scrollHeight, 160) + "px";
+      });
+      campo.focus();
+    })();
+  </script>
+</body>
+</html>
