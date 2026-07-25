@@ -46,18 +46,55 @@
       box-shadow: 0 0 14px rgba(169,123,255,0.35), inset 0 0 20px rgba(0,0,0,0.6);
       background: #14121a;
     }
-    .busto-frame img {
-      width: 100%; height: 100%; object-fit: cover;
+    /* El busto vive como sprite ANCLADO: contenedor fijo 72×96, solo cambia
+       background-position dentro de Habla.png (sheet 4×3, celda 256×341). La
+       cabeza NUNCA se desplaza — se descarta el meneo del par de <img> viejo. */
+    .busto-sprite {
+      width: 100%; height: 100%;
+      background-image: url("assets/Habla.png");
+      background-repeat: no-repeat;
+      background-size: 400% 300%;          /* 4 columnas × 3 filas */
+      background-position: 66.667% 100%;   /* REPOSO: (col2,fila2) boca cerrada, ojo ámbar */
       image-rendering: pixelated;
-      display: block;
+      transform-origin: 50% 60%;
+      animation: aurelius-respira 6s ease-in-out infinite;  /* respiración muy leve */
+      will-change: transform, background-position;
+    }
+    /* Fallback ROBUSTO: si Habla.png no carga, cae al frame neutro previo, estático. */
+    .busto-sprite.busto-fallback {
+      background-image: url("assets/aurelius_normal.png");
+      background-size: cover;
+      background-position: center top;
+      animation: none;
+    }
+    /* Vida del ojo-máquina: brillo ámbar que respira, con un parpadeo (dip) ocasional. */
+    .busto-frame::before {
+      content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(circle at 62% 46%, rgba(246,167,35,0.6), rgba(246,167,35,0) 24%);
+      mix-blend-mode: screen;
+      opacity: 0.16;
+      animation: aurelius-ambar 4.2s ease-in-out infinite;
     }
     /* la vena: un filo violeta que recorre el marco del busto */
     .busto-frame::after {
-      content: ""; position: absolute; inset: 0;
+      content: ""; position: absolute; inset: 0; z-index: 2;
       background: linear-gradient(105deg, transparent 46%, rgba(169,123,255,0.55) 50%, transparent 54%);
       pointer-events: none;
     }
     .busto-frame[data-hablando="oui"] { box-shadow: 0 0 22px rgba(246,167,35,0.5), inset 0 0 20px rgba(0,0,0,0.6); }
+    /* al hablar, el ojo late más vivo y rápido */
+    .busto-frame[data-hablando="oui"]::before { animation-duration: 1.6s; opacity: 0.42; }
+    @keyframes aurelius-respira { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.015); } }
+    @keyframes aurelius-ambar {
+      0%, 42%, 100% { opacity: 0.16; }
+      50% { opacity: 0.34; }                 /* respiración del brillo */
+      70% { opacity: 0.34; }
+      73% { opacity: 0.04; }                 /* parpadeo del ojo-máquina (dip rápido) */
+      77% { opacity: 0.30; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .busto-sprite, .busto-frame::before { animation: none; }
+    }
     .titulo { display: flex; flex-direction: column; }
     .titulo h1 { margin: 0; font-size: 20px; letter-spacing: 0.03em; }
     .titulo .sub { color: var(--tenue); font-size: 12px; font-family: ui-monospace, "SFMono-Regular", monospace; }
@@ -136,7 +173,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
 
   <header>
     <div class="busto-frame" id="busto-frame">
-      <img id="busto" src="assets/aurelius_normal.png" alt="Aurelius, busto de Marco Aurelio despierto" />
+      <div id="busto" class="busto-sprite" role="img" aria-label="Aurelius, busto de Marco Aurelio despierto"></div>
     </div>
     <div class="titulo">
       <h1>Aurelius</h1>
@@ -169,8 +206,6 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       var EP = new URLSearchParams(location.search).get("api") || ("http://" + NODO + ":11434");
       EP = EP.replace(/\/+$/, "");
       var MODEL = "qwen3:30b-a3b-instruct-2507-q4_K_M"; // tag COMPLETO (instruct, no thinking)
-      var NORMAL = "assets/aurelius_normal.png";
-      var TALK = "assets/aurelius_talking.png";
       var SYSTEM = (document.getElementById("system-prompt").textContent || "").trim();
 
       var log = document.getElementById("log");
@@ -187,16 +222,36 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       var historia = []; // [{role,content}] — memoria de la conversación (no persiste entre recargas)
       var ocupado = false;
 
-      // === Animación de habla: alterna boca-abierta ↔ normal mientras llegan tokens.
+      // === Busto como sprite ANCLADO (Habla.png, sheet 4×3, celda 256×341). La
+      //     cabeza NO se mueve: solo cambia background-position en el contenedor
+      //     fijo. Los frames de habla son todos de la MISMA fila (fila 2) → cero
+      //     desplazamiento vertical de la cabeza (mata el meneo del par viejo).
+      var F_REPOSO = "66.667% 100%";  // (col2,fila2): boca cerrada, ojo ámbar vivo
+      var F_HABLA = ["100% 100%", "66.667% 100%", "0% 100%", "66.667% 100%"]; // abierta·cerrada·entreabierta·cerrada
+      var hojaOk = true;
+
+      // Precarga con fallback ROBUSTO: si el sheet no carga, cara neutra estática.
+      (function () {
+        var probe = new Image();
+        probe.onerror = function () { hojaOk = false; busto.classList.add("busto-fallback"); };
+        probe.src = "assets/Habla.png";
+      })();
+
+      // Animación de habla: alterna los frames de boca mientras llegan tokens.
       var flap = null;
       function hablarInicio() {
         marco.setAttribute("data-hablando", "oui");
-        var on = false;
-        flap = setInterval(function () { on = !on; busto.src = on ? TALK : NORMAL; }, 150);
+        if (!hojaOk) return;  // en fallback no hay flap: cara neutra, sin saltos
+        var i = 0;
+        busto.style.backgroundPosition = F_HABLA[0];
+        flap = setInterval(function () {
+          i = (i + 1) % F_HABLA.length;
+          busto.style.backgroundPosition = F_HABLA[i];
+        }, 160);
       }
       function hablarFin() {
         if (flap) { clearInterval(flap); flap = null; }
-        busto.src = NORMAL;
+        if (hojaOk) busto.style.backgroundPosition = F_REPOSO;  // vuelve al frame neutro
         marco.setAttribute("data-hablando", "non");
       }
 
