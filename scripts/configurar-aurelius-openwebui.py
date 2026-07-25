@@ -47,7 +47,7 @@ BASE_MODEL = "qwen3:30b-a3b-instruct-2507-q4_K_M"
 ADMIN_USER_ID = "0fcd46db-fcfa-4f34-b4bf-240491ab96db"  # Hexelion (davidpecero@gmail.com)
 
 # Calibración del tono (§2): estoico, pausado, sin cold start.
-TEMPERATURE = 0.45  # más determinista, más "Preceptor", menos alucinación
+TEMPERATURE = 0.40  # más determinista y pausado, más "Preceptor", menos disperso (§concisión)
 KEEP_ALIVE = -1  # residente en RAM (el Beelink tiene de sobra) → sin cold start
 
 
@@ -76,7 +76,7 @@ def main() -> int:
     )
     meta = json.dumps(
         {
-            "description": "El Preceptor del Camino Hexelion — voz estoica, IronClaw.",
+            "description": "El Preceptor del Camino del Soberano — voz estoica, IronClaw.",
             "profile_image_url": avatar,  # busto de Marco Aurelio (§3)
             "suggestion_prompts": [
                 {"content": "Despierta, Aurelius."},
