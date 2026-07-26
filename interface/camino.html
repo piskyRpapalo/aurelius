@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Le Chemin du Souverain · Aurelius</title>
+  <style>
+    :root {
+      --fondo: #1a1a1a; --panel: #201d26; --vena: #a97bff; --vena-tenue: #6b4fa0;
+      --ambar: #f6a723; --texto: #e8e4dc; --tenue: #9a94a8; --ok: #7bd88f; --error: #ff6b6b;
+      --code: #14121a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #241f2e 0%, var(--fondo) 60%);
+      color: var(--texto); font-family: "Georgia", serif; min-height: 100vh;
+      padding: 0 0 48px;
+    }
+    header {
+      display: flex; align-items: center; gap: 14px; padding: 16px 20px;
+      border-bottom: 1px solid var(--vena-tenue);
+      background: linear-gradient(90deg, rgba(169,123,255,0.08), transparent);
+      position: sticky; top: 0; z-index: 5; backdrop-filter: blur(6px);
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.03em; }
+    header .salut { margin-left: auto; color: var(--vena); font: 500 14px/1 ui-monospace, monospace; }
+    a.retour { color: var(--tenue); font: 500 12px/1 ui-monospace, monospace; text-decoration: none; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 6px 10px; }
+    a.retour:hover { color: var(--texto); border-color: var(--vena); }
+    main { max-width: 760px; margin: 0 auto; padding: 20px; }
+
+    .rail { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
+    .etape {
+      flex: 1 1 90px; min-width: 90px; text-align: center; padding: 10px 6px; border-radius: 10px;
+      border: 1px solid var(--vena-tenue); font: 600 12px/1.3 ui-monospace, monospace; color: var(--tenue);
+      background: #17141d;
+    }
+    .etape[data-etat="fait"] { color: var(--ok); border-color: var(--ok); }
+    .etape[data-etat="actuel"] { color: var(--ambar); border-color: var(--ambar); box-shadow: 0 0 14px rgba(246,167,35,0.25); }
+    .etape small { display: block; font-weight: 400; color: inherit; opacity: 0.8; }
+
+    .module {
+      background: var(--panel); border: 1px solid var(--vena-tenue); border-left: 3px solid var(--vena);
+      border-radius: 14px; padding: 20px; margin-bottom: 16px;
+    }
+    .module h2 { margin: 0 0 6px; font-size: 22px; }
+    .module .obj { color: var(--tenue); font-style: italic; margin: 0 0 14px; }
+    ol.pasos { margin: 0 0 14px; padding-left: 20px; line-height: 1.6; }
+    ol.pasos li { margin-bottom: 6px; }
+    .bloc { margin: 12px 0; }
+    .bloc-titre { font: 600 12px/1 ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--vena); margin-bottom: 6px; }
+    pre.cmd {
+      position: relative; background: var(--code); border: 1px solid var(--vena-tenue); border-radius: 8px;
+      padding: 12px 40px 12px 12px; margin: 0; overflow-x: auto;
+      font: 400 13px/1.5 ui-monospace, "SFMono-Regular", monospace; color: #d7ffd7; white-space: pre-wrap; word-break: break-word;
+    }
+    button.copier {
+      position: absolute; top: 6px; right: 6px; background: var(--vena-tenue); color: var(--fondo);
+      border: none; border-radius: 6px; font: 700 10px/1 ui-monospace, monospace; padding: 5px 7px; cursor: pointer;
+    }
+    button.copier:hover { background: var(--vena); }
+    .champ { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+    input[type="text"], input[type="file"] {
+      flex: 1 1 240px; background: var(--code); color: var(--texto); border: 1px solid var(--vena-tenue);
+      border-radius: 8px; padding: 10px; font: 400 14px/1 ui-monospace, monospace;
+    }
+    button.action {
+      background: var(--vena); color: var(--fondo); border: none; border-radius: 8px; font: 700 13px/1 ui-monospace, monospace;
+      padding: 12px 18px; cursor: pointer; min-height: 44px;
+    }
+    button.action:hover:not(:disabled) { filter: brightness(1.12); }
+    button.action:disabled { opacity: 0.5; cursor: progress; }
+    .aviso { margin-top: 10px; font: 400 13px/1.5 ui-monospace, monospace; }
+    .aviso.ok { color: var(--ok); }
+    .aviso.err { color: var(--error); }
+    .prompt-cebado { background: var(--code); border: 1px dashed var(--vena-tenue); border-radius: 8px; padding: 12px; color: #efe7ff; font: italic 400 14px/1.6 "Georgia", serif; }
+    .fait-note { color: var(--ok); font: 500 13px/1.5 ui-monospace, monospace; }
+    .verrou { opacity: 0.5; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Le Chemin du Souverain</h1>
+    <span class="salut" id="salut"></span>
+    <a class="retour" href="aurelius_face.html">← Aurelius</a>
+  </header>
+  <main>
+    <div class="rail" id="rail"></div>
+    <div id="zone"></div>
+  </main>
+
+  <script>
+    "use strict";
+    (function () {
+      var API = ""; // mismo origen (servidor 8050)
+      var VAULT = "~/aurelius/sovereign_vault";
+      var SCRIPTS = "~/aurelius/scripts";
+      var MODELO = "qwen3:30b-a3b-instruct-2507-q4_K_M"; // el modelo local presente; cualquiera vale
+
+      // Definición del Camino M0–M2 (los demás son horizonte).
+      var CAMINO = [
+        { code: "M0", nom: "Le Totem" }, { code: "M1", nom: "Le Feu" },
+        { code: "M2", nom: "L'Eau" }, { code: "M3", nom: "Le Refuge" },
+        { code: "M4", nom: "Le Signal" }, { code: "M5", nom: "Le Pacte" },
+      ];
+
+      var zone = document.getElementById("zone");
+      var rail = document.getElementById("rail");
+      var salut = document.getElementById("salut");
+
+      function esc(s) { var d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+      function bloc(titre, cmd) {
+        return '<div class="bloc"><div class="bloc-titre">' + esc(titre) + '</div>' +
+          '<pre class="cmd"><button class="copier" type="button">COPIER</button>' + esc(cmd) + '</pre></div>';
+      }
+
+      function cablerCopieurs(scope) {
+        scope.querySelectorAll("button.copier").forEach(function (b) {
+          b.addEventListener("click", function () {
+            var pre = b.parentElement;
+            var txt = pre.textContent.replace(/^COPIER/, "");
+            navigator.clipboard && navigator.clipboard.writeText(txt);
+            b.textContent = "OK"; setTimeout(function () { b.textContent = "COPIER"; }, 1200);
+          });
+        });
+      }
+
+      async function getEstado() {
+        var r = await fetch(API + "/api/estado");
+        return r.json();
+      }
+
+      function pintarRail(estado) {
+        rail.innerHTML = "";
+        CAMINO.forEach(function (m) {
+          var etat = estado.modulos_completados.indexOf(m.code) >= 0 ? "fait"
+            : (estado.modulo_actual === m.code ? "actuel" : "attente");
+          var d = document.createElement("div");
+          d.className = "etape"; d.setAttribute("data-etat", etat);
+          d.innerHTML = esc(m.code) + "<small>" + esc(m.nom) + "</small>";
+          rail.appendChild(d);
+        });
+      }
+
+      // ---------- M0 · Le Totem ----------
+      function vueM0() {
+        var promptCebado = "Portrait avatar, solar-punk, buste d'un philosophe-empereur serein, "
+          + "marbre clair veiné de cuivre et de circuits chauds, yeux de lumière ambrée, "
+          + "fond organique et lumineux, pixel-art doux, esperanzado, sans texte.";
+        return '<div class="module"><h2>M0 · Le Totem</h2>'
+          + '<p class="obj">Crea tu compañero: la cara que hiciste tú. Efecto IKEA — es TU nodo.</p>'
+          + '<ol class="pasos">'
+          + '<li>Genera un avatar con una IA de imágenes gratis (Leonardo.ai, Bing) usando este prompt cebado Solar-punk:</li>'
+          + '</ol>'
+          + '<div class="prompt-cebado">' + esc(promptCebado) + '</div>'
+          + '<ol class="pasos" start="2">'
+          + '<li>Descarga la imagen y súbela aquí abajo con tu nombre. Se sella por hash y se vuelve tu Tótem.</li>'
+          + '</ol>'
+          + '<div class="champ">'
+          + '<input type="text" id="m0-nom" placeholder="Tu nombre, soberano…" />'
+          + '<input type="file" id="m0-file" accept="image/png,image/jpeg,image/webp" />'
+          + '<button class="action" id="m0-btn">Forger le Totem</button>'
+          + '</div><div class="aviso" id="m0-aviso"></div></div>';
+      }
+      function cablerM0() {
+        var btn = document.getElementById("m0-btn");
+        var aviso = document.getElementById("m0-aviso");
+        btn.addEventListener("click", async function () {
+          var nom = document.getElementById("m0-nom").value.trim();
+          var file = document.getElementById("m0-file").files[0];
+          if (nom === "") { aviso.className = "aviso err"; aviso.textContent = "Dime tu nombre primero."; return; }
+          if (!file) { aviso.className = "aviso err"; aviso.textContent = "Sube la imagen de tu Tótem."; return; }
+          var ext = (file.name.split(".").pop() || "png").toLowerCase();
+          btn.disabled = true; aviso.className = "aviso"; aviso.textContent = "Sellando tu Tótem…";
+          try {
+            var buf = await file.arrayBuffer();
+            var r = await fetch(API + "/api/totem", {
+              method: "POST", headers: { "X-Nombre": nom, "X-Ext": ext }, body: buf,
+            });
+            var j = await r.json();
+            if (!r.ok || !j.ok) throw new Error(j.error || ("HTTP " + r.status));
+            aviso.className = "aviso ok"; aviso.textContent = "✓ Tótem sellado (SHA-256 " + j.sha256.slice(0, 12) + "…). Bienvenido, " + nom + ".";
+            setTimeout(render, 900);
+          } catch (e) {
+            aviso.className = "aviso err"; aviso.textContent = "— " + e.message + " (rien n'a été forgé).";
+            btn.disabled = false;
+          }
+        });
+      }
+
+      // ---------- M1 · Le Feu ----------
+      function vueM1() {
+        var art = VAULT + "/M1_Espejo_Roto/tiempo_perdido.md";
+        return '<div class="module"><h2>M1 · Le Feu</h2>'
+          + '<p class="obj">Enciende el Fuego del Silicio: corre un modelo en TU máquina, sin la nube.</p>'
+          + '<ol class="pasos">'
+          + '<li>Desconecta la red (apaga el wifi o el cable) — nada debe salir del nodo.</li>'
+          + '<li>Pídele al modelo LOCAL algo útil y seguro: un plan, una receta, una traducción. Guarda su respuesta:</li>'
+          + '</ol>'
+          + bloc("correr el modelo offline y guardar la respuesta", 'mkdir -p ' + VAULT + '/M1_Espejo_Roto\nollama run ' + MODELO + ' "Dame un plan de 3 pasos, simple y seguro, para empezar un pequeno huerto en un balcon." > ' + art)
+          + '<ol class="pasos" start="3"><li>Firma el resultado con tu mano (integridad SHA-256):</li></ol>'
+          + bloc("firmar (IronClaw: lo ejecutas tu)", 'python3 ' + SCRIPTS + '/firmar_artefacto.py ' + art)
+          + '<p class="obj">Pega abajo el SHA-256 que imprimió el firmador para sellar M1.</p>'
+          + '<div class="champ"><input type="text" id="m1-sha" placeholder="SHA-256 (64 hex)…" />'
+          + '<button class="action" id="m1-btn">Sceller M1</button></div>'
+          + '<div class="aviso" id="m1-aviso"></div></div>';
+      }
+
+      // ---------- M2 · L'Eau ----------
+      function vueM2() {
+        var gri = VAULT + "/M2_Agua/grimorio.md";
+        var man = VAULT + "/M2_Agua/grimorio.manifest.json";
+        return '<div class="module"><h2>M2 · L\'Eau</h2>'
+          + '<p class="obj">La memoria local (RAG): guarda tu primer conocimiento curado, en el nodo — nunca sale.</p>'
+          + '<ol class="pasos">'
+          + '<li>Crea tu grimorio y pega texto de una fuente FÍSICA tuya (un libro, una nota). Cúralo: título, fuente, por qué importa.</li>'
+          + '</ol>'
+          + bloc("crear el grimorio", 'mkdir -p ' + VAULT + '/M2_Agua\nnano ' + gri)
+          + '<ol class="pasos" start="2"><li>Ingiérelo en tu memoria vectorial LOCAL (offline, sin modelo, sin red):</li></ol>'
+          + bloc("ingerir (lo ejecutas tu)", 'python3 ' + SCRIPTS + '/ingerir.py ' + gri)
+          + '<ol class="pasos" start="3"><li>Compruébalo: recupera algo del vector local con una pregunta tuya:</li></ol>'
+          + bloc("buscar en tu memoria local", 'python3 ' + SCRIPTS + '/ingerir.py ' + gri + ' --buscar "tu pregunta"')
+          + '<ol class="pasos" start="4"><li>Firma el manifiesto con tu mano:</li></ol>'
+          + bloc("firmar el manifiesto", 'python3 ' + SCRIPTS + '/firmar_artefacto.py ' + man)
+          + '<p class="obj">Pega abajo el SHA-256 del manifiesto para sellar M2.</p>'
+          + '<div class="champ"><input type="text" id="m2-sha" placeholder="SHA-256 (64 hex)…" />'
+          + '<button class="action" id="m2-btn">Sceller M2</button></div>'
+          + '<div class="aviso" id="m2-aviso"></div></div>';
+      }
+
+      function cablerCompletar(code, btnId, shaId, avisoId) {
+        var btn = document.getElementById(btnId);
+        var aviso = document.getElementById(avisoId);
+        btn.addEventListener("click", async function () {
+          var sha = (document.getElementById(shaId).value || "").trim().toLowerCase();
+          if (!/^[0-9a-f]{64}$/.test(sha)) {
+            aviso.className = "aviso err"; aviso.textContent = "Eso no es un SHA-256 (64 hex). Fírmalo en tu terminal primero.";
+            return;
+          }
+          btn.disabled = true; aviso.className = "aviso"; aviso.textContent = "Sellando…";
+          try {
+            var r = await fetch(API + "/api/modulo/completar", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ modulo: code, prueba: sha }),
+            });
+            var j = await r.json();
+            if (!r.ok || !j.ok) throw new Error(j.error || ("HTTP " + r.status));
+            aviso.className = "aviso ok"; aviso.textContent = "✓ " + code + " sellado. Le Chemin continue.";
+            setTimeout(render, 900);
+          } catch (e) {
+            aviso.className = "aviso err"; aviso.textContent = "— " + e.message;
+            btn.disabled = false;
+          }
+        });
+      }
+
+      function vueFinal() {
+        return '<div class="module"><h2>Le Chemin continue…</h2>'
+          + '<p class="obj">Has recorrido M0→M2: el Tótem, el Fuego y el Agua. M3 (Le Refuge) y más allá '
+          + 'son horizonte — el andamio se retira a medida que subes. Aurelius te espera para lo que sigue.</p></div>';
+      }
+
+      async function render() {
+        var estado;
+        try { estado = await getEstado(); }
+        catch (e) {
+          zone.innerHTML = '<div class="module"><h2>Le serveur ne répond pas</h2>'
+            + '<p class="obj">No alcanzo el estado (8050). ¿Está vivo el servicio de Aurelius?</p></div>';
+          return;
+        }
+        salut.textContent = estado.nombre ? ("Salut, " + estado.nombre) : "";
+        pintarRail(estado);
+        var act = estado.modulo_actual;
+        var html;
+        if (act === "M0") { html = vueM0(); }
+        else if (act === "M1") { html = vueM1(); }
+        else if (act === "M2") { html = vueM2(); }
+        else { html = vueFinal(); }
+        zone.innerHTML = html;
+        cablerCopieurs(zone);
+        if (act === "M0") cablerM0();
+        else if (act === "M1") cablerCompletar("M1", "m1-btn", "m1-sha", "m1-aviso");
+        else if (act === "M2") cablerCompletar("M2", "m2-btn", "m2-sha", "m2-aviso");
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

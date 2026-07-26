@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
-"""Servidor estático de la cara de Aurelius (Misión 2.3).
+"""Servidor de la cara de Aurelius (Misión 2.3) + API de ESTADO del Camino.
 
-Sirve `~/aurelius/interface/` en el puerto 8050, escuchando en 0.0.0.0 para que
-la cara sea alcanzable desde cualquier nodo del tailnet del Soberano
-(http://soberano.tailb9e0f7.ts.net:8050/aurelius_face.html) — nunca solo
-localhost. Es un servidor de FICHEROS estáticos: no proxya al modelo; la propia
-página hace fetch al endpoint de Ollama del Soberano. Cierre limpio con Ctrl-C
-o SIGTERM (systemd).
+Sirve `~/aurelius/interface/` en el puerto 8050 (0.0.0.0 → tailnet del Soberano).
+Además de ficheros estáticos, expone una API mínima para que el Camino del
+Soberano sea RECORRIBLE con estado persistente REAL en disco (el system prompt NO
+escribe ficheros — esta API sí):
+
+    GET  /api/estado             → estado_del_soberano.json
+    POST /api/totem              → M0·El Tótem: guarda el avatar subido, calcula su
+                                    SHA-256, fija nombre/totem_hash/creado, avanza a M1.
+                                    Cabeceras: X-Nombre, X-Ext (png|jpg|webp). Cuerpo = bytes de la imagen.
+    POST /api/modulo/completar   → M1/M2: {modulo:"M1"|"M2", prueba:"<sha256>"} — el
+                                    usuario firmó en SU terminal (IronClaw); aquí se registra.
+
+La verdad del estado vive en `sovereign_vault/estado_del_soberano.json`. Cierre
+limpio con Ctrl-C o SIGTERM (systemd).
 
 Uso:
     python3 scripts/servir_interfaz.py [--puerto 8050] [--host 0.0.0.0]
@@ -16,24 +24,114 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import datetime as _dt
 import functools
+import hashlib
 import http.server
+import json
+import re
 import signal
 import socket
 import socketserver
 import sys
 from pathlib import Path
 from types import FrameType
-from typing import NoReturn
+from typing import Any, NoReturn
 
 # La raíz servida: el hermano `interface/` junto a `scripts/`.
 RAIZ_INTERFAZ: Path = (Path(__file__).resolve().parent.parent / "interface").resolve()
+VAULT: Path = (Path(__file__).resolve().parent.parent / "sovereign_vault").resolve()
+ESTADO_JSON: Path = VAULT / "estado_del_soberano.json"
+M0_DIR: Path = VAULT / "M0_Totem"
 PUERTO_DEFECTO: int = 8050
 HOST_DEFECTO: str = "0.0.0.0"  # tailnet, no solo loopback
 
+# Orden canónico del Camino (system prompt: M0 Tótem · M1 Fuego · M2 Agua · …).
+ORDEN: tuple[str, ...] = ("M0", "M1", "M2", "M3", "M4", "M5")
+EXT_PERMITIDAS: frozenset[str] = frozenset({"png", "jpg", "jpeg", "webp"})
+MAX_TOTEM_BYTES: int = 8 * 1024 * 1024  # 8 MB — un avatar, no un vídeo
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+
+_ESTADO_BASE: dict[str, Any] = {
+    "nombre": None,
+    "totem_hash": None,
+    "modulo_actual": "M0",
+    "modulos_completados": [],
+    "creado": None,
+    "pruebas": {},  # campo aditivo declarado: {modulo: sha256 firmado por el usuario}
+}
+
+
+def _ahora_iso() -> str:
+    return _dt.datetime.now(_dt.timezone.utc).isoformat()
+
+
+def _slug(texto: str) -> str:
+    limpio = re.sub(r"[^a-z0-9]+", "-", texto.lower()).strip("-")
+    return limpio or "soberano"
+
+
+def _leer_estado() -> dict[str, Any]:
+    """Lee el estado del disco, defensivo: si falta o está corrupto, base limpia."""
+    base = dict(_ESTADO_BASE)
+    base["modulos_completados"] = []
+    base["pruebas"] = {}
+    if not ESTADO_JSON.exists():
+        return base
+    try:
+        crudo = json.loads(ESTADO_JSON.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return base
+    if not isinstance(crudo, dict):
+        return base
+    for clave, defecto in _ESTADO_BASE.items():
+        valor = crudo.get(clave, defecto)
+        base[clave] = valor if valor is not None else defecto
+    if not isinstance(base["modulos_completados"], list):
+        base["modulos_completados"] = []
+    if not isinstance(base["pruebas"], dict):
+        base["pruebas"] = {}
+    return base
+
+
+def _escribir_estado(estado: dict[str, Any]) -> None:
+    ESTADO_JSON.parent.mkdir(parents=True, exist_ok=True)
+    ESTADO_JSON.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _avanzar(estado: dict[str, Any], modulo: str) -> None:
+    """Marca `modulo` como completado y fija modulo_actual al siguiente del Camino."""
+    if modulo not in estado["modulos_completados"]:
+        estado["modulos_completados"].append(modulo)
+    if modulo in ORDEN:
+        i = ORDEN.index(modulo)
+        estado["modulo_actual"] = ORDEN[i + 1] if i + 1 < len(ORDEN) else modulo
+
+
+def _sha256_bytes(datos: bytes) -> str:
+    h = hashlib.sha256()
+    h.update(datos)
+    return h.hexdigest()
+
 
 class Manejador(http.server.SimpleHTTPRequestHandler):
-    """SimpleHTTPRequestHandler anclado a `interface/`, sin caché y silencioso."""
+    """Estáticos anclados a `interface/` + API de estado del Camino. Sin caché."""
+
+    # ---- utilidades de respuesta ----
+    def _json(self, cuerpo: dict[str, Any], codigo: int = 200) -> None:
+        datos = json.dumps(cuerpo, ensure_ascii=False).encode("utf-8")
+        self.send_response(codigo)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(datos)))
+        self.end_headers()
+        self.wfile.write(datos)
+
+    def _leer_cuerpo(self) -> bytes:
+        try:
+            n = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            return b""
+        return self.rfile.read(n) if n > 0 else b""
 
     def end_headers(self) -> None:
         # La cara es un artefacto vivo en desarrollo: nada de caché agresiva.
@@ -41,8 +139,95 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
     def log_message(self, formato: str, *args: object) -> None:
-        # Log compacto a stderr (systemd lo captura); sin ruido de user-agent.
         sys.stderr.write("[aurelius-8050] %s - %s\n" % (self.address_string(), formato % args))
+
+    # ---- API ----
+    def do_GET(self) -> None:  # noqa: N802 (firma de la stdlib)
+        if self.path.split("?", 1)[0] == "/api/estado":
+            self._json(_leer_estado())
+            return
+        super().do_GET()
+
+    def do_POST(self) -> None:  # noqa: N802
+        ruta = self.path.split("?", 1)[0]
+        try:
+            if ruta == "/api/totem":
+                self._post_totem()
+            elif ruta == "/api/modulo/completar":
+                self._post_completar()
+            else:
+                self._json({"error": "ruta desconocida"}, 404)
+        except Exception as e:  # degradación honesta, nunca 500 opaco sin cuerpo
+            self._json({"error": f"{type(e).__name__}: {e}"}, 500)
+
+    def _post_totem(self) -> None:
+        """M0·El Tótem: guarda el avatar, lo sella por hash, fija identidad, avanza a M1."""
+        nombre = (self.headers.get("X-Nombre", "") or "").strip()
+        ext = (self.headers.get("X-Ext", "png") or "png").strip().lower()
+        if nombre == "":
+            self._json({"error": "falta X-Nombre (¿cómo te llamas, soberano?)"}, 400)
+            return
+        if ext not in EXT_PERMITIDAS:
+            self._json({"error": f"extensión no permitida: {ext}"}, 400)
+            return
+        datos = self._leer_cuerpo()
+        if len(datos) == 0:
+            self._json({"error": "cuerpo vacío: sube la imagen del Tótem"}, 400)
+            return
+        if len(datos) > MAX_TOTEM_BYTES:
+            self._json({"error": "el Tótem supera 8 MB (es un avatar, no un vídeo)"}, 400)
+            return
+
+        M0_DIR.mkdir(parents=True, exist_ok=True)
+        destino = M0_DIR / f"totem-{_slug(nombre)}.{ext}"
+        destino.write_bytes(datos)
+        sha = _sha256_bytes(datos)
+        # Log de validación por hash (mismo formato que firmar_artefacto.py).
+        sig = {
+            "nombre": destino.name,
+            "sha256": sha,
+            "timestamp_iso": _ahora_iso(),
+            "tamano_bytes": len(datos),
+            "fase": "hash-M0-M2",
+            "prueba": "integridad (no autoria; la firma con clave Ed25519 llega en M3)",
+        }
+        destino.with_name(destino.name + ".sig.json").write_text(
+            json.dumps(sig, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+
+        estado = _leer_estado()
+        estado["nombre"] = nombre
+        estado["totem_hash"] = sha
+        if estado["creado"] is None:
+            estado["creado"] = _ahora_iso()
+        estado["pruebas"]["M0"] = sha
+        _avanzar(estado, "M0")
+        _escribir_estado(estado)
+        self._json({"ok": True, "sha256": sha, "totem": str(destino), "estado": estado})
+
+    def _post_completar(self) -> None:
+        """M1/M2: registra la firma que el usuario hizo en SU terminal (IronClaw)."""
+        try:
+            cuerpo = json.loads(self._leer_cuerpo() or b"{}")
+        except json.JSONDecodeError:
+            self._json({"error": "JSON inválido"}, 400)
+            return
+        modulo = str(cuerpo.get("modulo", "")).strip().upper()
+        prueba = str(cuerpo.get("prueba", "")).strip().lower()
+        if modulo not in ("M1", "M2"):
+            self._json({"error": "modulo debe ser M1 o M2"}, 400)
+            return
+        if not SHA256_RE.match(prueba):
+            self._json({"error": "prueba debe ser un SHA-256 (64 hex) — fírmalo en tu terminal primero"}, 400)
+            return
+        estado = _leer_estado()
+        if estado["nombre"] is None:
+            self._json({"error": "primero forja tu Tótem (M0)"}, 409)
+            return
+        estado["pruebas"][modulo] = prueba
+        _avanzar(estado, modulo)
+        _escribir_estado(estado)
+        self._json({"ok": True, "estado": estado})
 
 
 def _construir_servidor(host: str, puerto: int) -> socketserver.TCPServer:
@@ -51,7 +236,6 @@ def _construir_servidor(host: str, puerto: int) -> socketserver.TCPServer:
         raise FileNotFoundError(f"no existe el directorio a servir: {RAIZ_INTERFAZ}")
     cara = RAIZ_INTERFAZ / "aurelius_face.html"
     if not cara.is_file():
-        # Defensivo: avisar, pero no abortar — el server puede servir otros ficheros.
         sys.stderr.write(f"[aurelius-8050] AVISO: no se encontró {cara}\n")
 
     manejador = functools.partial(Manejador, directory=str(RAIZ_INTERFAZ))
@@ -79,10 +263,6 @@ def servir(host: str, puerto: int) -> int:
         sys.stderr.write(f"[aurelius-8050] ERROR: {err}\n")
         return 1
 
-    # serve_forever() corre en el hilo PRINCIPAL; llamar shutdown() desde el
-    # handler de señal (mismo hilo) se autobloquea. En su lugar, SIGTERM se
-    # convierte en KeyboardInterrupt (SIGINT ya lo es) para romper el select del
-    # bucle, y cerramos el socket en el `finally`. Patrón probado y sin deadlock.
     def _apagar(_sig: int, _frame: FrameType | None) -> NoReturn:
         raise KeyboardInterrupt
 

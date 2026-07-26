@@ -5,3 +5,11 @@ dist/
 
 # archivos de descarga redundantes (screen.png + DESIGN.md ya extraídos)
 src/assets/*.zip
+
+# Contenido local del Soberano (artefactos del usuario, nunca se versiona);
+# solo la estructura (.gitkeep) y el estado base quedan en el repo.
+sovereign_vault/*/*
+!sovereign_vault/*/.gitkeep
+
+__pycache__/
+*.pyc

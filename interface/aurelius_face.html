@@ -100,6 +100,9 @@
     .titulo .sub { color: var(--tenue); font-size: 12px; font-family: ui-monospace, "SFMono-Regular", monospace; }
     .estado { margin-left: auto; text-align: right; font-family: ui-monospace, monospace; font-size: 11px; color: var(--tenue); }
     .estado b { color: var(--vena); font-weight: 600; }
+    .au-chemin { margin-left: 16px; color: var(--vena); text-decoration: none; font: 600 13px/1 ui-monospace, monospace; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 9px 12px; white-space: nowrap; }
+    .au-chemin:hover { background: var(--vena); color: var(--fondo); }
+    .au-chemin:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
 
     main {
       flex: 1 1 auto;
@@ -179,6 +182,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       <h1>Aurelius</h1>
       <span class="sub">el Preceptor · IronClaw</span>
     </div>
+    <a class="au-chemin" href="camino.html">Le Chemin ▸</a>
     <div class="estado" id="estado">
       <div>modelo <b id="e-modelo">—</b></div>
       <div>nodo <b id="e-nodo">—</b></div>
@@ -207,6 +211,15 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       EP = EP.replace(/\/+$/, "");
       var MODEL = "qwen3:30b-a3b-instruct-2507-q4_K_M"; // tag COMPLETO (instruct, no thinking)
       var SYSTEM = (document.getElementById("system-prompt").textContent || "").trim();
+      var estadoSoberano = null; // se rellena de /api/estado (persistencia real del Camino)
+      function sistemaConEstado() {
+        if (!estadoSoberano || !estadoSoberano.nombre) return SYSTEM;
+        var e = estadoSoberano;
+        var hechos = (e.modulos_completados || []).join(", ") || "ninguno";
+        return SYSTEM + "\n\nESTADO ACTUAL DEL SOBERANO (persistido en su nodo — NO lo inventes, "
+          + "es real): se llama " + e.nombre + "; módulo actual " + e.modulo_actual
+          + "; completados: " + hechos + ". Salúdalo por su nombre y, si procede, guíalo hacia su módulo actual.";
+      }
 
       var log = document.getElementById("log");
       var vacio = document.getElementById("vacio");
@@ -221,6 +234,15 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
 
       var historia = []; // [{role,content}] — memoria de la conversación (no persiste entre recargas)
       var ocupado = false;
+
+      // Estado REAL del Camino (servidor 8050): si ya forjó su Tótem, Aurelius lo
+      // saluda por su nombre (el estado se inyecta al system prompt, no se inventa).
+      (function cargarEstado() {
+        fetch("/api/estado")
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (e) { if (e) estadoSoberano = e; })
+          .catch(function () {});
+      })();
 
       // === Busto como sprite ANCLADO (Habla.png, sheet 4×3, celda 256×341). La
       //     cabeza NO se mueve: solo cambia background-position en el contenedor
@@ -310,7 +332,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
               stream: true,
               keep_alive: -1,
               options: { temperature: 0.4 },
-              messages: [{ role: "system", content: SYSTEM }].concat(historia),
+              messages: [{ role: "system", content: sistemaConEstado() }].concat(historia),
             }),
           });
           if (!r.ok) throw new Error("HTTP " + r.status);
