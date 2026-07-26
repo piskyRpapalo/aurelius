@@ -76,6 +76,15 @@
     .prompt-cebado { background: var(--code); border: 1px dashed var(--vena-tenue); border-radius: 8px; padding: 12px; color: #efe7ff; font: italic 400 14px/1.6 "Georgia", serif; }
     .fait-note { color: var(--ok); font: 500 13px/1.5 ui-monospace, monospace; }
     .verrou { opacity: 0.5; }
+
+    /* Móvil: táctiles ≥44px (retour del header y el botón COPIER de los bloques
+       de comando). El rail M0-M5 ya envuelve sin desbordar (flex-wrap), así que
+       "cabe" en pantalla estrecha sin scroll horizontal del documento. */
+    @media (max-width: 600px) {
+      a.retour { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 12px; }
+      pre.cmd { padding-right: 52px; }
+      button.copier { min-height: 44px; padding: 8px 10px; }
+    }
   </style>
 </head>
 <body>

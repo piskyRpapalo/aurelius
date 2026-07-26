@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- interactive-widget=resizes-content: al abrir el teclado en móvil el
+       navegador REDIMENSIONA el viewport (no lo superpone), así el app-shell
+       (100dvh) recalcula y el header nunca se empuja fuera arriba. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <title>Aurelius · el Preceptor</title>
   <style>
     /* Solar-punk oscuro: fondo #1a1a1a + vena violeta, ojo ámbar del busto. */
@@ -112,6 +115,7 @@
       width: 100%; max-width: 780px; margin: 0 auto;
       padding: 18px; display: flex; flex-direction: column; gap: 12px;
       overflow-y: auto;
+      overscroll-behavior: contain; /* el scroll del chat no encadena al body (mata el arrastre iOS que desplazaba el shell) */
     }
     .msg { max-width: 88%; padding: 10px 14px; border-radius: 12px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; }
     .msg.tu { align-self: flex-end; background: var(--tu); border: 1px solid #38344a; }
@@ -152,6 +156,20 @@
     @media (max-width: 520px) {
       .estado { display: none; }
       .titulo h1 { font-size: 17px; }
+    }
+    /* Móvil estrecho (≤430px, cubre 360/390): el header desbordaba ~36px a 360
+       — busto + título + selector + "The Path" no cabían y los controles se
+       salían por la derecha (el "sigue desapareciendo"). Aquí encoge el busto,
+       aprieta gaps y garantiza táctiles ≥44px, sin desborde. flex-wrap como red
+       de seguridad: si aún no cupieran, lang+Path bajan a una 2ª fila visible. */
+    @media (max-width: 430px) {
+      header { padding: 10px 12px; gap: 10px; flex-wrap: wrap; }
+      .busto-frame { width: 54px; height: 72px; }
+      .titulo h1 { font-size: 16px; }
+      .titulo .sub { font-size: 10px; }
+      .au-lang { margin-left: auto; min-height: 44px; padding: 6px 8px; }
+      .au-chemin { margin-left: 8px; min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; }
+      .verbo-b { min-height: 44px; }
     }
   </style>
 </head>
