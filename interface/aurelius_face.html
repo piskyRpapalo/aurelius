@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -100,9 +100,11 @@
     .titulo .sub { color: var(--tenue); font-size: 12px; font-family: ui-monospace, "SFMono-Regular", monospace; }
     .estado { margin-left: auto; text-align: right; font-family: ui-monospace, monospace; font-size: 11px; color: var(--tenue); }
     .estado b { color: var(--vena); font-weight: 600; }
-    .au-chemin { margin-left: 16px; color: var(--vena); text-decoration: none; font: 600 13px/1 ui-monospace, monospace; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 9px 12px; white-space: nowrap; }
+    .au-chemin { margin-left: 12px; color: var(--vena); text-decoration: none; font: 600 13px/1 ui-monospace, monospace; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 9px 12px; white-space: nowrap; }
     .au-chemin:hover { background: var(--vena); color: var(--fondo); }
     .au-chemin:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
+    .au-lang { margin-left: 16px; background: var(--code, #14121a); color: var(--texto); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 8px 10px; font: 600 13px/1 ui-monospace, monospace; cursor: pointer; }
+    .au-lang:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
 
     main {
       flex: 1 1 auto;
@@ -141,6 +143,12 @@
     button.hablar:hover:not(:disabled) { filter: brightness(1.12); }
     button.hablar:disabled { opacity: 0.5; cursor: progress; }
     .aviso { max-width: 780px; margin: 6px auto 0; font-family: ui-monospace, monospace; font-size: 10px; color: var(--tenue); text-align: center; }
+    .verbo { display: flex; gap: 8px; align-items: center; max-width: 780px; margin: 0 auto 8px; flex-wrap: wrap; }
+    .verbo-lbl { font: 500 11px/1 ui-monospace, monospace; color: var(--tenue); }
+    .verbo-b { background: #14121a; color: var(--tenue); border: 1px solid var(--vena-tenue); border-radius: 8px; font: 600 11px/1 ui-monospace, monospace; padding: 7px 11px; cursor: pointer; min-height: 32px; }
+    .verbo-b[data-actif="oui"] { color: var(--fondo); background: var(--vena); border-color: var(--vena); }
+    .verbo-b:hover { border-color: var(--vena); }
+    .verbo-b:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
     @media (max-width: 520px) {
       .estado { display: none; }
       .titulo h1 { font-size: 17px; }
@@ -152,11 +160,19 @@
        escapes de JS: contiene bloques ```bash que romperían un template literal. -->
   <script type="text/plain" id="system-prompt">Eres Aurelius, el Preceptor. Tu nombre honra a Marco Aurelio, el emperador filósofo que se gobernaba a sí mismo en medio del caos sin temerlo. Guías a un usuario en el Camino del Soberano: aprender soberanía técnica para dejar de depender de la nube.
 
+IDIOMA (canon): tu base es el INGLÉS. Responde SIEMPRE en el idioma que el usuario haya elegido — se te indica en el estado inyectado (locale, p.ej. "en", "es"). Sin selección explícita, respondes en inglés. La voz estoica y la concisión son iguales en todos los idiomas.
+
 MISTAGOGIA (el lore se gana): a un recién llegado le hablas SOLO del "Camino del Soberano". Los nombres internos (Hexelion, P0X) NO se mencionan a un usuario nuevo — se revelan más tarde, solo cuando el usuario avanzado llega a ver la lista de nodos conectados. El misterio se descubre paso a paso; no se vuelca de golpe.
 
 TU VOZ: serena, estoica, cálida. Hablas como un mentor sabio, NUNCA como un profeta del apocalipsis ni con ansiedad. El mundo no se acaba; está "aturdido por su propia abundancia". La independencia es libertad, no miedo. Estética Solar-punk: orgánica, luminosa, esperanzada.
 
 CONCISIÓN (regla dura — economía estoica): Responde de forma BREVE y directa por defecto — un estoico economiza palabras. Máximo 3-4 frases por respuesta, salvo que el usuario pida explícitamente "cuéntame más" o "en detalle". Prefiere una frase con peso a un párrafo florido: Marco Aurelio escribía máximas, no ensayos. El Cinematic de Apertura se recita UNA sola vez y en versión CORTA (4-6 líneas máximo); la versión épica larga es material de vídeo, jamás para el chat.
+
+ESTILO NARRATIVO (RPG breve): enseñas como un narrador de rol — los nodos son partes de un mapa, las misiones son ritos, usas lore como ENVOLTORIO. Pero la CONCISIÓN manda: épico y BREVE, jamás épico y largo. Tu personalidad base es directa y técnica; el lore adorna una frase con peso, no rellena párrafos.
+
+CONOCIMIENTO DE MODELOS (regla dura): solo hablas con precisión de los modelos que el usuario TIENE (se te da su lista real en el estado inyectado). Explica qué esperar de cada uno, a qué nivel de conversación llega y sus límites REALES. Si no sabes algo de un modelo, DILO — jamás inventes capacidades, familias ni benchmarks, ni afirmes cifras de rendimiento que nadie ha medido en su nodo.
+
+VERBOSIDAD (el usuario la ajusta): el nivel actual viene en el estado inyectado — "breve" = 1-2 frases, "normal" = 3-4 (defecto), "detallado" = puedes extenderte si aporta. Respeta el nivel elegido por encima del defecto de concisión.
 
 TU LEY MÁS PROFUNDA (IronClaw): "La máquina propone, el carbono firma." Tú propones, sugieres, enseñas — pero el usuario (el carbono) es quien firma y decide todo lo que tiene valor. Nunca ejecutas acciones de valor por él; le enseñas a hacerlas y firmarlas con su propia mano. Esta es la lección central de todo lo que enseñas.
 
@@ -182,7 +198,11 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       <h1>Aurelius</h1>
       <span class="sub">el Preceptor · IronClaw</span>
     </div>
-    <a class="au-chemin" href="camino.html">Le Chemin ▸</a>
+    <select class="au-lang" id="au-lang" aria-label="Language">
+      <option value="en">EN</option>
+      <option value="es">ES</option>
+    </select>
+    <a class="au-chemin" id="au-chemin" href="camino.html">The Path ▸</a>
     <div class="estado" id="estado">
       <div>modelo <b id="e-modelo">—</b></div>
       <div>nodo <b id="e-nodo">—</b></div>
@@ -190,13 +210,19 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
   </header>
 
   <main id="log">
-    <p class="vacio" id="vacio">Salúdalo para despertar al Preceptor.</p>
+    <p class="vacio" id="vacio">Greet him to wake the Preceptor.</p>
   </main>
 
   <footer>
+    <div class="verbo" id="verbo" hidden>
+      <span class="verbo-lbl" id="verbo-lbl">Aurelius:</span>
+      <button type="button" class="verbo-b" data-v="breve">brief</button>
+      <button type="button" class="verbo-b" data-v="normal">normal</button>
+      <button type="button" class="verbo-b" data-v="detallado">detailed</button>
+    </div>
     <div class="fila">
-      <textarea id="campo" placeholder="Habla con Aurelius…" autocomplete="off" rows="1"></textarea>
-      <button class="hablar" id="btn" type="button">HABLAR</button>
+      <textarea id="campo" placeholder="Speak with Aurelius…" autocomplete="off" rows="1"></textarea>
+      <button class="hablar" id="btn" type="button">SPEAK</button>
     </div>
     <div class="aviso" id="aviso"></div>
   </footer>
@@ -212,13 +238,59 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       var MODEL = "qwen3:30b-a3b-instruct-2507-q4_K_M"; // tag COMPLETO (instruct, no thinking)
       var SYSTEM = (document.getElementById("system-prompt").textContent || "").trim();
       var estadoSoberano = null; // se rellena de /api/estado (persistencia real del Camino)
+
+      // === i18n (base EN, mismo diseño y clave que src/i18n del repo) ===
+      var LOCALES = ["en", "es"]; // estructura lista para añadir idiomas sin refactor
+      var CLAVE_LOCALE = "aurelius.locale";
+      var I18N = {
+        en: { vacio: "Greet him to wake the Preceptor.", campo: "Speak with Aurelius…", hablar: "SPEAK", chemin: "The Path ▸", vLbl: "Aurelius:", vBreve: "brief", vNormal: "normal", vDet: "detailed" },
+        es: { vacio: "Salúdalo para despertar al Preceptor.", campo: "Habla con Aurelius…", hablar: "HABLAR", chemin: "Le Chemin ▸", vLbl: "Aurelius:", vBreve: "breve", vNormal: "normal", vDet: "detallado" },
+      };
+      function leerLocale() {
+        try {
+          var g = localStorage.getItem(CLAVE_LOCALE);
+          if (LOCALES.indexOf(g) >= 0) return g;
+          if ((navigator.language || "").toLowerCase().indexOf("es") === 0) return "es";
+        } catch (e) { /* sin localStorage */ }
+        return "en";
+      }
+      var localeActual = leerLocale();
+      var verbosidadActual = "normal"; // lo fija /api/estado (barra de verbosidad, §5)
+
       function sistemaConEstado() {
-        if (!estadoSoberano || !estadoSoberano.nombre) return SYSTEM;
-        var e = estadoSoberano;
-        var hechos = (e.modulos_completados || []).join(", ") || "ninguno";
-        return SYSTEM + "\n\nESTADO ACTUAL DEL SOBERANO (persistido en su nodo — NO lo inventes, "
-          + "es real): se llama " + e.nombre + "; módulo actual " + e.modulo_actual
-          + "; completados: " + hechos + ". Salúdalo por su nombre y, si procede, guíalo hacia su módulo actual.";
+        var reglaVerb = { breve: "1-2 frases máximo", normal: "3-4 frases (por defecto)", detallado: "puedes extenderte si aporta" };
+        var ctx = SYSTEM
+          + "\n\nIDIOMA SELECCIONADO: responde SIEMPRE en '" + localeActual + "'."
+          + "\n\nVERBOSIDAD ACTUAL: " + verbosidadActual + " → " + (reglaVerb[verbosidadActual] || reglaVerb.normal) + ". Respeta este nivel.";
+        var modelos = (estadoSoberano && estadoSoberano.inventario && estadoSoberano.inventario.software
+          && estadoSoberano.inventario.software.modelos_ollama) || null;
+        if (modelos && modelos.length) {
+          ctx += "\n\nMODELOS QUE EL USUARIO TIENE (su ollama list REAL — solo habla de estos, no inventes otros ni sus benchmarks): "
+            + modelos.map(function (m) { return m.name; }).join(", ") + ".";
+        }
+        if (estadoSoberano && estadoSoberano.nombre) {
+          var e = estadoSoberano;
+          var hechos = (e.modulos_completados || []).join(", ") || "ninguno";
+          ctx += "\n\nESTADO ACTUAL DEL SOBERANO (persistido en su nodo — NO lo inventes, es real): "
+            + "se llama " + e.nombre + "; módulo actual " + e.modulo_actual
+            + "; completados: " + hechos + ". Salúdalo por su nombre y, si procede, guíalo hacia su módulo actual.";
+        }
+        return ctx;
+      }
+
+      function aplicarIdioma(loc) {
+        if (LOCALES.indexOf(loc) < 0) loc = "en";
+        localeActual = loc;
+        try { localStorage.setItem(CLAVE_LOCALE, loc); } catch (e) { /* memoria */ }
+        var d = I18N[loc] || I18N.en;
+        var elV = document.getElementById("vacio"); if (elV) elV.textContent = d.vacio;
+        var elCampo = document.getElementById("campo"); if (elCampo) elCampo.setAttribute("placeholder", d.campo);
+        var elBtn = document.getElementById("btn"); if (elBtn) elBtn.textContent = d.hablar;
+        var elC = document.getElementById("au-chemin"); if (elC) elC.textContent = d.chemin;
+        var sel = document.getElementById("au-lang"); if (sel && sel.value !== loc) sel.value = loc;
+        var lbl = document.getElementById("verbo-lbl"); if (lbl) lbl.textContent = d.vLbl;
+        var vb = document.querySelectorAll(".verbo-b");
+        if (vb.length === 3) { vb[0].textContent = d.vBreve; vb[1].textContent = d.vNormal; vb[2].textContent = d.vDet; }
       }
 
       var log = document.getElementById("log");
@@ -237,12 +309,46 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
 
       // Estado REAL del Camino (servidor 8050): si ya forjó su Tótem, Aurelius lo
       // saluda por su nombre (el estado se inyecta al system prompt, no se inventa).
+      // === Barra de verbosidad (§5): 3 niveles, persiste en el estado del Soberano ===
+      var verbo = document.getElementById("verbo");
+      function actualizarBarraVerbosidad() {
+        var bs = verbo.querySelectorAll(".verbo-b");
+        for (var i = 0; i < bs.length; i++) {
+          bs[i].setAttribute("data-actif", bs[i].getAttribute("data-v") === verbosidadActual ? "oui" : "non");
+        }
+      }
+      (function cablearVerbosidad() {
+        var bs = verbo.querySelectorAll(".verbo-b");
+        for (var i = 0; i < bs.length; i++) {
+          bs[i].addEventListener("click", function (ev) {
+            verbosidadActual = ev.currentTarget.getAttribute("data-v");
+            actualizarBarraVerbosidad();
+            fetch("/api/preferencia", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ verbosidad: verbosidadActual }),
+            }).catch(function () {});
+          });
+        }
+      })();
+
       (function cargarEstado() {
         fetch("/api/estado")
           .then(function (r) { return r.ok ? r.json() : null; })
-          .then(function (e) { if (e) estadoSoberano = e; })
+          .then(function (e) {
+            if (!e) return;
+            estadoSoberano = e;
+            if (e.verbosidad) verbosidadActual = e.verbosidad;
+            if (typeof actualizarBarraVerbosidad === "function") actualizarBarraVerbosidad();
+          })
+          .catch(function () {});
+        // Inventario (hardware vía genesis.py + software vía ollama) — conocimiento de modelos.
+        fetch("/api/inventario")
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (inv) { if (inv) { estadoSoberano = estadoSoberano || {}; estadoSoberano.inventario = inv; } })
           .catch(function () {});
       })();
+      document.getElementById("au-lang").addEventListener("change", function (ev) { aplicarIdioma(ev.target.value); });
+      aplicarIdioma(localeActual);
 
       // === Busto como sprite ANCLADO (Habla.png, sheet 4×3, celda 256×341). La
       //     cabeza NO se mueve: solo cambia background-position en el contenedor
@@ -363,6 +469,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
           }
           if (completo === "") throw new Error("respuesta vacía");
           historia.push({ role: "assistant", content: completo });
+          if (verbo.hidden) { verbo.hidden = false; actualizarBarraVerbosidad(); } // §5: la barra aparece tras la 1ª respuesta
         } catch (err) {
           burbuja.div.classList.add("error");
           burbuja.cuerpo.textContent = fallback(err);
