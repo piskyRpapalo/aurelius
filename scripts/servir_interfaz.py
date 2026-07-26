@@ -30,10 +30,13 @@ import hashlib
 import http.server
 import json
 import re
+import shutil
 import signal
 import socket
 import socketserver
+import subprocess
 import sys
+import urllib.request
 from pathlib import Path
 from types import FrameType
 from typing import Any, NoReturn
@@ -43,6 +46,11 @@ RAIZ_INTERFAZ: Path = (Path(__file__).resolve().parent.parent / "interface").res
 VAULT: Path = (Path(__file__).resolve().parent.parent / "sovereign_vault").resolve()
 ESTADO_JSON: Path = VAULT / "estado_del_soberano.json"
 M0_DIR: Path = VAULT / "M0_Totem"
+GENESIS_PY: Path = Path("/home/pisky/p0x/monje/genesis.py")  # auditoría de hardware honesta (se INVOCA, no se toca)
+OLLAMA_TAGS: str = "http://127.0.0.1:11434/api/tags"
+HERRAMIENTAS: tuple[str, ...] = ("python3", "git", "ollama", "docker", "ffmpeg", "node", "uv", "whisper", "yt-dlp")
+VERBOSIDADES: frozenset[str] = frozenset({"breve", "normal", "detallado"})
+LOCALES: frozenset[str] = frozenset({"en", "es"})
 PUERTO_DEFECTO: int = 8050
 HOST_DEFECTO: str = "0.0.0.0"  # tailnet, no solo loopback
 
@@ -59,6 +67,9 @@ _ESTADO_BASE: dict[str, Any] = {
     "modulos_completados": [],
     "creado": None,
     "pruebas": {},  # campo aditivo declarado: {modulo: sha256 firmado por el usuario}
+    "verbosidad": "normal",  # §barra de verbosidad: breve|normal|detallado
+    "locale": "en",  # idioma base canon (inglés); el desplegable lo cambia
+    "inventario": None,  # snapshot del inventario (hardware genesis + software)
 }
 
 
@@ -114,6 +125,65 @@ def _sha256_bytes(datos: bytes) -> str:
     return h.hexdigest()
 
 
+def _genesis_hw() -> dict[str, Any]:
+    """Invoca genesis.py (auditoría de hardware honesta) por subprocess — NO lo toca
+    (su guard isinstance es inviolable). Si falla, hardware desconocido, no inventado."""
+    if not GENESIS_PY.exists():
+        return {"estado": "desconocido", "motivo": f"no existe {GENESIS_PY}"}
+    try:
+        out = subprocess.run(
+            [sys.executable, str(GENESIS_PY)], capture_output=True, text=True, timeout=25,
+        )
+    except (subprocess.SubprocessError, OSError) as e:
+        return {"estado": "desconocido", "motivo": f"{type(e).__name__}: {e}"[:200]}
+    if out.returncode != 0:
+        return {"estado": "desconocido", "motivo": (out.stderr or "genesis error").strip()[:200]}
+    try:
+        return json.loads(out.stdout)
+    except json.JSONDecodeError:
+        return {"estado": "desconocido", "motivo": "genesis no devolvió JSON"}
+
+
+def _ollama_modelos() -> dict[str, Any]:
+    """Software: modelos instalados vía /api/tags. Honesto si Ollama no responde."""
+    try:
+        with urllib.request.urlopen(OLLAMA_TAGS, timeout=6) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except Exception as e:  # noqa: BLE001 — red/parse: degradación honesta
+        return {"estado": "desconocido", "motivo": f"ollama no responde ({e})"[:160], "modelos": []}
+    modelos = [
+        {
+            "name": m.get("name"),
+            "size_bytes": m.get("size"),
+            "familia": (m.get("details") or {}).get("family"),
+            "parametros": (m.get("details") or {}).get("parameter_size"),
+            "cuantizacion": (m.get("details") or {}).get("quantization_level"),
+        }
+        for m in data.get("models", [])
+    ]
+    return {"estado": "vivo", "modelos": modelos}
+
+
+def _herramientas() -> dict[str, bool]:
+    """Presencia de herramientas detectables (which). Ausente = False honesto."""
+    return {t: shutil.which(t) is not None for t in HERRAMIENTAS}
+
+
+def _inventario() -> dict[str, Any]:
+    """Inventario del Soberano: hardware (genesis) + software (ollama, herramientas)."""
+    ol = _ollama_modelos()
+    return {
+        "hardware": _genesis_hw(),
+        "software": {
+            "ollama": ol.get("estado"),
+            "modelos_ollama": ol.get("modelos", []),
+            "herramientas": _herramientas(),
+        },
+        "generado": _ahora_iso(),
+        "nota": "honest sensors: lo no detectado se marca desconocido, no se inventa",
+    }
+
+
 class Manejador(http.server.SimpleHTTPRequestHandler):
     """Estáticos anclados a `interface/` + API de estado del Camino. Sin caché."""
 
@@ -143,8 +213,16 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
 
     # ---- API ----
     def do_GET(self) -> None:  # noqa: N802 (firma de la stdlib)
-        if self.path.split("?", 1)[0] == "/api/estado":
+        ruta = self.path.split("?", 1)[0]
+        if ruta == "/api/estado":
             self._json(_leer_estado())
+            return
+        if ruta == "/api/inventario":
+            inv = _inventario()
+            estado = _leer_estado()
+            estado["inventario"] = inv  # snapshot en el estado del Soberano
+            _escribir_estado(estado)
+            self._json(inv)
             return
         super().do_GET()
 
@@ -155,6 +233,8 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
                 self._post_totem()
             elif ruta == "/api/modulo/completar":
                 self._post_completar()
+            elif ruta == "/api/preferencia":
+                self._post_preferencia()
             else:
                 self._json({"error": "ruta desconocida"}, 404)
         except Exception as e:  # degradación honesta, nunca 500 opaco sin cuerpo
@@ -226,6 +306,29 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
             return
         estado["pruebas"][modulo] = prueba
         _avanzar(estado, modulo)
+        _escribir_estado(estado)
+        self._json({"ok": True, "estado": estado})
+
+    def _post_preferencia(self) -> None:
+        """§verbosidad + idioma: persiste la preferencia del usuario en el estado."""
+        try:
+            cuerpo = json.loads(self._leer_cuerpo() or b"{}")
+        except json.JSONDecodeError:
+            self._json({"error": "JSON inválido"}, 400)
+            return
+        estado = _leer_estado()
+        cambiado = False
+        verb = str(cuerpo.get("verbosidad", "")).strip().lower()
+        if verb in VERBOSIDADES:
+            estado["verbosidad"] = verb
+            cambiado = True
+        loc = str(cuerpo.get("locale", "")).strip().lower()
+        if loc in LOCALES:
+            estado["locale"] = loc
+            cambiado = True
+        if not cambiado:
+            self._json({"error": "nada válido (verbosidad: breve|normal|detallado; locale: en|es)"}, 400)
+            return
         _escribir_estado(estado)
         self._json({"ok": True, "estado": estado})
 

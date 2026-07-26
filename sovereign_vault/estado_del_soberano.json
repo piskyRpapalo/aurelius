@@ -4,5 +4,8 @@
   "modulo_actual": "M0",
   "modulos_completados": [],
   "creado": null,
-  "pruebas": {}
+  "pruebas": {},
+  "verbosidad": "normal",
+  "locale": "en",
+  "inventario": null
 }
