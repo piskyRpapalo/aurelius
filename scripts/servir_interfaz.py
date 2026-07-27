@@ -36,6 +36,7 @@ import socket
 import socketserver
 import subprocess
 import sys
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from types import FrameType
@@ -44,7 +45,16 @@ from typing import Any, NoReturn
 # La raíz servida: el hermano `interface/` junto a `scripts/`.
 RAIZ_INTERFAZ: Path = (Path(__file__).resolve().parent.parent / "interface").resolve()
 VAULT: Path = (Path(__file__).resolve().parent.parent / "sovereign_vault").resolve()
-ESTADO_JSON: Path = VAULT / "estado_del_soberano.json"
+# MULTIUSUARIO (misión hermanos, 2026-07-27): el estado ya NO es un único fichero
+# — vive por soberano en sovereign_vault/estado/<slug>.json. El fichero legado
+# (monousuario) se migra a estado/soberano.json al arrancar y se conserva como
+# respaldo. LÍMITE HONESTO: esto es SEPARACIÓN DE ESTADO para hermanos de
+# confianza en un tailnet privado, NO autenticación — cualquiera con el enlace
+# puede escribir el nombre de otro. Auth real es feature futura.
+ESTADO_DIR: Path = VAULT / "estado"
+ESTADO_LEGADO: Path = VAULT / "estado_del_soberano.json"
+SLUG_MAX: int = 40
+SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")  # lista blanca estricta
 M0_DIR: Path = VAULT / "M0_Totem"
 GENESIS_PY: Path = Path("/home/pisky/p0x/monje/genesis.py")  # auditoría de hardware honesta (se INVOCA, no se toca)
 OLLAMA_TAGS: str = "http://127.0.0.1:11434/api/tags"
@@ -78,19 +88,65 @@ def _ahora_iso() -> str:
 
 
 def _slug(texto: str) -> str:
-    limpio = re.sub(r"[^a-z0-9]+", "-", texto.lower()).strip("-")
+    """Slug SANEADO desde entrada de usuario → nombre de fichero seguro.
+    Minúsculas, lista blanca [a-z0-9-], sin espacios ni rutas ni `..`, cap 40.
+    Cualquier carácter fuera de la lista blanca colapsa a '-'; vacío → 'soberano'."""
+    limpio = re.sub(r"[^a-z0-9]+", "-", texto.lower()).strip("-")[:SLUG_MAX].strip("-")
     return limpio or "soberano"
 
 
-def _leer_estado() -> dict[str, Any]:
-    """Lee el estado del disco, defensivo: si falta o está corrupto, base limpia."""
+def _slug_valido(slug: str | None) -> str | None:
+    """Valida un slug ya formado (viene del cliente): estricto o None. Defensa
+    contra path traversal — solo [a-z0-9-], jamás `/`, `.`, `..` ni longitud loca."""
+    if slug is None:
+        return None
+    slug = slug.strip()
+    return slug if SLUG_RE.match(slug) else None
+
+
+def _ruta_estado(slug: str) -> Path:
+    """Ruta del estado de un soberano, ANCLADA a ESTADO_DIR (defensa en
+    profundidad: aunque el slug burlara la validación, jamás sale del directorio)."""
+    p = (ESTADO_DIR / f"{slug}.json").resolve()
+    if not str(p).startswith(str(ESTADO_DIR.resolve()) + "/"):
+        raise ValueError(f"slug fuera del directorio de estado: {slug!r}")
+    return p
+
+
+def _migrar_legado() -> None:
+    """Migra el estado monousuario legado → estado/soberano.json UNA vez.
+    Idempotente: si el destino ya existe, no toca nada. El legado se conserva."""
+    ESTADO_DIR.mkdir(parents=True, exist_ok=True)
+    destino = ESTADO_DIR / "soberano.json"
+    if destino.exists() or not ESTADO_LEGADO.exists():
+        return
+    try:
+        shutil.copy2(ESTADO_LEGADO, destino)
+        sys.stderr.write(f"[aurelius-8050] migrado estado legado → {destino.name}\n")
+    except OSError as e:
+        sys.stderr.write(f"[aurelius-8050] AVISO: no se pudo migrar el legado ({e})\n")
+
+
+def _base_estado() -> dict[str, Any]:
+    """Estado base limpio (usuario nuevo o sin nombre todavía — solo en memoria)."""
     base = dict(_ESTADO_BASE)
     base["modulos_completados"] = []
     base["pruebas"] = {}
-    if not ESTADO_JSON.exists():
+    return base
+
+
+def _leer_estado(slug: str | None) -> dict[str, Any]:
+    """Lee el estado del soberano `slug` del disco, defensivo. Sin slug (usuario
+    nuevo, aún sin nombre) → base limpia EN MEMORIA, no se escribe nada. Slug
+    válido sin fichero → base (empieza su Camino en M0)."""
+    base = _base_estado()
+    if slug is None:
+        return base
+    ruta = _ruta_estado(slug)
+    if not ruta.exists():
         return base
     try:
-        crudo = json.loads(ESTADO_JSON.read_text(encoding="utf-8"))
+        crudo = json.loads(ruta.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return base
     if not isinstance(crudo, dict):
@@ -105,9 +161,12 @@ def _leer_estado() -> dict[str, Any]:
     return base
 
 
-def _escribir_estado(estado: dict[str, Any]) -> None:
-    ESTADO_JSON.parent.mkdir(parents=True, exist_ok=True)
-    ESTADO_JSON.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
+def _escribir_estado(slug: str, estado: dict[str, Any]) -> None:
+    """Persiste el estado del soberano `slug`. Requiere identidad — sin nombre no
+    se escribe (el usuario nuevo vive en memoria hasta que se nombra en M0)."""
+    ruta = _ruta_estado(slug)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    ruta.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _avanzar(estado: dict[str, Any], modulo: str) -> None:
@@ -203,6 +262,18 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
             return b""
         return self.rfile.read(n) if n > 0 else b""
 
+    def _slug_peticion(self) -> str | None:
+        """Slug del soberano de esta petición: header X-Soberano o query ?soberano=.
+        Validado estricto (path traversal/basura → None). SEPARACIÓN DE ESTADO, NO
+        AUTH: cualquiera con el enlace puede poner el nombre de otro (hermanos de
+        confianza en tailnet privado). Auth real = feature futura."""
+        crudo = self.headers.get("X-Soberano")
+        if not crudo:
+            consulta = urllib.parse.urlsplit(self.path).query
+            vals = urllib.parse.parse_qs(consulta).get("soberano")
+            crudo = vals[0] if vals else None
+        return _slug_valido(crudo)
+
     def end_headers(self) -> None:
         # La cara es un artefacto vivo en desarrollo: nada de caché agresiva.
         self.send_header("Cache-Control", "no-store, must-revalidate")
@@ -215,13 +286,15 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 (firma de la stdlib)
         ruta = self.path.split("?", 1)[0]
         if ruta == "/api/estado":
-            self._json(_leer_estado())
+            self._json(_leer_estado(self._slug_peticion()))
             return
         if ruta == "/api/inventario":
             inv = _inventario()
-            estado = _leer_estado()
-            estado["inventario"] = inv  # snapshot en el estado del Soberano
-            _escribir_estado(estado)
+            slug = self._slug_peticion()
+            if slug is not None:  # solo se cachea en el estado de un soberano nombrado
+                estado = _leer_estado(slug)
+                estado["inventario"] = inv
+                _escribir_estado(slug, estado)
             self._json(inv)
             return
         super().do_GET()
@@ -275,15 +348,18 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
             json.dumps(sig, ensure_ascii=False, indent=2), encoding="utf-8"
         )
 
-        estado = _leer_estado()
+        # El nombre DEFINE la identidad: su slug es el fichero de estado. El
+        # cliente guardará este slug para sus siguientes peticiones.
+        slug = _slug(nombre)
+        estado = _leer_estado(slug)
         estado["nombre"] = nombre
         estado["totem_hash"] = sha
         if estado["creado"] is None:
             estado["creado"] = _ahora_iso()
         estado["pruebas"]["M0"] = sha
         _avanzar(estado, "M0")
-        _escribir_estado(estado)
-        self._json({"ok": True, "sha256": sha, "totem": str(destino), "estado": estado})
+        _escribir_estado(slug, estado)
+        self._json({"ok": True, "sha256": sha, "slug": slug, "totem": str(destino), "estado": estado})
 
     def _post_completar(self) -> None:
         """M1/M2: registra la firma que el usuario hizo en SU terminal (IronClaw)."""
@@ -300,13 +376,17 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
         if not SHA256_RE.match(prueba):
             self._json({"error": "prueba debe ser un SHA-256 (64 hex) — fírmalo en tu terminal primero"}, 400)
             return
-        estado = _leer_estado()
+        slug = self._slug_peticion()
+        if slug is None:
+            self._json({"error": "sin identidad: forja tu Tótem (M0) para tener un Camino"}, 409)
+            return
+        estado = _leer_estado(slug)
         if estado["nombre"] is None:
             self._json({"error": "primero forja tu Tótem (M0)"}, 409)
             return
         estado["pruebas"][modulo] = prueba
         _avanzar(estado, modulo)
-        _escribir_estado(estado)
+        _escribir_estado(slug, estado)
         self._json({"ok": True, "estado": estado})
 
     def _post_preferencia(self) -> None:
@@ -316,7 +396,8 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
         except json.JSONDecodeError:
             self._json({"error": "JSON inválido"}, 400)
             return
-        estado = _leer_estado()
+        slug = self._slug_peticion()
+        estado = _leer_estado(slug)
         cambiado = False
         verb = str(cuerpo.get("verbosidad", "")).strip().lower()
         if verb in VERBOSIDADES:
@@ -329,8 +410,10 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
         if not cambiado:
             self._json({"error": "nada válido (verbosidad: breve|normal|detallado; locale: en|es)"}, 400)
             return
-        _escribir_estado(estado)
-        self._json({"ok": True, "estado": estado})
+        # Solo se persiste con identidad; usuario nuevo (sin nombre) → en memoria.
+        if slug is not None:
+            _escribir_estado(slug, estado)
+        self._json({"ok": True, "persistido": slug is not None, "estado": estado})
 
 
 def _construir_servidor(host: str, puerto: int) -> socketserver.TCPServer:
@@ -360,6 +443,7 @@ def _ip_tailnet() -> str | None:
 
 def servir(host: str, puerto: int) -> int:
     """Levanta el servidor y bloquea hasta señal de cierre. Devuelve exit code."""
+    _migrar_legado()  # monousuario → estado/soberano.json (idempotente)
     try:
         servidor = _construir_servidor(host, puerto)
     except (FileNotFoundError, OSError) as err:
