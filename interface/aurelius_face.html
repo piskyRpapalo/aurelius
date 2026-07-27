@@ -101,13 +101,21 @@
     .titulo { display: flex; flex-direction: column; }
     .titulo h1 { margin: 0; font-size: 20px; letter-spacing: 0.03em; }
     .titulo .sub { color: var(--tenue); font-size: 12px; font-family: ui-monospace, "SFMono-Regular", monospace; }
-    .estado { margin-left: auto; text-align: right; font-family: ui-monospace, monospace; font-size: 11px; color: var(--tenue); }
-    .estado b { color: var(--vena); font-weight: 600; }
-    .au-chemin { margin-left: 12px; color: var(--vena); text-decoration: none; font: 600 13px/1 ui-monospace, monospace; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 9px 12px; white-space: nowrap; }
+    .au-chemin { margin-left: 8px; color: var(--vena); text-decoration: none; font: 600 13px/1 ui-monospace, monospace; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 0 12px; min-height: 40px; display: inline-flex; align-items: center; white-space: nowrap; }
     .au-chemin:hover { background: var(--vena); color: var(--fondo); }
     .au-chemin:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
-    .au-lang { margin-left: 16px; background: var(--code, #14121a); color: var(--texto); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 8px 10px; font: 600 13px/1 ui-monospace, monospace; cursor: pointer; }
+    .au-lang { margin-left: auto; background: var(--code, #14121a); color: var(--texto); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 8px 10px; font: 600 13px/1 ui-monospace, monospace; cursor: pointer; min-height: 40px; }
     .au-lang:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
+    .au-noverif { color: var(--ambar); font: 500 10px/1 ui-monospace, monospace; margin-left: 6px; white-space: nowrap; }
+    /* Identidad + higiene (footer): nombre del soberano + "IA local · tu nodo";
+       el detalle técnico (endpoint/hostname) queda plegado tras <details>. */
+    .au-id { background: none; border: 1px solid var(--vena-tenue); color: var(--vena); font: 600 10px/1 ui-monospace, monospace; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
+    .au-id:hover { border-color: var(--vena); }
+    .au-loc { color: var(--tenue); }
+    .au-tech { display: inline; color: var(--tenue); }
+    .au-tech summary { display: inline; cursor: pointer; color: var(--tenue); opacity: 0.7; }
+    .au-tech[open] summary { opacity: 1; }
+    #au-tech-body { display: block; margin-top: 4px; word-break: break-all; }
 
     main {
       flex: 1 1 auto;
@@ -146,7 +154,7 @@
     }
     button.hablar:hover:not(:disabled) { filter: brightness(1.12); }
     button.hablar:disabled { opacity: 0.5; cursor: progress; }
-    .aviso { max-width: 780px; margin: 6px auto 0; font-family: ui-monospace, monospace; font-size: 10px; color: var(--tenue); text-align: center; }
+    .aviso { max-width: 780px; margin: 6px auto 0; font-family: ui-monospace, monospace; font-size: 10px; color: var(--tenue); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; justify-content: center; }
     .verbo { display: flex; gap: 8px; align-items: center; max-width: 780px; margin: 0 auto 8px; flex-wrap: wrap; }
     .verbo-lbl { font: 500 11px/1 ui-monospace, monospace; color: var(--tenue); }
     .verbo-b { background: #14121a; color: var(--tenue); border: 1px solid var(--vena-tenue); border-radius: 8px; font: 600 11px/1 ui-monospace, monospace; padding: 7px 11px; cursor: pointer; min-height: 32px; }
@@ -154,21 +162,19 @@
     .verbo-b:hover { border-color: var(--vena); }
     .verbo-b:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
     @media (max-width: 520px) {
-      .estado { display: none; }
+      .titulo .sub { display: none; } /* higiene de espacio: el subtítulo cede en móvil */
       .titulo h1 { font-size: 17px; }
     }
-    /* Móvil estrecho (≤430px, cubre 360/390): el header desbordaba ~36px a 360
-       — busto + título + selector + "The Path" no cabían y los controles se
-       salían por la derecha (el "sigue desapareciendo"). Aquí encoge el busto,
-       aprieta gaps y garantiza táctiles ≥44px, sin desborde. flex-wrap como red
-       de seguridad: si aún no cupieran, lang+Path bajan a una 2ª fila visible. */
+    /* Móvil estrecho (≤430px, cubre 360/390) · header a UNA fila (PENDIENTES 166):
+       busto pequeño, "Aurelius" a secas, selector compacto, "The Path" con label
+       corta. Sin flex-wrap → una sola fila, sin desbordar (verificado 360/390). */
     @media (max-width: 430px) {
-      header { padding: 10px 12px; gap: 10px; flex-wrap: wrap; }
-      .busto-frame { width: 54px; height: 72px; }
-      .titulo h1 { font-size: 16px; }
-      .titulo .sub { font-size: 10px; }
-      .au-lang { margin-left: auto; min-height: 44px; padding: 6px 8px; }
-      .au-chemin { margin-left: 8px; min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; }
+      header { padding: 10px 10px; gap: 8px; flex-wrap: nowrap; }
+      .busto-frame { width: 44px; height: 58px; }
+      .titulo h1 { font-size: 15px; }
+      .au-lang { min-height: 44px; padding: 6px 6px; font-size: 12px; }
+      .au-chemin { min-height: 44px; padding: 0 9px; font-size: 12px; }
+      .au-noverif { display: none; } /* el aviso ⚠ auto se conserva en el footer */
       .verbo-b { min-height: 44px; }
     }
   </style>
@@ -214,17 +220,11 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
     </div>
     <div class="titulo">
       <h1>Aurelius</h1>
-      <span class="sub">el Preceptor · IronClaw</span>
+      <span class="sub" id="au-sub">the Preceptor · IronClaw</span>
     </div>
-    <select class="au-lang" id="au-lang" aria-label="Language">
-      <option value="en">EN</option>
-      <option value="es">ES</option>
-    </select>
+    <select class="au-lang" id="au-lang" aria-label="Language"></select>
+    <span class="au-noverif" id="au-noverif" hidden>⚠ auto</span>
     <a class="au-chemin" id="au-chemin" href="camino.html">The Path ▸</a>
-    <div class="estado" id="estado">
-      <div>modelo <b id="e-modelo">—</b></div>
-      <div>nodo <b id="e-nodo">—</b></div>
-    </div>
   </header>
 
   <main id="log">
@@ -242,9 +242,14 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       <textarea id="campo" placeholder="Speak with Aurelius…" autocomplete="off" rows="1"></textarea>
       <button class="hablar" id="btn" type="button">SPEAK</button>
     </div>
-    <div class="aviso" id="aviso"></div>
+    <div class="aviso" id="aviso">
+      <button type="button" class="au-id" id="au-id"></button>
+      <span class="au-loc" id="au-loc"></span>
+      <details class="au-tech"><summary id="au-tech-sum">technical detail</summary><span id="au-tech-body"></span></details>
+    </div>
   </footer>
 
+  <script src="i18n.js"></script>
   <script>
     "use strict";
     (function () {
@@ -257,28 +262,27 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       var SYSTEM = (document.getElementById("system-prompt").textContent || "").trim();
       var estadoSoberano = null; // se rellena de /api/estado (persistencia real del Camino)
 
-      // === i18n (base EN, mismo diseño y clave que src/i18n del repo) ===
-      var LOCALES = ["en", "es"]; // estructura lista para añadir idiomas sin refactor
-      var CLAVE_LOCALE = "aurelius.locale";
-      var I18N = {
-        en: { vacio: "Greet him to wake the Preceptor.", campo: "Speak with Aurelius…", hablar: "SPEAK", chemin: "The Path ▸", vLbl: "Aurelius:", vBreve: "brief", vNormal: "normal", vDet: "detailed" },
-        es: { vacio: "Salúdalo para despertar al Preceptor.", campo: "Habla con Aurelius…", hablar: "HABLAR", chemin: "Le Chemin ▸", vLbl: "Aurelius:", vBreve: "breve", vNormal: "normal", vDet: "detallado" },
-      };
-      function leerLocale() {
-        try {
-          var g = localStorage.getItem(CLAVE_LOCALE);
-          if (LOCALES.indexOf(g) >= 0) return g;
-          if ((navigator.language || "").toLowerCase().indexOf("es") === 0) return "es";
-        } catch (e) { /* sin localStorage */ }
-        return "en";
+      // === i18n compartido (i18n.js) + identidad del soberano (multiusuario) ===
+      // El idioma vive en i18n.js (localStorage aurelius.locale) y viaja al Camino.
+      // La identidad es SEPARACIÓN de estado, NO auth: el slug viaja en ?soberano=;
+      // cualquiera con el enlace puede poner otro nombre (hermanos de confianza).
+      var I = window.AURELIUS_I18N;
+      function slugSoberano() { try { return localStorage.getItem("aurelius.soberano") || null; } catch (e) { return null; } }
+      function nombreSoberano() { try { return localStorage.getItem("aurelius.nombre") || null; } catch (e) { return null; } }
+      function slugDe(n) { return (n || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40).replace(/^-+|-+$/g, ""); }
+      function fijarSoberano(n) {
+        var s = slugDe(n); if (!s) return null;
+        try { localStorage.setItem("aurelius.soberano", s); localStorage.setItem("aurelius.nombre", n.trim()); } catch (e) { /* memoria */ }
+        return s;
       }
-      var localeActual = leerLocale();
+      function apiUrl(path) { var s = slugSoberano(); return s ? path + (path.indexOf("?") >= 0 ? "&" : "?") + "soberano=" + encodeURIComponent(s) : path; }
+
       var verbosidadActual = "normal"; // lo fija /api/estado (barra de verbosidad, §5)
 
       function sistemaConEstado() {
         var reglaVerb = { breve: "1-2 frases máximo", normal: "3-4 frases (por defecto)", detallado: "puedes extenderte si aporta" };
         var ctx = SYSTEM
-          + "\n\nIDIOMA SELECCIONADO: responde SIEMPRE en '" + localeActual + "'."
+          + "\n\nIDIOMA SELECCIONADO: responde SIEMPRE en '" + I.locale + "'."
           + "\n\nVERBOSIDAD ACTUAL: " + verbosidadActual + " → " + (reglaVerb[verbosidadActual] || reglaVerb.normal) + ". Respeta este nivel.";
         var modelos = (estadoSoberano && estadoSoberano.inventario && estadoSoberano.inventario.software
           && estadoSoberano.inventario.software.modelos_ollama) || null;
@@ -286,29 +290,47 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
           ctx += "\n\nMODELOS QUE EL USUARIO TIENE (su ollama list REAL — solo habla de estos, no inventes otros ni sus benchmarks): "
             + modelos.map(function (m) { return m.name; }).join(", ") + ".";
         }
-        if (estadoSoberano && estadoSoberano.nombre) {
-          var e = estadoSoberano;
+        var nom = (estadoSoberano && estadoSoberano.nombre) || nombreSoberano();
+        if (nom) {
+          var e = estadoSoberano || {};
           var hechos = (e.modulos_completados || []).join(", ") || "ninguno";
           ctx += "\n\nESTADO ACTUAL DEL SOBERANO (persistido en su nodo — NO lo inventes, es real): "
-            + "se llama " + e.nombre + "; módulo actual " + e.modulo_actual
+            + "se llama " + nom + "; módulo actual " + (e.modulo_actual || "M0")
             + "; completados: " + hechos + ". Salúdalo por su nombre y, si procede, guíalo hacia su módulo actual.";
         }
         return ctx;
       }
 
-      function aplicarIdioma(loc) {
-        if (LOCALES.indexOf(loc) < 0) loc = "en";
-        localeActual = loc;
-        try { localStorage.setItem(CLAVE_LOCALE, loc); } catch (e) { /* memoria */ }
-        var d = I18N[loc] || I18N.en;
-        var elV = document.getElementById("vacio"); if (elV) elV.textContent = d.vacio;
-        var elCampo = document.getElementById("campo"); if (elCampo) elCampo.setAttribute("placeholder", d.campo);
-        var elBtn = document.getElementById("btn"); if (elBtn) elBtn.textContent = d.hablar;
-        var elC = document.getElementById("au-chemin"); if (elC) elC.textContent = d.chemin;
-        var sel = document.getElementById("au-lang"); if (sel && sel.value !== loc) sel.value = loc;
-        var lbl = document.getElementById("verbo-lbl"); if (lbl) lbl.textContent = d.vLbl;
+      // Selector de idioma poblado desde i18n.js (7 locales).
+      (function poblarLang() {
+        var sel = document.getElementById("au-lang");
+        I.locales.forEach(function (loc) {
+          var o = document.createElement("option"); o.value = loc; o.textContent = I.nombre[loc]; sel.appendChild(o);
+        });
+      })();
+
+      function refrescarIdentidad() {
+        var nom = nombreSoberano();
+        var idb = document.getElementById("au-id");
+        if (idb) idb.textContent = nom ? (I.t("id.greet") + nom) : I.t("id.ask");
+      }
+
+      function aplicarIdioma() {
+        document.documentElement.lang = I.locale;
+        var set = function (id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; };
+        set("au-sub", I.t("face.sub"));
+        set("btn", I.t("face.hablar"));
+        set("au-chemin", I.t("face.chemin"));
+        set("verbo-lbl", I.t("face.verboLbl"));
+        set("au-loc", I.t("face.localAI"));
+        set("au-tech-sum", I.t("face.techDetail"));
+        var elV = document.getElementById("vacio"); if (elV) elV.textContent = I.t("face.vacio");
+        var elCampo = document.getElementById("campo"); if (elCampo) elCampo.setAttribute("placeholder", I.t("face.campo"));
+        var sel = document.getElementById("au-lang"); if (sel && sel.value !== I.locale) sel.value = I.locale;
+        var nv = document.getElementById("au-noverif"); if (nv) nv.hidden = I.esVerificado();
         var vb = document.querySelectorAll(".verbo-b");
-        if (vb.length === 3) { vb[0].textContent = d.vBreve; vb[1].textContent = d.vNormal; vb[2].textContent = d.vDet; }
+        if (vb.length === 3) { vb[0].textContent = I.t("face.vBreve"); vb[1].textContent = I.t("face.vNormal"); vb[2].textContent = I.t("face.vDet"); }
+        refrescarIdentidad();
       }
 
       var log = document.getElementById("log");
@@ -318,9 +340,10 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       var busto = document.getElementById("busto");
       var marco = document.getElementById("busto-frame");
       var aviso = document.getElementById("aviso");
-      document.getElementById("e-modelo").textContent = "qwen3:30b-instruct";
-      document.getElementById("e-nodo").textContent = NODO;
-      aviso.textContent = "endpoint: " + EP + "/api/chat  ·  IA 100% local en el Soberano";
+      // HIGIENE: el hostname/endpoint del nodo NO va a la vista por defecto (un
+      // hermano aprendiendo no necesita ver soberano...:11434). Se pliega tras el
+      // <details>. Visible por defecto: "IA local · tu nodo" (au-loc, i18n).
+      document.getElementById("au-tech-body").textContent = "model " + MODEL + " · endpoint " + EP + "/api/chat";
 
       var historia = []; // [{role,content}] — memoria de la conversación (no persiste entre recargas)
       var ocupado = false;
@@ -341,7 +364,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
           bs[i].addEventListener("click", function (ev) {
             verbosidadActual = ev.currentTarget.getAttribute("data-v");
             actualizarBarraVerbosidad();
-            fetch("/api/preferencia", {
+            fetch(apiUrl("/api/preferencia"), {
               method: "POST", headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ verbosidad: verbosidadActual }),
             }).catch(function () {});
@@ -349,24 +372,40 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
         }
       })();
 
-      (function cargarEstado() {
-        fetch("/api/estado")
+      function recargarEstado() {
+        fetch(apiUrl("/api/estado"))
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (e) {
             if (!e) return;
             estadoSoberano = e;
             if (e.verbosidad) verbosidadActual = e.verbosidad;
-            if (typeof actualizarBarraVerbosidad === "function") actualizarBarraVerbosidad();
+            actualizarBarraVerbosidad();
+            refrescarIdentidad();
           })
           .catch(function () {});
         // Inventario (hardware vía genesis.py + software vía ollama) — conocimiento de modelos.
-        fetch("/api/inventario")
+        fetch(apiUrl("/api/inventario"))
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (inv) { if (inv) { estadoSoberano = estadoSoberano || {}; estadoSoberano.inventario = inv; } })
           .catch(function () {});
-      })();
-      document.getElementById("au-lang").addEventListener("change", function (ev) { aplicarIdioma(ev.target.value); });
-      aplicarIdioma(localeActual);
+      }
+      recargarEstado();
+
+      // Selector de idioma: gobierna la cara Y el Camino (i18n.js persiste la
+      // elección; también se envía al servidor para el estado del soberano).
+      document.getElementById("au-lang").addEventListener("change", function (ev) {
+        I.set(ev.target.value); aplicarIdioma();
+        fetch(apiUrl("/api/preferencia"), {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ locale: I.locale }),
+        }).catch(function () {});
+      });
+      // Identidad: el usuario escribe/recuerda su nombre; se persiste y carga SU camino.
+      document.getElementById("au-id").addEventListener("click", function () {
+        var n = window.prompt(I.t("id.ask"), nombreSoberano() || "");
+        if (n && n.trim() && fijarSoberano(n)) { refrescarIdentidad(); recargarEstado(); }
+      });
+      aplicarIdioma();
 
       // === Busto como sprite ANCLADO (Habla.png, sheet 4×3, celda 256×341). La
       //     cabeza NO se mueve: solo cambia background-position en el contenedor
