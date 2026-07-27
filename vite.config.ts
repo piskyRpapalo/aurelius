@@ -1,8 +1,8 @@
 import { defineConfig } from "vite";
 
-// Aurelius se sirve bajo /aurelius (destino canónico: la cara del Puente del
-// dashboard ya apunta ahí). El gateway de fragua monta ~/aurelius/dist en
-// /aurelius — paso de despliegue, coordinado (como el Nexo en /ui).
+// Aurelius is served under /aurelius. The built dist/ is mounted at that path by
+// the host's static server as a coordinated deploy step — a relative base path,
+// no internal hostnames or absolute node paths in the build config.
 export default defineConfig({
   base: "/aurelius/",
   build: {

@@ -1,23 +1,18 @@
-/* IA LOCAL DE AURELIUS — enrutado canónico (§D · crítico de rendimiento).
+/* AURELIUS LOCAL AI — canonical routing (performance-critical).
  *
- * REGLA DURA: Aurelius habla SOLO con el modelo residente del propio nodo
- * `soberano` (el "Beelink" = soberano, la MISMA máquina donde corre Aurelius y
- * donde vive `soberano-coder`). NUNCA a través del proxy que enruta a Fragua
- * (RK3588, CPU, hasta ~30s de latencia). El navegador de David corre en soberano,
- * así que `localhost:11434` = el Ollama local de soberano, con GPU/Vulkan.
+ * HARD RULE: Aurelius talks ONLY to the resident model on the SAME machine it
+ * runs on, over `localhost` — never over the network to another node. The
+ * browser runs on the same host, so `localhost:11434` is the local Ollama with
+ * GPU acceleration. Isolated by design: minimal latency, nothing crosses the LAN.
  *
- * Verificado 2026-07-20: `ollama ps` muestra `soberano-coder:latest` a 100% GPU
- * en este endpoint (OLLAMA_IGPU_ENABLE=1 / Vulkan). Carga en frío ~6s + 1 tok;
- * en caliente, tiempo real. NO cruza la red del rack hacia otros nodos.
- *
- * Endpoint ANTES (a corregir): proxy → Fragua (batch/CPU, lento).
- * Endpoint AHORA: localhost:11434 (soberano, GPU) — aislado, mínima latencia. */
+ * Configure the endpoint/model for your own machine (see interface/config.json
+ * for the served face; this module is scaffolding for the future Vite build). */
 
-/** Endpoint del modelo local de soberano. Localhost del propio nodo, jamás la red. */
+/** Local model endpoint — the machine's own loopback, never the network. */
 export const AURELIUS_AI_ENDPOINT = "http://localhost:11434";
 
-/** Modelo residente con aceleración GPU/Vulkan en soberano. */
-export const AURELIUS_AI_MODEL = "soberano-coder:latest";
+/** Resident local model tag — set this to your own model. */
+export const AURELIUS_AI_MODEL = "qwen3:30b-a3b-instruct-2507-q4_K_M";
 
 export interface RespuestaIA {
   readonly texto: string;
@@ -27,8 +22,8 @@ export interface RespuestaIA {
 }
 
 /**
- * Genera una respuesta con el modelo LOCAL de soberano (no-stream).
- * Aislado por diseño: solo `localhost`, nunca el proxy hacia Fragua.
+ * Genera una respuesta con el modelo LOCAL (no-stream).
+ * Aislado por diseño: solo `localhost`, nunca la red.
  */
 export async function generarLocal(
   prompt: string,
@@ -47,7 +42,7 @@ export async function generarLocal(
     signal: opciones.signal ?? null,
   });
   if (!r.ok) {
-    throw new Error(`IA local no responde (${r.status}) — ¿ollama en soberano vivo?`);
+    throw new Error(`IA local no responde (${r.status}) — ¿ollama local vivo?`);
   }
   const carga: unknown = await r.json();
   const texto =

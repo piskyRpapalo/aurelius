@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Servidor de la cara de Aurelius (Misión 2.3) + API de ESTADO del Camino.
 
-Sirve `~/aurelius/interface/` en el puerto 8050 (0.0.0.0 → tailnet del Soberano).
+Sirve `interface/` en el puerto 8050 (0.0.0.0 → alcanzable en la red local).
 Además de ficheros estáticos, expone una API mínima para que el Camino del
 Soberano sea RECORRIBLE con estado persistente REAL en disco (el system prompt NO
 escribe ficheros — esta API sí):
@@ -56,7 +56,11 @@ ESTADO_LEGADO: Path = VAULT / "estado_del_soberano.json"
 SLUG_MAX: int = 40
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")  # lista blanca estricta
 M0_DIR: Path = VAULT / "M0_Totem"
-GENESIS_PY: Path = Path("/home/pisky/p0x/monje/genesis.py")  # auditoría de hardware honesta (se INVOCA, no se toca)
+# Auditoría de hardware honesta: se INVOCA (no se toca) un script externo si el
+# operador lo configura por env. Sin él, el inventario rinde "desconocido"
+# (honest sensors). Sin ruta del núcleo hardcodeada — portable.
+_GENESIS_ENV: str = os.environ.get("AURELIUS_GENESIS_PY", "")
+GENESIS_PY: Path = Path(_GENESIS_ENV) if _GENESIS_ENV else Path("/nonexistent/genesis.py")
 OLLAMA_TAGS: str = "http://127.0.0.1:11434/api/tags"
 HERRAMIENTAS: tuple[str, ...] = ("python3", "git", "ollama", "docker", "ffmpeg", "node", "uv", "whisper", "yt-dlp")
 VERBOSIDADES: frozenset[str] = frozenset({"breve", "normal", "detallado"})
