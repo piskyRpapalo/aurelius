@@ -458,10 +458,10 @@ def servir(host: str, puerto: int) -> int:
     ip = _ip_tailnet()
     sys.stderr.write(f"[aurelius-8050] sirviendo {RAIZ_INTERFAZ}\n")
     sys.stderr.write(f"[aurelius-8050] escuchando en http://{host}:{puerto}\n")
+    # La IP se calcula en runtime (no hay hostname en el código): el endpoint del
+    # modelo vive en interface/config.json (fuera de git). Barrido de reconocimiento.
     if ip is not None:
-        sys.stderr.write(f"[aurelius-8050]   → tailnet: http://{ip}:{puerto}/aurelius_face.html\n")
-    sys.stderr.write("[aurelius-8050]   → MagicDNS: "
-                     f"http://soberano.tailb9e0f7.ts.net:{puerto}/aurelius_face.html\n")
+        sys.stderr.write(f"[aurelius-8050]   → LAN/tailnet: http://{ip}:{puerto}/aurelius_face.html\n")
 
     with servidor:
         try:

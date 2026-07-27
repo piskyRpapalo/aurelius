@@ -27,11 +27,31 @@ Aurelius is deliberately fenced off, and the fences change how it behaves:
   on a private network, **not** auth: real authentication is future work, and it's
   labeled as such in the code.
 
+## 🔌 Run it — point Aurelius at your own local model
+
+Aurelius is **portable**: it has no hardware address baked into the code. Point it
+at *your* local model in one file.
+
+```bash
+# 1. copy the example config and edit it to your own Ollama endpoint
+cp interface/config.example.json interface/config.json
+#    { "ollama": "http://localhost:11434", "model": "<your-model-tag>", "webui": "http://localhost:8080" }
+#    (config.json is git-ignored — your address never gets committed)
+
+# 2. serve the face (defaults to :8050)
+python3 scripts/servir_interfaz.py
+```
+
+Without a `config.json`, Aurelius falls back to `http://localhost:11434` and shows
+a clear "set your config" notice in the UI. You can also override per-load with
+`?api=http://host:11434`.
+
 ## 🧠 Stack
 
 `Python` (state server) · `Ollama` + `Qwen` (local instruct model, streaming) ·
 vanilla JS/HTML face · `Playwright` (viewport suite) · local vector memory for the
-RAG mission.
+RAG mission. The model endpoint lives in **`config.json`** (git-ignored), never in
+the code.
 
 ## ✅ Status (real, not aspirational)
 

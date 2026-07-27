@@ -112,6 +112,7 @@
     .au-id { background: none; border: 1px solid var(--vena-tenue); color: var(--vena); font: 600 10px/1 ui-monospace, monospace; border-radius: 6px; padding: 4px 8px; cursor: pointer; }
     .au-id:hover { border-color: var(--vena); }
     .au-loc { color: var(--tenue); }
+    .au-cfgwarn { color: var(--ambar); font-weight: 600; }
     .au-tech { display: inline; color: var(--tenue); }
     .au-tech summary { display: inline; cursor: pointer; color: var(--tenue); opacity: 0.7; }
     .au-tech[open] summary { opacity: 1; }
@@ -245,6 +246,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
     <div class="aviso" id="aviso">
       <button type="button" class="au-id" id="au-id"></button>
       <span class="au-loc" id="au-loc"></span>
+      <span class="au-cfgwarn" id="au-cfgwarn" hidden></span>
       <details class="au-tech"><summary id="au-tech-sum">technical detail</summary><span id="au-tech-body"></span></details>
     </div>
   </footer>
@@ -253,12 +255,40 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
   <script>
     "use strict";
     (function () {
-      // === Endpoint: NUNCA localhost crudo — el tailnet del Soberano (MagicDNS).
-      //     Se puede sobreescribir con ?api=… para pruebas. Ollama nativo.
-      var NODO = "soberano.tailb9e0f7.ts.net";
-      var EP = new URLSearchParams(location.search).get("api") || ("http://" + NODO + ":11434");
-      EP = EP.replace(/\/+$/, "");
-      var MODEL = "qwen3:30b-a3b-instruct-2507-q4_K_M"; // tag COMPLETO (instruct, no thinking)
+      // === Endpoint del modelo por CONFIGURACIÓN (portable, sin hostname en el
+      //     código): config.json (local, fuera de git) → config.example.json →
+      //     localhost. ?api=<url> lo sobreescribe para pruebas. Cualquiera puede
+      //     clonar Aurelius y apuntarlo a SU propio Ollama editando config.json. ===
+      var CFG_DEFECTO = { ollama: "http://localhost:11434", model: "qwen3:30b-a3b-instruct-2507-q4_K_M", webui: "http://localhost:8080" };
+      var API_OVERRIDE = new URLSearchParams(location.search).get("api");
+      var EP = (API_OVERRIDE || CFG_DEFECTO.ollama).replace(/\/+$/, "");
+      var MODEL = CFG_DEFECTO.model;
+      var WEBUI = CFG_DEFECTO.webui;
+      var cfgReal = false; // true solo si cargó config.json (no el ejemplo/defecto)
+
+      async function cargarConfig() {
+        var fuentes = ["config.json", "config.example.json"];
+        for (var i = 0; i < fuentes.length; i++) {
+          try {
+            var r = await fetch(fuentes[i], { cache: "no-store" });
+            if (!r.ok) continue;
+            var c = await r.json();
+            if (c && typeof c === "object") {
+              if (typeof c.ollama === "string" && !API_OVERRIDE) EP = c.ollama.replace(/\/+$/, "");
+              if (typeof c.model === "string") MODEL = c.model;
+              if (typeof c.webui === "string") WEBUI = c.webui.replace(/\/+$/, "");
+              cfgReal = fuentes[i] === "config.json";
+              break;
+            }
+          } catch (e) { /* siguiente fuente */ }
+        }
+        var tb = document.getElementById("au-tech-body");
+        if (tb) tb.textContent = "model " + MODEL + " · endpoint " + EP + "/api/chat";
+        // Aviso claro si NO hay config real (usa ejemplo/localhost): hay que configurarlo.
+        var warn = document.getElementById("au-cfgwarn");
+        if (warn) { warn.hidden = cfgReal || !!API_OVERRIDE; warn.textContent = I.t("face.configWarn"); }
+      }
+      var configLista = cargarConfig(); // se resuelve antes de que el usuario escriba
       var SYSTEM = (document.getElementById("system-prompt").textContent || "").trim();
       var estadoSoberano = null; // se rellena de /api/estado (persistencia real del Camino)
 
@@ -340,10 +370,10 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       var busto = document.getElementById("busto");
       var marco = document.getElementById("busto-frame");
       var aviso = document.getElementById("aviso");
-      // HIGIENE: el hostname/endpoint del nodo NO va a la vista por defecto (un
-      // hermano aprendiendo no necesita ver soberano...:11434). Se pliega tras el
-      // <details>. Visible por defecto: "IA local · tu nodo" (au-loc, i18n).
-      document.getElementById("au-tech-body").textContent = "model " + MODEL + " · endpoint " + EP + "/api/chat";
+      // HIGIENE: el endpoint (venga de config.json) NO va a la vista por defecto
+      // — se pliega tras el <details>; lo rellena cargarConfig(). Visible por
+      // defecto: "IA local · tu nodo" (au-loc, i18n). El hostname del nodo ya no
+      // vive en el código: sale de config.json (fuera de git).
 
       var historia = []; // [{role,content}] — memoria de la conversación (no persiste entre recargas)
       var ocupado = false;
@@ -457,21 +487,23 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
         // Fallback HONESTO: nunca cuelga, nunca inventa una respuesta.
         var causa = String(err && err.message ? err.message : err);
         return (
-          "— El Preceptor no responde (" + causa + ").\n\n" +
-          "El endpoint es " + EP + " . Causa probable: Ollama en el Soberano escucha\n" +
-          "solo en 127.0.0.1:11434, no en el tailnet. Para abrirlo (requiere sudo del carbono):\n\n" +
+          "— The Preceptor isn't answering (" + causa + ").\n\n" +
+          "Endpoint: " + EP + " . Likely cause: your local model (Ollama) isn't\n" +
+          "reachable there. Check config.json (copy config.example.json) and that\n" +
+          "Ollama is running. To expose it beyond loopback (needs your sudo):\n\n" +
           "  sudo systemctl edit ollama\n" +
           "  # [Service]\n" +
           "  # Environment=\"OLLAMA_HOST=0.0.0.0\"\n" +
           "  # Environment=\"OLLAMA_ORIGINS=*\"\n" +
           "  sudo systemctl restart ollama\n\n" +
-          "Mientras tanto, Aurelius sigue vivo vía OpenWebUI en http://" + NODO + ":8080 ."
+          "A local web UI may also be available at " + WEBUI + " ."
         );
       }
 
       async function enviar() {
         var txt = campo.value.trim();
         if (txt === "" || ocupado) return;
+        try { await configLista; } catch (e) { /* usa defectos */ } // EP listo antes de enviar
         ocupado = true; btn.disabled = true;
         campo.value = ""; campo.style.height = "auto";
         nuevaBurbuja("tu", "tú").cuerpo.textContent = txt;

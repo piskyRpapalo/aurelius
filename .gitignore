@@ -16,3 +16,6 @@ sovereign_vault/*/*
 
 __pycache__/
 *.pyc
+
+# Config local del nodo (endpoint del modelo) — NUNCA se versiona (fuga de reconocimiento).
+interface/config.json

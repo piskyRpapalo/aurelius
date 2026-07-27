@@ -1,0 +1,6 @@
+{
+  "_comment": "Copy this file to config.json (kept out of git) and point it at YOUR local model. Aurelius reads config.json first, then this example, then falls back to localhost. Override per-load with ?api=<url>.",
+  "ollama": "http://localhost:11434",
+  "model": "qwen3:30b-a3b-instruct-2507-q4_K_M",
+  "webui": "http://localhost:8080"
+}
