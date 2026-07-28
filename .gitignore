@@ -19,3 +19,5 @@ __pycache__/
 
 # Config local del nodo (endpoint del modelo) — NUNCA se versiona (fuga de reconocimiento).
 interface/config.json
+sovereign_vault/estado_del_soberano.json
+sovereign_vault/*.bak-*
