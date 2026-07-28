@@ -29,6 +29,7 @@ import functools
 import hashlib
 import http.server
 import json
+import os
 import re
 import shutil
 import signal
