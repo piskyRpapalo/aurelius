@@ -101,9 +101,30 @@
     .titulo { display: flex; flex-direction: column; }
     .titulo h1 { margin: 0; font-size: 20px; letter-spacing: 0.03em; }
     .titulo .sub { color: var(--tenue); font-size: 12px; font-family: ui-monospace, "SFMono-Regular", monospace; }
-    .au-chemin { margin-left: 8px; color: var(--vena); text-decoration: none; font: 600 13px/1 ui-monospace, monospace; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 0 12px; min-height: 40px; display: inline-flex; align-items: center; white-space: nowrap; }
+    .au-chemin { margin-left: 8px; color: var(--vena); text-decoration: none; background: none; cursor: pointer; font: 600 13px/1 ui-monospace, monospace; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 0 12px; min-height: 40px; display: inline-flex; align-items: center; white-space: nowrap; }
     .au-chemin:hover { background: var(--vena); color: var(--fondo); }
     .au-chemin:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
+
+    /* Drawer lateral del Camino (BLOQUE B): overlay derecho sobre la cara; el
+       chat queda visible. Móvil ≤600px → pantalla completa. */
+    .au-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(10,8,14,0.55); }
+    .au-drawer {
+      position: fixed; top: 0; right: 0; z-index: 41;
+      height: 100vh; height: 100dvh; width: min(520px, 94vw);
+      background: var(--fondo); border-left: 1px solid var(--vena-tenue);
+      box-shadow: -12px 0 40px rgba(0,0,0,0.5);
+      display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform 240ms cubic-bezier(0.4,0,0.2,1);
+    }
+    .au-drawer[data-abierto="oui"] { transform: translateX(0); }
+    .au-drawer-bar { flex: 0 0 auto; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--vena-tenue); background: linear-gradient(90deg, rgba(169,123,255,0.10), transparent); }
+    .au-drawer-title { font: 600 14px/1 ui-monospace, monospace; color: var(--vena); }
+    .au-drawer-close { margin-left: auto; min-width: 44px; min-height: 44px; background: none; border: 1px solid var(--vena-tenue); border-radius: 8px; color: var(--texto); font-size: 16px; cursor: pointer; }
+    .au-drawer-close:hover { border-color: var(--vena); color: var(--vena); }
+    .au-drawer-close:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
+    .au-drawer-frame { flex: 1 1 auto; width: 100%; border: none; background: var(--fondo); }
+    @media (prefers-reduced-motion: reduce) { .au-drawer { transition: none; } }
+    @media (max-width: 600px) { .au-drawer { width: 100vw; border-left: none; } }
     .au-lang { margin-left: auto; background: var(--code, #14121a); color: var(--texto); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 8px 10px; font: 600 13px/1 ui-monospace, monospace; cursor: pointer; min-height: 40px; }
     .au-lang:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
     .au-noverif { color: var(--ambar); font: 500 10px/1 ui-monospace, monospace; margin-left: 6px; white-space: nowrap; }
@@ -226,7 +247,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
     </div>
     <select class="au-lang" id="au-lang" aria-label="Language"></select>
     <span class="au-noverif" id="au-noverif" hidden>⚠ auto</span>
-    <a class="au-chemin" id="au-chemin" href="camino.html">The Path ▸</a>
+    <button type="button" class="au-chemin" id="au-chemin" aria-expanded="false" aria-controls="au-drawer">The Path ▸</button>
   </header>
 
   <main id="log">
@@ -251,6 +272,19 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       <details class="au-tech"><summary id="au-tech-sum">technical detail</summary><span id="au-tech-body"></span></details>
     </div>
   </footer>
+
+  <!-- El Camino como DRAWER lateral (no página aparte): el chat de Aurelius
+       queda visible con su contexto mientras el usuario recorre las misiones.
+       Reutiliza camino.html vía <iframe> (mismo origen → comparte idioma y slug
+       por localStorage). Móvil: overlay a pantalla completa con cierre claro. -->
+  <div class="au-backdrop" id="au-backdrop" hidden></div>
+  <aside class="au-drawer" id="au-drawer" aria-label="The Path" aria-hidden="true">
+    <div class="au-drawer-bar">
+      <span class="au-drawer-title" id="au-drawer-title">The Path</span>
+      <button type="button" class="au-drawer-close" id="au-drawer-close" aria-label="Close">✕</button>
+    </div>
+    <iframe class="au-drawer-frame" id="au-drawer-frame" title="The Path"></iframe>
+  </aside>
 
   <script src="i18n.js"></script>
   <script src="oraculo.js"></script>
@@ -467,6 +501,58 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
         if (n && n.trim() && fijarSoberano(n)) { refrescarIdentidad(); recargarEstado(); }
       });
       aplicarIdioma();
+
+      // === El Camino como DRAWER (BLOQUE B) — iframe de camino.html (mismo
+      //     origen → comparte idioma/slug por localStorage). El chat queda
+      //     visible; en móvil es overlay a pantalla completa. Cierre por botón,
+      //     backdrop o Escape (nunca atrapa al usuario). ===
+      var drawer = document.getElementById("au-drawer");
+      var backdrop = document.getElementById("au-backdrop");
+      var drawerFrame = document.getElementById("au-drawer-frame");
+      var chemin = document.getElementById("au-chemin");
+      var drawerCerrar = document.getElementById("au-drawer-close");
+      var drawerCargado = false;
+      function abrirDrawer() {
+        if (!drawerCargado) { drawerFrame.src = "camino.html"; drawerCargado = true; }
+        document.getElementById("au-drawer-title").textContent = I.t("path.title");
+        drawer.setAttribute("data-abierto", "oui");
+        drawer.setAttribute("aria-hidden", "false");
+        backdrop.hidden = false;
+        chemin.setAttribute("aria-expanded", "true");
+        drawerCerrar.focus();
+      }
+      function cerrarDrawer() {
+        drawer.setAttribute("data-abierto", "non");
+        drawer.setAttribute("aria-hidden", "true");
+        backdrop.hidden = true;
+        chemin.setAttribute("aria-expanded", "false");
+      }
+      chemin.addEventListener("click", function () {
+        (drawer.getAttribute("data-abierto") === "oui" ? cerrarDrawer : abrirDrawer)();
+      });
+      drawerCerrar.addEventListener("click", cerrarDrawer);
+      backdrop.addEventListener("click", cerrarDrawer);
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && drawer.getAttribute("data-abierto") === "oui") { cerrarDrawer(); chemin.focus(); }
+      });
+
+      // El Tótem DESPIERTA (BLOQUE A · recompensa de M0): el Camino (iframe) avisa
+      // al crear el Tótem → el busto de la cara se anima y saluda por su nombre.
+      function despertarTotem(nombre) {
+        if (nombre && fijarSoberano(nombre)) refrescarIdentidad();
+        recargarEstado();
+        if (typeof hablarInicio === "function") { hablarInicio(); setTimeout(hablarFin, 1600); }
+        var burbuja = nuevaBurbuja("aurelius", "Aurelius");
+        burbuja.cuerpo.textContent = I.t("wake.greet", { name: nombre || "" });
+        log.scrollTop = log.scrollHeight;
+      }
+      window.addEventListener("message", function (ev) {
+        if (ev.source !== drawerFrame.contentWindow) return; // solo del propio Camino
+        var d = ev.data || {};
+        if (d && d.tipo === "aurelius:totem-creado" && typeof d.nombre === "string") {
+          despertarTotem(d.nombre);
+        }
+      });
 
       // === Busto como sprite ANCLADO (Habla.png, sheet 4×3, celda 256×341). La
       //     cabeza NO se mueve: solo cambia background-position en el contenedor
