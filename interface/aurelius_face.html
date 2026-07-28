@@ -253,6 +253,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
   </footer>
 
   <script src="i18n.js"></script>
+  <script src="oraculo.js"></script>
   <script>
     "use strict";
     (function () {
@@ -336,6 +337,19 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
         if (modelos && modelos.length) {
           ctx += "\n\nMODELOS QUE EL USUARIO TIENE (su ollama list REAL — solo habla de estos, no inventes otros ni sus benchmarks): "
             + modelos.map(function (m) { return m.name; }).join(", ") + ".";
+        }
+        // ORÁCULO DE RECURSOS: desde la RAM REAL del inventario, qué clase de
+        // modelo cabe — para AVISAR (no prohibir) y ENSEÑAR antes de descargar.
+        var hw = estadoSoberano && estadoSoberano.inventario && estadoSoberano.inventario.hardware;
+        var ramGb = hw && hw.hardware ? hw.hardware.ram_disponible_gb : null;
+        if (window.AURELIUS_ORACULO) {
+          var a = window.AURELIUS_ORACULO.analizar(typeof ramGb === "number" ? ramGb : null);
+          ctx += "\n\nORÁCULO DE RECURSOS (guía ANTES de que descargue nada; dato real de su nodo): "
+            + window.AURELIUS_ORACULO.resumen(a);
+          if (a.disponible) {
+            ctx += " REGLA A ENSEÑAR (no solo obedecer): " + a.regla + " " + a.aviso_swap + " " + a.nota_estimacion
+              + " Si pregunta por un modelo que NO cabe, ADVIÉRTELE con claridad y explícale el porqué (swap a disco = mucho más lento), pero NO se lo prohíbas — es su máquina y su soberanía, informada. Si falta un dato como la VRAM, dilo como NO DISPONIBLE, jamás lo estimes a ojo.";
+          }
         }
         var nom = (estadoSoberano && estadoSoberano.nombre) || nombreSoberano();
         if (nom) {
