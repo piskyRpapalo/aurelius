@@ -166,18 +166,53 @@
 
       function bloc(titre, cmd) {
         return '<div class="bloc"><div class="bloc-titre">' + esc(titre) + '</div>' +
-          '<pre class="cmd"><button class="copier" type="button">' + esc(I.t("copy")) + '</button>' + esc(cmd) + '</pre></div>';
+          '<pre class="cmd"><button class="copier" type="button">' + esc(I.t("copy")) + '</button>' +
+          '<span class="cmd-txt">' + esc(cmd) + '</span></pre></div>';
       }
 
       function cablerCopieurs(scope) {
         scope.querySelectorAll("button.copier").forEach(function (b) {
           b.addEventListener("click", function () {
             var pre = b.parentElement;
-            var txt = pre.textContent.replace(new RegExp("^" + I.t("copy")), "");
-            navigator.clipboard && navigator.clipboard.writeText(txt);
-            b.textContent = I.t("copyOk"); setTimeout(function () { b.textContent = I.t("copy"); }, 1200);
+            var span = pre.querySelector(".cmd-txt");
+            var txt = span ? span.textContent : pre.textContent.replace(new RegExp("^" + I.t("copy")), "");
+            copiar(txt, b, span);
           });
         });
+      }
+
+      // Copia ROBUSTA en contexto NO seguro: Aurelius se sirve por http:// vía el
+      // hostname del tailnet (≠ localhost), así que navigator.clipboard está
+      // BLOQUEADO por el navegador (mismo motivo que el micrófono). Fallback a
+      // execCommand con un textarea temporal; si tampoco, se SELECCIONA el
+      // comando visible para copia manual con teclado. Se marca "copiado" SOLO si
+      // de verdad copió — un botón que miente (el paso falla en silencio) es peor
+      // que ninguno. El comando SIEMPRE queda visible y legible (IronClaw: se lee
+      // antes de ejecutar).
+      function copiar(txt, btn, span) {
+        function marca(clave, ms) {
+          btn.textContent = I.t(clave);
+          setTimeout(function () { btn.textContent = I.t("copy"); }, ms || 1200);
+        }
+        function manual() {
+          if (span) {
+            var r = document.createRange(); r.selectNodeContents(span);
+            var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+          }
+          marca("copyManual", 3000);
+        }
+        if (window.isSecureContext && navigator.clipboard) {
+          navigator.clipboard.writeText(txt).then(function () { marca("copyOk"); }).catch(manual);
+          return;
+        }
+        var ta = document.createElement("textarea");
+        ta.value = txt; ta.setAttribute("readonly", "");
+        ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        var ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+        document.body.removeChild(ta);
+        if (ok) marca("copyOk"); else manual();
       }
 
       async function getEstado() {

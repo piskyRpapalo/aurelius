@@ -80,7 +80,7 @@ window.AURELIUS_I18N = (function () {
       "seal.ok": "✓ {code} sealed. The Path continues.",
       "final.title": "The Path continues…",
       "final.body": "You walked M0→M2: the Totem, the Fire and the Water. M3 (the Refuge) and beyond are horizon — the scaffold retires as you climb. Aurelius awaits you for what's next.",
-      "copy": "COPY", "copyOk": "OK",
+      "copy": "COPY", "copyOk": "OK", "copyManual": "⌘/Ctrl+C",
     },
     es: {
       "face.sub": "el Preceptor · IronClaw",
@@ -143,7 +143,7 @@ window.AURELIUS_I18N = (function () {
       "seal.ok": "✓ {code} sellado. El Camino continúa.",
       "final.title": "El Camino continúa…",
       "final.body": "Has recorrido M0→M2: el Tótem, el Fuego y el Agua. M3 (el Refugio) y más allá son horizonte — el andamio se retira a medida que subes. Aurelius te espera para lo que sigue.",
-      "copy": "COPIAR", "copyOk": "OK",
+      "copy": "COPIAR", "copyOk": "OK", "copyManual": "⌘/Ctrl+C",
     },
     fr: {
       "face.sub": "le Précepteur · IronClaw",
@@ -206,7 +206,7 @@ window.AURELIUS_I18N = (function () {
       "seal.ok": "✓ {code} scellé. Le Chemin continue.",
       "final.title": "Le Chemin continue…",
       "final.body": "Tu as parcouru M0→M2 : le Totem, le Feu et l'Eau. M3 (le Refuge) et au-delà sont l'horizon — l'échafaudage se retire à mesure que tu montes. Aurelius t'attend pour la suite.",
-      "copy": "COPIER", "copyOk": "OK",
+      "copy": "COPIER", "copyOk": "OK", "copyManual": "⌘/Ctrl+C",
     },
     // ── pt/de/el/ru: SIN revisar humano (verified:false). Se traducen las claves
     //    cortas de UI; la prosa técnica larga cae a INGLÉS (mejor que doctrina mal
