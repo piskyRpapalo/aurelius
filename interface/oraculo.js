@@ -57,7 +57,7 @@ window.AURELIUS_ORACULO = (function () {
   /** Resumen en texto llano para inyectar al mentor / mostrar al usuario. */
   function resumen(a) {
     if (!a || a.disponible === false) {
-      return "Recursos: RAM no reportada por el inventario — no estimo a ojo. Reconecta genesis.py o revisa el inventario.";
+      return "Recursos: RAM no reportada por el inventario — no estimo a ojo. Revisa el proveedor de inventario de hardware.";
     }
     var caben = a.clases.filter(function (c) { return c.comodo; }).map(function (c) { return c.params_b + "B"; });
     var justos = a.clases.filter(function (c) { return c.cabe && !c.comodo; }).map(function (c) { return c.params_b + "B"; });

@@ -53,6 +53,31 @@ vanilla JS/HTML face · `Playwright` (viewport suite) · local vector memory for
 RAG mission. The model endpoint lives in **`config.json`** (git-ignored), never in
 the code.
 
+## 💻 Honest requirements
+
+The app itself is light (a static face + a small state server); what you need is
+driven entirely by the **model** you point it at. Requirements are given by RAM
+class. Aurelius has a built-in **resource oracle** that tells you your ceiling
+*before* you download anything.
+
+| Level | RAM (class) | Model it runs (Q4, estimated) | Notes |
+|---|---|---|---|
+| Minimum viable | ~8 GB | up to ~7–8B | works — a smaller model is less capable and Aurelius says so; slower, not impossible |
+| Recommended | ~16 GB | up to ~13–14B | comfortable headroom for context |
+| Measured comfortable | ~32 GB | up to ~30–32B | the config this was built on: a 30.5B 4-bit model at **≈35 tok/s** *(measured, warm/resident)* |
+
+**What degrades with less RAM** is the *ceiling*, not the ability to run: you drop
+to a smaller model class. A model larger than your RAM spills to disk (swap) — it
+still runs, just far slower.
+
+*Measured vs estimated:* the **≈35 tok/s** and the footprint anchor (a 30.5B 4-bit
+model ≈ 18.6 GB) are **measured** on an x86 mini-PC APU with an integrated GPU.
+The per-class footprints are **estimates** from that anchor plus standard
+quantization ratios (Q4 ≈ 0.6 GB per billion params). Generation speed on other
+hardware is **not measured here**. VRAM is **not read** by the inventory, so the
+oracle reasons from system RAM only (conservative); a capable GPU can run larger
+models than the RAM-only estimate suggests.
+
 ## ✅ Status (real, not aspirational)
 
 - [x] i18n scaffolding — 7 locales (`en` `es` `fr` human-verified; `pt` `de` `el` `ru` machine-translated and flagged, falling back to English rather than shipping bad doctrine)
