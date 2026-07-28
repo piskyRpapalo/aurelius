@@ -68,6 +68,24 @@ the code.
 - [ ] Real authentication (today: state separation only)
 - [ ] Test suite runnable standalone (Playwright configured; dependency install pending)
 
+## 🛤️ The Path — and where the learner signs
+
+Every mission ends with the **learner** signing what they built by hand — the
+scaffold fades as competence rises. `M0–M2` are playable today; `M3–M5` are the
+horizon.
+
+```mermaid
+flowchart LR
+  M0["M0 · The Totem<br/>identity"] --> M1["M1 · The Fire<br/>run a model offline"]
+  M1 --> M2["M2 · The Water<br/>local RAG memory"]
+  M2 -.-> M3["M3 · The Refuge<br/>(horizon)"]
+  M3 -.-> M4["M4 · The Signal<br/>(horizon)"]
+  M4 -.-> M5["M5 · The Pact<br/>(horizon)"]
+  M0 -->|seal by hash| SIG(["✍ learner signs"])
+  M1 -->|sign the result| SIG
+  M2 -->|sign the manifest| SIG
+```
+
 <details>
 <summary>The Path (mission map)</summary>
 
