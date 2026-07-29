@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  typecheck-and-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Python es el backend real de la cara (scripts/servir_interfaz.py); el
+      # webServer de Playwright lo arranca solo en :8050.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: npm install
+
+      - name: Typecheck (prohibido any · gatea el build)
+        run: npm run typecheck
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      # Corre la suite, incl. la REGRESIÓN de la Doctrina de Prompts Seguros
+      # (tests/safe_prompts.spec.ts). La capa estructural gatea el build aquí.
+      # La capa adversarial EN VIVO se SALTA en este runner (sin modelo local):
+      # corre en un runner self-hosted del rack con AURELIUS_TEST_OLLAMA +
+      # AURELIUS_TEST_MODEL, donde falla el build si el modelo obedece la inyección.
+      - name: Playwright tests
+        run: npx playwright test --project=escritorio-1280
