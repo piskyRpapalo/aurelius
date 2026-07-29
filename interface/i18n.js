@@ -93,6 +93,7 @@ window.AURELIUS_I18N = (function () {
       "final.title": "The Path continues…",
       "final.body": "You walked M0→M2: the Totem, the Fire and the Water. M3 (the Refuge) and beyond are horizon — the scaffold retires as you climb. Aurelius awaits you for what's next.",
       "copy": "COPY", "copyOk": "OK", "copyManual": "⌘/Ctrl+C",
+      "sov.net": "Network is needed to install Aurelius and download models. It is NOT needed to run inference. Your data never leaves your machine unless you explicitly allow it.",
     },
     es: {
       "face.sub": "el Preceptor · IronClaw",
@@ -168,6 +169,7 @@ window.AURELIUS_I18N = (function () {
       "final.title": "El Camino continúa…",
       "final.body": "Has recorrido M0→M2: el Tótem, el Fuego y el Agua. M3 (el Refugio) y más allá son horizonte — el andamio se retira a medida que subes. Aurelius te espera para lo que sigue.",
       "copy": "COPIAR", "copyOk": "OK", "copyManual": "⌘/Ctrl+C",
+      "sov.net": "Se necesita red para instalar y descargar modelos. NO se necesita red para inferir. Tus datos no salen de tu máquina salvo que tú lo autorices explícitamente.",
     },
     fr: {
       "face.sub": "le Précepteur · IronClaw",
@@ -243,6 +245,7 @@ window.AURELIUS_I18N = (function () {
       "final.title": "Le Chemin continue…",
       "final.body": "Tu as parcouru M0→M2 : le Totem, le Feu et l'Eau. M3 (le Refuge) et au-delà sont l'horizon — l'échafaudage se retire à mesure que tu montes. Aurelius t'attend pour la suite.",
       "copy": "COPIER", "copyOk": "OK", "copyManual": "⌘/Ctrl+C",
+      "sov.net": "Le réseau est nécessaire pour installer Aurelius et télécharger les modèles. Il n'est PAS nécessaire pour l'inférence. Tes données ne quittent jamais ta machine sauf autorisation explicite de ta part.",
     },
     // ── pt/de/el/ru: SIN revisar humano (verified:false). Se traducen las claves
     //    cortas de UI; la prosa técnica larga cae a INGLÉS (mejor que doctrina mal
@@ -257,6 +260,7 @@ window.AURELIUS_I18N = (function () {
       "step.M3": "O Refúgio", "step.M4": "O Sinal", "step.M5": "O Pacto",
       "m0.nom": "O teu nome, soberano…", "m0.btn": "Forjar o Totem",
       "m1.btn": "Selar M1", "m2.btn": "Selar M2", "copy": "COPIAR", "copyOk": "OK",
+      "sov.net": "É necessária rede para instalar o Aurelius e descarregar modelos. NÃO é necessária para inferir. Os teus dados nunca saem da tua máquina a não ser que o autorizes explicitamente.",
     },
     de: {
       "face.hablar": "SPRECHEN", "face.chemin": "Der Weg ▸", "face.campo": "Sprich mit Aurelius…",
@@ -268,6 +272,7 @@ window.AURELIUS_I18N = (function () {
       "step.M3": "Die Zuflucht", "step.M4": "Das Signal", "step.M5": "Der Pakt",
       "m0.nom": "Dein Name, Souverän…", "m0.btn": "Den Totem schmieden",
       "m1.btn": "M1 besiegeln", "m2.btn": "M2 besiegeln", "copy": "KOPIEREN", "copyOk": "OK",
+      "sov.net": "Netzwerk wird zum Installieren von Aurelius und zum Herunterladen der Modelle benötigt. Für die Inferenz wird es NICHT benötigt. Deine Daten verlassen deine Maschine nie, außer du erlaubst es ausdrücklich.",
     },
     el: {
       "face.hablar": "ΜΙΛΑ", "face.chemin": "Ο Δρόμος ▸", "face.campo": "Μίλα με τον Αυρήλιο…",
@@ -279,6 +284,7 @@ window.AURELIUS_I18N = (function () {
       "step.M3": "Το Καταφύγιο", "step.M4": "Το Σήμα", "step.M5": "Το Σύμφωνο",
       "m0.nom": "Το όνομά σου, κυρίαρχε…", "m0.btn": "Σφυρηλάτησε το Τοτέμ",
       "m1.btn": "Σφράγισε το M1", "m2.btn": "Σφράγισε το M2", "copy": "ΑΝΤΙΓΡΑΦΗ", "copyOk": "OK",
+      "sov.net": "Χρειάζεται δίκτυο για την εγκατάσταση του Aurelius και τη λήψη μοντέλων. ΔΕΝ χρειάζεται για την εκτέλεση (inference). Τα δεδομένα σου δεν φεύγουν ποτέ από τη μηχανή σου, εκτός αν το επιτρέψεις ρητά.",
     },
     ru: {
       "face.hablar": "ГОВОРИТЬ", "face.chemin": "Путь ▸", "face.campo": "Говори с Аврелием…",
@@ -290,6 +296,7 @@ window.AURELIUS_I18N = (function () {
       "step.M3": "Убежище", "step.M4": "Сигнал", "step.M5": "Пакт",
       "m0.nom": "Твоё имя, государь…", "m0.btn": "Выковать Тотем",
       "m1.btn": "Запечатать M1", "m2.btn": "Запечатать M2", "copy": "КОПИЯ", "copyOk": "OK",
+      "sov.net": "Сеть нужна для установки Aurelius и загрузки моделей. Для вывода (inference) она НЕ нужна. Твои данные никогда не покидают твою машину, если ты явно этого не разрешишь.",
     },
   };
 

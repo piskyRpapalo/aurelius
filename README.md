@@ -9,6 +9,20 @@ your first offline model to holding your own cryptographic key.
 It is a standalone organism, separate from the Hexelion dashboard, so its
 multilingualism never contaminates that project's strict language law.
 
+## 🔐 Local-First with Data Sovereignty
+
+Aurelius is **local-first** — not "magically offline," and saying so plainly is the
+point. A sovereignty project that overstates its own purity loses the very
+credibility it needs:
+
+> **Network is needed to install Aurelius and download models. It is NOT needed to
+> run inference. Your data never leaves your machine unless you explicitly allow
+> it.**
+
+Once the model is on disk you can pull the network cable and everything still runs —
+that is exactly what M1 (The Fire) teaches. "Local-first" is the honest claim;
+"100% offline" would not be.
+
 ## 📐 Architectural Boundaries
 
 Aurelius is deliberately fenced off, and the fences change how it behaves:

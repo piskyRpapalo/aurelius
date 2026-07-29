@@ -363,6 +363,7 @@
         var art = VAULT + "/M1_Espejo_Roto/tiempo_perdido.md";
         return '<div class="module"><h2>' + esc(I.t("m1.title")) + '</h2>'
           + '<p class="obj">' + esc(I.t("m1.obj")) + '</p>'
+          + '<p class="on-nota">' + esc(I.t("sov.net")) + '</p>'
           + '<ol class="pasos"><li>' + esc(I.t("m1.step1")) + '</li><li>' + esc(I.t("m1.step2")) + '</li></ol>'
           + bloc(I.t("m1.cmd1"), 'mkdir -p ' + VAULT + '/M1_Espejo_Roto\nollama run ' + MODELO + ' "Dame un plan de 3 pasos, simple y seguro, para empezar un pequeno huerto en un balcon." > ' + art)
           + '<ol class="pasos" start="3"><li>' + esc(I.t("m1.step3")) + '</li></ol>'

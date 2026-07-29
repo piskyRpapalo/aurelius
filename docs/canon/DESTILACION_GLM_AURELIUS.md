@@ -42,7 +42,7 @@ Un sistema de puntos acumulables por aportar recursos es el primer peldaño de l
 ## §4 · EL REORDENAMIENTO (contra la arquitectura real, no contra GLM)
 GLM ordena las 5 misiones como si el Micelio (la red de nodos) ya existiera. En tu realidad (mapa F1-F6), la red es F6 con condiciones sin cumplir. Reorden obligatorio:
 
-**Aurelius MVP = Misiones 1, 2 y 5 (100% locales, cero red, cero exposición de topología):**
+**Aurelius MVP = Misiones 1, 2 y 5 (locales en runtime — inferencia/RAG/firma sin red; la descarga inicial del modelo sí necesita red — cero exposición de topología):**
 - **M1 · Rito de Siembra** (mascota): local, Efecto IKEA, enseña que el nodo es tuyo. Primera célula perfecta.
 - **M2 · Primer Espécimen** (foto de planta con modo avión): local, enseña soberanía del dato y alimenta el Códice botánico con procedencia. Encaja con la botánica activa del Jardin (misión estratégica futura).
 - **M5 · Primer Ladrillo del Grimorio** (curar un tutorial): local, es Observar + el Escriba/Grimorio de la doctrina de producto. Enseña a no depender de la nube.
