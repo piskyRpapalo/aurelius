@@ -10,7 +10,14 @@
    La math NO es una métrica medida por modelo: es una ESTIMACIÓN de viabilidad,
    anclada en un punto REAL medido en este proyecto (un modelo de 30.5B mil
    millones a cuantización Q4_K_M ocupa ≈18.56 GB → ≈0.6 GB por mil millones a Q4)
-   más las razones de memoria estándar por cuantización. Se etiqueta como estimada. */
+   más las razones de memoria estándar por cuantización. Se etiqueta como estimada.
+
+   DOS FÍSICAS DISTINTAS (corrección 2026-07-29):
+   - RAM (footprint) = f(parámetros TOTALES): todos los pesos deben residir en memoria.
+   - Velocidad (tok/s) = f(parámetros ACTIVOS): en un MoE solo computan los expertos
+     enrutados por token. El ancla medida (35 tok/s) es de un MoE con ~3.3B ACTIVOS;
+     NO se extrapola a un modelo DENSO de tamaño total parecido (un denso de 30B es
+     mucho más lento). La velocidad se etiqueta [MEDIDO] / [ESTIMADO] / [NO APLICABLE]. */
 
 window.AURELIUS_ORACULO = (function () {
   // Ancla medida (este proyecto): 18.56 GB / 30.5 B ≈ 0.61 → 0.6 GB por B a Q4.
@@ -19,9 +26,40 @@ window.AURELIUS_ORACULO = (function () {
   var KV_GB = 1.5; // caché de contexto aproximada (crece con la ventana)
   var CLASES_B = [1, 3, 8, 14, 32, 70]; // tamaños comunes en mil millones de parámetros
 
+  // Ancla de VELOCIDAD medida en este proyecto: es un MoE, no un denso. Los 35 tok/s
+  // corresponden a ~3.3B ACTIVOS. No se transfieren a arquitecturas densas.
+  var ANCLA_VELOCIDAD = { arch: "moe", activos_b: 3.3, tok_s: 35 };
+
+  // footprint = RAM = f(parámetros TOTALES). Correcto para denso Y MoE: todos los
+  // pesos residen en memoria aunque en un MoE solo una fracción compute por token.
   function footprint(paramsB, quant) {
     var por = GB_POR_B[quant] || GB_POR_B.q4;
     return paramsB * por + KV_GB;
+  }
+
+  /** Etiqueta la VELOCIDAD de un modelo del manifiesto separando denso de MoE. La
+      medición (35 tok/s) SOLO aplica al ancla MoE; a un denso NO se extrapola. Devuelve
+      { etiqueta: "MEDIDO"|"ESTIMADO"|"NO APLICABLE", texto }. Defensivo ante la forma. */
+  function velocidadDe(model) {
+    if (!model || typeof model !== "object") {
+      return { etiqueta: "NO APLICABLE", texto: "velocidad desconocida" };
+    }
+    if (model.throughput_provenance === "measured" && typeof model.throughput_tok_s === "number") {
+      var act = typeof model.active_b === "number" ? model.active_b : null;
+      return {
+        etiqueta: "MEDIDO",
+        texto: "~" + model.throughput_tok_s + " tok/s [MEDIDO]" + (act ? " (MoE, ~" + act + "B activos)" : ""),
+      };
+    }
+    if (model.arch === "moe") {
+      return { etiqueta: "ESTIMADO", texto: "velocidad [ESTIMADA] — MoE sin medir en este HW" };
+    }
+    // Denso: la única medición que tenemos es de un MoE de ~3.3B activos. No aplica.
+    return {
+      etiqueta: "NO APLICABLE",
+      texto: "velocidad [NO APLICABLE] — la única medición (" + ANCLA_VELOCIDAD.tok_s +
+        " tok/s) es de un MoE de ~" + ANCLA_VELOCIDAD.activos_b + "B activos; un modelo denso es más lento y aquí no se estima a ojo",
+    };
   }
 
   /** Analiza la RAM disponible (GB) → clases que caben, recomendado, y VRAM
@@ -51,6 +89,7 @@ window.AURELIUS_ORACULO = (function () {
       regla: "memoria ≈ (parámetros en miles de millones) × (bytes por peso, que fija la cuantización) + caché de contexto. Q4 ≈ 0.6 GB por mil millones; Q8 el doble; F16 más del triple.",
       aviso_swap: "si el modelo supera tu RAM, el sistema tira de disco (swap): funciona, pero MUCHO más lento — segundos por palabra en vez de tiempo real.",
       nota_estimacion: "cifras ESTIMADAS (ancladas en un punto real medido), no medidas por modelo. Con GPU y suficiente VRAM podrías correr más de lo que dice esta estimación por RAM.",
+      nota_velocidad: "que un modelo QUEPA en RAM (params totales) no dice cómo de RÁPIDO irá: la velocidad la fijan los params ACTIVOS. La única medición (35 tok/s) es de un MoE de ~3.3B activos y NO se extrapola a modelos densos.",
     };
   }
 
@@ -67,7 +106,16 @@ window.AURELIUS_ORACULO = (function () {
         return m && typeof m.tag === "string" && typeof m.class_b === "number" && m.class_b <= tope;
       })
       .sort(function (x, y) { return y.class_b - x.class_b; })
-      .map(function (m) { return { tag: m.tag, class_b: m.class_b, verificado: m.hardware_verified === true }; });
+      .map(function (m) {
+        return {
+          tag: m.tag,
+          class_b: m.class_b,
+          arch: m.arch === "moe" ? "moe" : "dense",
+          active_b: typeof m.active_b === "number" ? m.active_b : m.class_b,
+          verificado: m.hardware_verified === true,
+          velocidad: velocidadDe(m), // { etiqueta, texto } — MEDIDO / ESTIMADO / NO APLICABLE
+        };
+      });
   }
 
   /** Resumen en texto llano para inyectar al mentor / mostrar al usuario. Si se le
@@ -84,13 +132,16 @@ window.AURELIUS_ORACULO = (function () {
     partes.push("RAM disponible: " + a.ramGb + " GB. VRAM: " + (a.vramGb === null ? "no reportada" : a.vramGb + " GB") + ".");
     partes.push("A cuantización Q4: caben con holgura " + (caben.join(", ") || "—") + (justos.length ? "; van justos " + justos.join(", ") : "") + (noCaben.length ? "; NO caben (swap a disco) " + noCaben.join(", ") : "") + ".");
     if (a.recomendadoMaxB !== null) partes.push("Recomendado máximo cómodo: ~" + a.recomendadoMaxB + "B a Q4.");
+    partes.push("La RAM decide qué CABE (params totales); la velocidad depende de los params ACTIVOS — no son lo mismo.");
     var recs = recomendarTags(a, manifiesto);
     if (recs.length) {
-      var etq = recs.slice(0, 3).map(function (r) { return r.tag + (r.verificado ? "" : " (sin verificar)"); });
-      partes.push("Del manifiesto, te caben: " + etq.join(", ") + ".");
+      var etq = recs.slice(0, 3).map(function (r) {
+        return r.tag + (r.verificado ? "" : " (sin verificar)") + " · " + r.velocidad.texto;
+      });
+      partes.push("Del manifiesto, te caben: " + etq.join("; ") + ".");
     }
     return partes.join(" ");
   }
 
-  return { analizar: analizar, resumen: resumen, footprint: footprint, recomendarTags: recomendarTags };
+  return { analizar: analizar, resumen: resumen, footprint: footprint, recomendarTags: recomendarTags, velocidadDe: velocidadDe };
 })();
