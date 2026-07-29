@@ -6,7 +6,8 @@
  * / horizonte: esta forma de datos ya lo soporta (una misión es solo datos), pero
  * NO se construye aquí.
  *
- * FASE 1 = ritos LOCALES (M1–M3). Las misiones de red (handshake Tailscale, trueque
+ * FASE 1 = ritos LOCALES del Camino canónico (Tótem M0, Agua M2, Refugio M3 — los
+ * nombres son los de "The Path" del README). Las misiones de red (handshake, trueque
  * de cómputo) son horizonte F6 — exponen topología y arrastran puntos vetados; no
  * se implementan. El tier "red" existe en el tipo para cuando llegue su hora. */
 
@@ -31,13 +32,13 @@ export interface Mission {
 
 export const MISSIONS: readonly Mission[] = [
   {
-    id: "primer-espejo",
-    code: "M1",
+    id: "totem",
+    code: "M0",
     tier: "local",
     ikea: true,
     title: {
-      en: "The First Mirror — Rite of Seeding",
-      es: "El Primer Espejo — Rito de Siembra",
+      en: "The Totem",
+      es: "El Tótem",
     },
     objective: {
       en: "Create your companion: the personification of your Hexelion. Effect IKEA — it is YOUR node.",
@@ -62,12 +63,12 @@ export const MISSIONS: readonly Mission[] = [
     status: "available",
   },
   {
-    id: "scribe-local",
+    id: "agua",
     code: "M2",
     tier: "local",
     title: {
-      en: "The Local Scribe",
-      es: "El Scribe Local",
+      en: "The Water",
+      es: "El Agua",
     },
     objective: {
       en: "Learn the local memory (RAG): save your first piece of curated knowledge, on-node.",
@@ -92,12 +93,12 @@ export const MISSIONS: readonly Mission[] = [
     status: "locked",
   },
   {
-    id: "sonda-fisica",
+    id: "refugio",
     code: "M3",
     tier: "movil",
     title: {
-      en: "The Physical Probe",
-      es: "La Sonda Física",
+      en: "The Refuge",
+      es: "El Refugio",
     },
     objective: {
       en: "Your first botanical photo in airplane mode (data sovereignty), signed locally.",
