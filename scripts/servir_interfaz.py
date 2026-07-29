@@ -65,7 +65,11 @@ GENESIS_PY: Path = Path(_GENESIS_ENV) if _GENESIS_ENV else Path("/nonexistent/ge
 OLLAMA_TAGS: str = "http://127.0.0.1:11434/api/tags"
 HERRAMIENTAS: tuple[str, ...] = ("python3", "git", "ollama", "docker", "ffmpeg", "node", "uv", "whisper", "yt-dlp")
 VERBOSIDADES: frozenset[str] = frozenset({"breve", "normal", "detallado"})
-LOCALES: frozenset[str] = frozenset({"en", "es"})
+LOCALES: frozenset[str] = frozenset({"en", "es", "fr", "pt", "de", "el", "ru"})
+# Onboarding guiado del Tótem (M0): nivel condiciona la PROFUNDIDAD de las
+# explicaciones (Scaffolding Fading); tono ajusta el ESTILO — JAMÁS las reglas.
+NIVELES: frozenset[str] = frozenset({"principiante", "intermedio", "avanzado"})
+TONOS: frozenset[str] = frozenset({"sereno", "directo", "didactico"})
 PUERTO_DEFECTO: int = 8050
 HOST_DEFECTO: str = "0.0.0.0"  # tailnet, no solo loopback
 
@@ -85,6 +89,9 @@ _ESTADO_BASE: dict[str, Any] = {
     "verbosidad": "normal",  # §barra de verbosidad: breve|normal|detallado
     "locale": "en",  # idioma base canon (inglés); el desplegable lo cambia
     "inventario": None,  # snapshot del inventario (hardware genesis + software)
+    "nivel": None,  # onboarding M0: principiante|intermedio|avanzado (profundidad)
+    "tono": None,  # onboarding M0: sereno|directo|didactico (ESTILO, no reglas)
+    "ram_declarada_gb": None,  # corrección opcional del usuario al hardware detectado
 }
 
 
@@ -412,8 +419,20 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
         if loc in LOCALES:
             estado["locale"] = loc
             cambiado = True
+        niv = str(cuerpo.get("nivel", "")).strip().lower()
+        if niv in NIVELES:
+            estado["nivel"] = niv
+            cambiado = True
+        ton = str(cuerpo.get("tono", "")).strip().lower()
+        if ton in TONOS:
+            estado["tono"] = ton
+            cambiado = True
+        ram = cuerpo.get("ram_declarada_gb")
+        if isinstance(ram, (int, float)) and 0 < ram <= 4096:  # defensivo: rango sano
+            estado["ram_declarada_gb"] = float(ram)
+            cambiado = True
         if not cambiado:
-            self._json({"error": "nada válido (verbosidad: breve|normal|detallado; locale: en|es)"}, 400)
+            self._json({"error": "nada válido (verbosidad/locale/nivel/tono/ram_declarada_gb)"}, 400)
             return
         # Solo se persiste con identidad; usuario nuevo (sin nombre) → en memoria.
         if slug is not None:

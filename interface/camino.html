@@ -87,6 +87,19 @@
       .cm-lang { padding: 6px 8px; min-height: 44px; }
       a.retour { min-height: 44px; }
     }
+
+    /* Onboarding guiado M0 (BLOQUE A) */
+    .on-guia { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+    .on-guia > li { border-left: 2px solid var(--vena-tenue); padding-left: 12px; }
+    .on-q { font: 600 13px/1.3 ui-monospace, monospace; color: var(--vena); margin-bottom: 8px; letter-spacing: 0.02em; }
+    .on-hw { background: var(--code); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 10px 12px; font: 400 13px/1.5 ui-monospace, monospace; color: var(--tenue); }
+    .on-hw-ok { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font: 400 13px/1 ui-monospace, monospace; color: var(--texto); cursor: pointer; }
+    .on-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+    .on-b { background: #17141d; color: var(--tenue); border: 1px solid var(--vena-tenue); border-radius: 8px; font: 600 12px/1 ui-monospace, monospace; padding: 10px 14px; min-height: 44px; cursor: pointer; }
+    .on-b:hover { border-color: var(--vena); }
+    .on-b[data-actif="oui"] { color: var(--fondo); background: var(--vena); border-color: var(--vena); }
+    .on-b:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
+    .on-nota { margin: 8px 0 0; font: italic 400 11px/1.5 "Georgia", serif; color: var(--ambar); }
   </style>
 </head>
 <body>
@@ -103,6 +116,7 @@
   </main>
 
   <script src="i18n.js"></script>
+  <script src="oraculo.js"></script>
   <script>
     "use strict";
     (function () {
@@ -233,14 +247,35 @@
       }
 
       // ---------- M0 · El Tótem ----------
+      // Onboarding GUIADO (BLOQUE A): preguntas cortas que "despiertan" el Tótem.
+      // NO se pregunta lo que el sistema ya sabe (el hardware lo audita el
+      // Oráculo: se MUESTRA y solo se confirma/corrige).
       function vueM0() {
         return '<div class="module"><h2>' + esc(I.t("m0.title")) + '</h2>'
           + '<p class="obj">' + esc(I.t("m0.obj")) + '</p>'
-          + '<ol class="pasos"><li>' + esc(I.t("m0.step1")) + '</li></ol>'
+          + '<ol class="on-guia">'
+          + '<li><div class="on-q">' + esc(I.t("on.name")) + '</div>'
+          + '<input type="text" id="m0-nom" placeholder="' + esc(I.t("m0.nom")) + '" /></li>'
+          + '<li><div class="on-q">' + esc(I.t("on.hardware")) + '</div>'
+          + '<div class="on-hw" id="on-hw">' + esc(I.t("on.hardwareDetecting")) + '</div>'
+          + '<label class="on-hw-ok"><input type="checkbox" id="on-hw-ok" checked /> ' + esc(I.t("on.hardwareConfirm")) + '</label>'
+          + '<div class="champ" id="on-hw-fix" hidden><input type="number" id="on-hw-ram" min="1" max="4096" placeholder="' + esc(I.t("on.hardwareCorrect")) + '" /></div></li>'
+          + '<li><div class="on-q">' + esc(I.t("on.level")) + '</div>'
+          + '<div class="on-opts" id="on-nivel">'
+          + '<button type="button" class="on-b" data-v="principiante">' + esc(I.t("level.beginner")) + '</button>'
+          + '<button type="button" class="on-b" data-v="intermedio">' + esc(I.t("level.intermediate")) + '</button>'
+          + '<button type="button" class="on-b" data-v="avanzado">' + esc(I.t("level.advanced")) + '</button></div></li>'
+          + '<li><div class="on-q">' + esc(I.t("on.tone")) + '</div>'
+          + '<div class="on-opts" id="on-tono">'
+          + '<button type="button" class="on-b" data-v="sereno">' + esc(I.t("tone.serene")) + '</button>'
+          + '<button type="button" class="on-b" data-v="directo">' + esc(I.t("tone.direct")) + '</button>'
+          + '<button type="button" class="on-b" data-v="didactico">' + esc(I.t("tone.didactic")) + '</button></div>'
+          + '<p class="on-nota">' + esc(I.t("on.toneNote")) + '</p></li>'
+          + '</ol>'
+          + '<ol class="pasos" start="5"><li>' + esc(I.t("m0.step1")) + '</li></ol>'
           + '<div class="prompt-cebado">' + esc(I.t("m0.prompt")) + '</div>'
-          + '<ol class="pasos" start="2"><li>' + esc(I.t("m0.step2")) + '</li></ol>'
+          + '<ol class="pasos" start="6"><li>' + esc(I.t("m0.step2")) + '</li></ol>'
           + '<div class="champ">'
-          + '<input type="text" id="m0-nom" placeholder="' + esc(I.t("m0.nom")) + '" />'
           + '<input type="file" id="m0-file" accept="image/png,image/jpeg,image/webp" />'
           + '<button class="action" id="m0-btn">' + esc(I.t("m0.btn")) + '</button>'
           + '</div><div class="aviso" id="m0-aviso"></div></div>';
@@ -248,21 +283,65 @@
       function cablerM0() {
         var btn = document.getElementById("m0-btn");
         var aviso = document.getElementById("m0-aviso");
+        var nivelSel = null, tonoSel = null;
+        function cablearGrupo(id, fijar) {
+          var bs = document.querySelectorAll("#" + id + " .on-b");
+          bs.forEach(function (b) {
+            b.addEventListener("click", function () {
+              bs.forEach(function (x) { x.setAttribute("data-actif", "non"); });
+              b.setAttribute("data-actif", "oui"); fijar(b.getAttribute("data-v"));
+            });
+          });
+        }
+        cablearGrupo("on-nivel", function (v) { nivelSel = v; });
+        cablearGrupo("on-tono", function (v) { tonoSel = v; });
+        // Hardware: NO se pregunta — el Oráculo lo detecta; se muestra y se confirma/corrige.
+        var hwOk = document.getElementById("on-hw-ok");
+        hwOk.addEventListener("change", function () { document.getElementById("on-hw-fix").hidden = hwOk.checked; });
+        fetch(apiUrl(API + "/api/inventario"))
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (inv) {
+            var hw = document.getElementById("on-hw");
+            var ram = inv && inv.hardware && inv.hardware.hardware ? inv.hardware.hardware.ram_disponible_gb : null;
+            if (window.AURELIUS_ORACULO && typeof ram === "number") {
+              hw.textContent = window.AURELIUS_ORACULO.resumen(window.AURELIUS_ORACULO.analizar(ram));
+            } else {
+              hw.textContent = I.t("on.hardwareUnknown"); // honest sensors: no lo estima a ojo
+              hwOk.checked = false; document.getElementById("on-hw-fix").hidden = false;
+            }
+          })
+          .catch(function () { document.getElementById("on-hw").textContent = I.t("on.hardwareUnknown"); });
+
         btn.addEventListener("click", async function () {
           var nom = document.getElementById("m0-nom").value.trim();
           var file = document.getElementById("m0-file").files[0];
           if (nom === "") { aviso.className = "aviso err"; aviso.textContent = I.t("m0.errName"); return; }
+          if (!nivelSel || !tonoSel) { aviso.className = "aviso err"; aviso.textContent = I.t("on.errChoose"); return; }
           if (!file) { aviso.className = "aviso err"; aviso.textContent = I.t("m0.errFile"); return; }
           var ext = (file.name.split(".").pop() || "png").toLowerCase();
           btn.disabled = true; aviso.className = "aviso"; aviso.textContent = I.t("m0.sealing");
           try {
             var buf = await file.arrayBuffer();
-            var r = await fetch(API + "/api/totem", {
-              method: "POST", headers: { "X-Nombre": nom, "X-Ext": ext }, body: buf,
-            });
+            var r = await fetch(API + "/api/totem", { method: "POST", headers: { "X-Nombre": nom, "X-Ext": ext }, body: buf });
             var j = await r.json();
             if (!r.ok || !j.ok) throw new Error(j.error || ("HTTP " + r.status));
             fijarSlug(j.slug, nom); // el servidor devuelve el slug: lo recordamos
+            // Guarda nivel/tono (+ corrección de RAM si la hubo) en el estado por slug.
+            var prefs = { nivel: nivelSel, tono: tonoSel };
+            if (!hwOk.checked) {
+              var ramFix = parseFloat(document.getElementById("on-hw-ram").value);
+              if (isFinite(ramFix) && ramFix > 0) prefs.ram_declarada_gb = ramFix;
+            }
+            await fetch(apiUrl(API + "/api/preferencia"), {
+              method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(prefs),
+            }).catch(function () {});
+            // EL TÓTEM DESPIERTA: si estamos dentro del drawer, avisa a la cara
+            // para que el busto se anime y salude por su nombre (recompensa de M0).
+            try {
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ tipo: "aurelius:totem-creado", nombre: nom }, window.location.origin);
+              }
+            } catch (e) { /* standalone: sin padre, no pasa nada */ }
             aviso.className = "aviso ok";
             aviso.textContent = I.t("m0.sealed", { sha: j.sha256.slice(0, 12), name: nom });
             setTimeout(render, 900);
