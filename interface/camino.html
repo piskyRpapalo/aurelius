@@ -124,7 +124,10 @@
       var API = ""; // mismo origen (servidor 8050)
       var VAULT = "~/aurelius/sovereign_vault";
       var SCRIPTS = "~/aurelius/scripts";
-      var MODELO = "qwen3:30b-a3b-instruct-2507-q4_K_M"; // el modelo local presente; cualquiera vale
+      // Modelo mostrado en los comandos: DESACOPLADO. resolverModelo() lo resuelve
+      // (config real del nodo → manifiesto models.json → este literal solo como
+      // ÚLTIMO RECURSO offline). El nombre NO es la fuente de verdad; el manifiesto sí.
+      var MODELO = "qwen3:30b-a3b-instruct-2507-q4_K_M";
 
       // === Identidad del soberano (multiusuario · SEPARACIÓN, no auth). El slug
       //     vive en localStorage (lo fija la cara o el Tótem M0) y viaja en
@@ -298,19 +301,22 @@
         // Hardware: NO se pregunta — el Oráculo lo detecta; se muestra y se confirma/corrige.
         var hwOk = document.getElementById("on-hw-ok");
         hwOk.addEventListener("change", function () { document.getElementById("on-hw-fix").hidden = hwOk.checked; });
-        fetch(apiUrl(API + "/api/inventario"))
-          .then(function (r) { return r.ok ? r.json() : null; })
-          .then(function (inv) {
-            var hw = document.getElementById("on-hw");
-            var ram = inv && inv.hardware && inv.hardware.hardware ? inv.hardware.hardware.ram_disponible_gb : null;
-            if (window.AURELIUS_ORACULO && typeof ram === "number") {
-              hw.textContent = window.AURELIUS_ORACULO.resumen(window.AURELIUS_ORACULO.analizar(ram));
-            } else {
-              hw.textContent = I.t("on.hardwareUnknown"); // honest sensors: no lo estima a ojo
-              hwOk.checked = false; document.getElementById("on-hw-fix").hidden = false;
-            }
-          })
-          .catch(function () { document.getElementById("on-hw").textContent = I.t("on.hardwareUnknown"); });
+        // Inventario (RAM real) + manifiesto de modelos: el Oráculo LEE del
+        // manifiesto para nombrar tags concretos que caben — no los hardcodea.
+        Promise.all([
+          fetch(apiUrl(API + "/api/inventario")).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+          fetch("models.json", { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
+        ]).then(function (res) {
+          var inv = res[0], manifiesto = res[1];
+          var hw = document.getElementById("on-hw");
+          var ram = inv && inv.hardware && inv.hardware.hardware ? inv.hardware.hardware.ram_disponible_gb : null;
+          if (window.AURELIUS_ORACULO && typeof ram === "number") {
+            hw.textContent = window.AURELIUS_ORACULO.resumen(window.AURELIUS_ORACULO.analizar(ram), manifiesto);
+          } else {
+            hw.textContent = I.t("on.hardwareUnknown"); // honest sensors: no lo estima a ojo
+            hwOk.checked = false; document.getElementById("on-hw-fix").hidden = false;
+          }
+        });
 
         btn.addEventListener("click", async function () {
           var nom = document.getElementById("m0-nom").value.trim();
@@ -441,8 +447,32 @@
         else if (act === "M2") cablerCompletar("M2", "m2-btn", "m2-sha", "m2-aviso");
       }
 
+      // Resuelve el tag del modelo SIN hardcodearlo en la lógica: el modelo real
+      // declarado por el operador (config.json, fuera de git) manda; si no, el
+      // recomendado por defecto del manifiesto versionado (models.json); si ambos
+      // fallan, se queda el literal de último recurso. Footgun de tags: el manifiesto
+      // solo lista variantes instruct explícitas (ver models.json).
+      function tagPorDefecto(man) {
+        if (!man || !Array.isArray(man.models)) return null;
+        var d = man.models.filter(function (x) { return x && x.id === man.default; })[0] || man.models[0];
+        return d && typeof d.tag === "string" && d.tag ? d.tag : null;
+      }
+      async function resolverModelo() {
+        var fuentes = ["config.json", "config.example.json"];
+        for (var i = 0; i < fuentes.length; i++) {
+          try {
+            var r = await fetch(fuentes[i], { cache: "no-store" });
+            if (r.ok) { var c = await r.json(); if (c && typeof c.model === "string" && c.model) { MODELO = c.model; return; } }
+          } catch (e) { /* siguiente fuente */ }
+        }
+        try {
+          var rm = await fetch("models.json", { cache: "no-store" });
+          if (rm.ok) { var t = tagPorDefecto(await rm.json()); if (t) { MODELO = t; return; } }
+        } catch (e) { /* offline → literal de último recurso */ }
+      }
+
       aplicarIdioma();
-      render();
+      resolverModelo().then(render);
     })();
   </script>
 </body>

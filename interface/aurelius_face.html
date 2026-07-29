@@ -295,6 +295,9 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       //     código): config.json (local, fuera de git) → config.example.json →
       //     localhost. ?api=<url> lo sobreescribe para pruebas. Cualquiera puede
       //     clonar Aurelius y apuntarlo a SU propio Ollama editando config.json. ===
+      // `model` aquí es solo ÚLTIMO RECURSO offline: cargarConfig() lo sustituye por
+      // el manifiesto versionado (models.json) o por el config real del nodo. El
+      // nombre del modelo NO se hardcodea como fuente de verdad — el manifiesto sí.
       var CFG_DEFECTO = { ollama: "http://localhost:11434", model: "qwen3:30b-a3b-instruct-2507-q4_K_M", webui: "http://localhost:8080" };
       var API_OVERRIDE = new URLSearchParams(location.search).get("api");
       var EP = (API_OVERRIDE || CFG_DEFECTO.ollama).replace(/\/+$/, "");
@@ -302,7 +305,20 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       var WEBUI = CFG_DEFECTO.webui;
       var cfgReal = false; // true solo si cargó config.json (no el ejemplo/defecto)
 
+      // Lee el tag recomendado por defecto del manifiesto versionado (desacoplado).
+      function tagPorDefecto(man) {
+        if (!man || !Array.isArray(man.models)) return null;
+        var d = man.models.filter(function (x) { return x && x.id === man.default; })[0] || man.models[0];
+        return d && typeof d.tag === "string" && d.tag ? d.tag : null;
+      }
+
       async function cargarConfig() {
+        // 0) manifiesto de modelos: fuente de verdad del tag por defecto. El config
+        //    real del nodo (abajo) puede sobreescribirlo con SU modelo residente.
+        try {
+          var rm = await fetch("models.json", { cache: "no-store" });
+          if (rm.ok) { var t = tagPorDefecto(await rm.json()); if (t) MODEL = t; }
+        } catch (e) { /* offline → se queda el literal de último recurso */ }
         var fuentes = ["config.json", "config.example.json"];
         for (var i = 0; i < fuentes.length; i++) {
           try {

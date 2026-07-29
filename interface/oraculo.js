@@ -54,8 +54,26 @@ window.AURELIUS_ORACULO = (function () {
     };
   }
 
-  /** Resumen en texto llano para inyectar al mentor / mostrar al usuario. */
-  function resumen(a) {
+  /** Cruza el análisis de RAM con el manifiesto versionado (models.json) y devuelve
+      los modelos concretos que caben cómodos, del más grande al más pequeño. El
+      Oráculo NO hardcodea tags: los LEE del manifiesto. Defensivo ante la forma del
+      objeto (que puede venir null si el fetch falló). */
+  function recomendarTags(a, manifiesto) {
+    if (!a || a.disponible === false) return [];
+    if (!manifiesto || !Array.isArray(manifiesto.models)) return [];
+    var tope = typeof a.recomendadoMaxB === "number" ? a.recomendadoMaxB : 0;
+    return manifiesto.models
+      .filter(function (m) {
+        return m && typeof m.tag === "string" && typeof m.class_b === "number" && m.class_b <= tope;
+      })
+      .sort(function (x, y) { return y.class_b - x.class_b; })
+      .map(function (m) { return { tag: m.tag, class_b: m.class_b, verificado: m.hardware_verified === true }; });
+  }
+
+  /** Resumen en texto llano para inyectar al mentor / mostrar al usuario. Si se le
+      pasa el manifiesto (models.json ya parseado), nombra los tags concretos que
+      caben — leídos del manifiesto, jamás hardcodeados. */
+  function resumen(a, manifiesto) {
     if (!a || a.disponible === false) {
       return "Recursos: RAM no reportada por el inventario — no estimo a ojo. Revisa el proveedor de inventario de hardware.";
     }
@@ -66,8 +84,13 @@ window.AURELIUS_ORACULO = (function () {
     partes.push("RAM disponible: " + a.ramGb + " GB. VRAM: " + (a.vramGb === null ? "no reportada" : a.vramGb + " GB") + ".");
     partes.push("A cuantización Q4: caben con holgura " + (caben.join(", ") || "—") + (justos.length ? "; van justos " + justos.join(", ") : "") + (noCaben.length ? "; NO caben (swap a disco) " + noCaben.join(", ") : "") + ".");
     if (a.recomendadoMaxB !== null) partes.push("Recomendado máximo cómodo: ~" + a.recomendadoMaxB + "B a Q4.");
+    var recs = recomendarTags(a, manifiesto);
+    if (recs.length) {
+      var etq = recs.slice(0, 3).map(function (r) { return r.tag + (r.verificado ? "" : " (sin verificar)"); });
+      partes.push("Del manifiesto, te caben: " + etq.join(", ") + ".");
+    }
     return partes.join(" ");
   }
 
-  return { analizar: analizar, resumen: resumen, footprint: footprint };
+  return { analizar: analizar, resumen: resumen, footprint: footprint, recomendarTags: recomendarTags };
 })();
