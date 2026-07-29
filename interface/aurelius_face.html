@@ -496,7 +496,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
             refrescarIdentidad();
           })
           .catch(function () {});
-        // Inventario (hardware vía genesis.py + software vía ollama) — conocimiento de modelos.
+        // Inventario (hardware vía auditoría externa + software vía ollama) — conocimiento de modelos.
         fetch(apiUrl("/api/inventario"))
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (inv) { if (inv) { estadoSoberano = estadoSoberano || {}; estadoSoberano.inventario = inv; } })

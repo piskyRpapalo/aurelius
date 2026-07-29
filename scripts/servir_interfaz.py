@@ -61,7 +61,7 @@ M0_DIR: Path = VAULT / "M0_Totem"
 # operador lo configura por env. Sin él, el inventario rinde "desconocido"
 # (honest sensors). Sin ruta del núcleo hardcodeada — portable.
 _GENESIS_ENV: str = os.environ.get("AURELIUS_GENESIS_PY", "")
-GENESIS_PY: Path = Path(_GENESIS_ENV) if _GENESIS_ENV else Path("/nonexistent/genesis.py")
+GENESIS_PY: Path = Path(_GENESIS_ENV) if _GENESIS_ENV else Path("/nonexistent/hw-audit")
 OLLAMA_TAGS: str = "http://127.0.0.1:11434/api/tags"
 HERRAMIENTAS: tuple[str, ...] = ("python3", "git", "ollama", "docker", "ffmpeg", "node", "uv", "whisper", "yt-dlp")
 VERBOSIDADES: frozenset[str] = frozenset({"breve", "normal", "detallado"})
@@ -197,8 +197,9 @@ def _sha256_bytes(datos: bytes) -> str:
 
 
 def _genesis_hw() -> dict[str, Any]:
-    """Invoca genesis.py (auditoría de hardware honesta) por subprocess — NO lo toca
-    (su guard isinstance es inviolable). Si falla, hardware desconocido, no inventado."""
+    """Invoca el script externo de auditoría de hardware (AURELIUS_GENESIS_PY) por
+    subprocess — NO lo toca (su guardia isinstance es inviolable). Si falla o no
+    está configurado, hardware desconocido, jamás inventado."""
     if not GENESIS_PY.exists():
         return {"estado": "desconocido", "motivo": f"no existe {GENESIS_PY}"}
     try:
