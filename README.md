@@ -6,6 +6,12 @@ in the middle of chaos without fearing it. Aurelius runs on your own hardware,
 talks to a **local model** (no cloud), and walks you along *The Path* from running
 your first offline model to holding your own cryptographic key.
 
+![Aurelius — the local Preceptor](docs/img/aurelius-face.png)
+
+*Aurelius, the local Preceptor — an English-first, concise companion that walks you
+along* The Path *: from your first offline model to holding your own key. Runs on
+local AI, on your node.*
+
 It is a standalone organism, separate from the Hexelion dashboard, so its
 multilingualism never contaminates that project's strict language law.
 
