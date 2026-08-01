@@ -1,0 +1,68 @@
+/* Estilos del Camino (rail + módulos de misión), COMPARTIDOS entre la página
+   standalone camino.html y el panel local del drawer en aurelius_face.html.
+   Todo va scoped bajo .cm-scope para NO filtrarse a la cara que lo embebe.
+   Requiere del host las variables: --fondo --panel --vena --vena-tenue --ambar
+   --texto --tenue --ok --error --code. */
+
+.cm-scope .rail { display: flex; gap: 8px; margin-bottom: 22px; overflow-x: auto; padding-bottom: 4px; }
+.cm-scope .etape {
+  flex: 0 0 auto; min-width: 92px; text-align: center; padding: 10px 8px; border-radius: 10px;
+  border: 1px solid var(--vena-tenue); font: 600 12px/1.3 ui-monospace, monospace; color: var(--tenue);
+  background: #17141d;
+}
+.cm-scope .etape[data-etat="fait"] { color: var(--ok); border-color: var(--ok); }
+.cm-scope .etape[data-etat="actuel"] { color: var(--ambar); border-color: var(--ambar); box-shadow: 0 0 14px rgba(246,167,35,0.25); }
+.cm-scope .etape small { display: block; font-weight: 400; color: inherit; opacity: 0.8; }
+
+.cm-scope .salut { display: block; color: var(--vena); font: 500 14px/1 ui-monospace, monospace; margin-bottom: 14px; }
+
+.cm-scope .module {
+  background: var(--panel); border: 1px solid var(--vena-tenue); border-left: 3px solid var(--vena);
+  border-radius: 14px; padding: 20px; margin-bottom: 16px;
+}
+.cm-scope .module h2 { margin: 0 0 6px; font-size: 22px; }
+.cm-scope .module .obj { color: var(--tenue); font-style: italic; margin: 0 0 14px; }
+.cm-scope ol.pasos { margin: 0 0 14px; padding-left: 20px; line-height: 1.6; }
+.cm-scope ol.pasos li { margin-bottom: 6px; }
+.cm-scope .bloc { margin: 12px 0; }
+.cm-scope .bloc-titre { font: 600 12px/1 ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--vena); margin-bottom: 6px; }
+.cm-scope pre.cmd {
+  position: relative; background: var(--code); border: 1px solid var(--vena-tenue); border-radius: 8px;
+  padding: 12px 52px 12px 12px; margin: 0; overflow-x: auto;
+  font: 400 13px/1.5 ui-monospace, "SFMono-Regular", monospace; color: #d7ffd7; white-space: pre-wrap; word-break: break-word;
+}
+.cm-scope button.copier {
+  position: absolute; top: 6px; right: 6px; background: var(--vena-tenue); color: var(--fondo);
+  border: none; border-radius: 6px; font: 700 10px/1 ui-monospace, monospace; padding: 8px 8px; cursor: pointer; min-height: 40px;
+}
+.cm-scope button.copier:hover { background: var(--vena); }
+.cm-scope .champ { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.cm-scope input[type="text"], .cm-scope input[type="file"], .cm-scope input[type="number"] {
+  flex: 1 1 240px; background: var(--code); color: var(--texto); border: 1px solid var(--vena-tenue);
+  border-radius: 8px; padding: 10px; font: 400 14px/1 ui-monospace, monospace;
+}
+.cm-scope button.action {
+  background: var(--vena); color: var(--fondo); border: none; border-radius: 8px; font: 700 13px/1 ui-monospace, monospace;
+  padding: 12px 18px; cursor: pointer; min-height: 44px;
+}
+.cm-scope button.action:hover:not(:disabled) { filter: brightness(1.12); }
+.cm-scope button.action:disabled { opacity: 0.5; cursor: progress; }
+.cm-scope .aviso { margin-top: 10px; font: 400 13px/1.5 ui-monospace, monospace; }
+.cm-scope .aviso.ok { color: var(--ok); }
+.cm-scope .aviso.err { color: var(--error); }
+.cm-scope .prompt-cebado { background: var(--code); border: 1px dashed var(--vena-tenue); border-radius: 8px; padding: 12px; color: #efe7ff; font: italic 400 14px/1.6 "Georgia", serif; }
+.cm-scope .fait-note { color: var(--ok); font: 500 13px/1.5 ui-monospace, monospace; }
+.cm-scope .verrou { opacity: 0.5; }
+
+/* Onboarding guiado M0 (BLOQUE A) */
+.cm-scope .on-guia { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.cm-scope .on-guia > li { border-left: 2px solid var(--vena-tenue); padding-left: 12px; }
+.cm-scope .on-q { font: 600 13px/1.3 ui-monospace, monospace; color: var(--vena); margin-bottom: 8px; letter-spacing: 0.02em; }
+.cm-scope .on-hw { background: var(--code); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 10px 12px; font: 400 13px/1.5 ui-monospace, monospace; color: var(--tenue); }
+.cm-scope .on-hw-ok { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font: 400 13px/1 ui-monospace, monospace; color: var(--texto); cursor: pointer; }
+.cm-scope .on-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+.cm-scope .on-b { background: #17141d; color: var(--tenue); border: 1px solid var(--vena-tenue); border-radius: 8px; font: 600 12px/1 ui-monospace, monospace; padding: 10px 14px; min-height: 44px; cursor: pointer; }
+.cm-scope .on-b:hover { border-color: var(--vena); }
+.cm-scope .on-b[data-actif="oui"] { color: var(--fondo); background: var(--vena); border-color: var(--vena); }
+.cm-scope .on-b:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
+.cm-scope .on-nota { margin: 8px 0 0; font: italic 400 11px/1.5 "Georgia", serif; color: var(--ambar); }

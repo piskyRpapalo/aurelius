@@ -7,6 +7,7 @@
        (100dvh) recalcula y el header nunca se empuja fuera arriba. -->
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <title>Aurelius · el Preceptor</title>
+  <link rel="stylesheet" href="camino.css" />
   <style>
     /* Solar-punk oscuro: fondo #1a1a1a + vena violeta, ojo ámbar del busto. */
     :root {
@@ -122,7 +123,7 @@
     .au-drawer-close { margin-left: auto; min-width: 44px; min-height: 44px; background: none; border: 1px solid var(--vena-tenue); border-radius: 8px; color: var(--texto); font-size: 16px; cursor: pointer; }
     .au-drawer-close:hover { border-color: var(--vena); color: var(--vena); }
     .au-drawer-close:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
-    .au-drawer-frame { flex: 1 1 auto; width: 100%; border: none; background: var(--fondo); }
+    .au-drawer-frame { flex: 1 1 auto; width: 100%; border: none; background: var(--fondo); overflow-y: auto; padding: 16px 16px 40px; }
     @media (prefers-reduced-motion: reduce) { .au-drawer { transition: none; } }
     @media (max-width: 600px) { .au-drawer { width: 100vw; border-left: none; } }
     .au-lang { margin-left: auto; background: var(--code, #14121a); color: var(--texto); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 8px 10px; font: 600 13px/1 ui-monospace, monospace; cursor: pointer; min-height: 40px; }
@@ -273,21 +274,27 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
     </div>
   </footer>
 
-  <!-- El Camino como DRAWER lateral (no página aparte): el chat de Aurelius
-       queda visible con su contexto mientras el usuario recorre las misiones.
-       Reutiliza camino.html vía <iframe> (mismo origen → comparte idioma y slug
-       por localStorage). Móvil: overlay a pantalla completa con cierre claro. -->
+  <!-- El Camino como DRAWER lateral (no página aparte): el chat de Aurelius queda
+       visible mientras el usuario recorre las misiones. Se monta EN LÍNEA con
+       AURELIUS_CAMINO.montar() — SIN iframe: la app ya no se embebe dentro de sí
+       misma, así que la recursión (cara→iframe→camino→cara…) queda eliminada de
+       raíz. Móvil: overlay a pantalla completa con cierre claro. -->
   <div class="au-backdrop" id="au-backdrop" hidden></div>
   <aside class="au-drawer" id="au-drawer" aria-label="The Path" aria-hidden="true">
     <div class="au-drawer-bar">
       <span class="au-drawer-title" id="au-drawer-title">The Path</span>
       <button type="button" class="au-drawer-close" id="au-drawer-close" aria-label="Close">✕</button>
     </div>
-    <iframe class="au-drawer-frame" id="au-drawer-frame" title="The Path"></iframe>
+    <div class="au-drawer-frame cm-scope" id="au-camino">
+      <span class="salut" id="salut"></span>
+      <div class="rail" id="rail"></div>
+      <div id="zone"></div>
+    </div>
   </aside>
 
   <script src="i18n.js"></script>
   <script src="oraculo.js"></script>
+  <script src="camino.js"></script>
   <script>
     "use strict";
     (function () {
@@ -524,6 +531,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       // elección; también se envía al servidor para el estado del soberano).
       document.getElementById("au-lang").addEventListener("change", function (ev) {
         I.set(ev.target.value); aplicarIdioma();
+        if (caminoAPI) caminoAPI.refrescar(); // re-pinta el Camino en el nuevo idioma
         fetch(apiUrl("/api/preferencia"), {
           method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ locale: I.locale }),
@@ -536,18 +544,25 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       });
       aplicarIdioma();
 
-      // === El Camino como DRAWER (BLOQUE B) — iframe de camino.html (mismo
-      //     origen → comparte idioma/slug por localStorage). El chat queda
-      //     visible; en móvil es overlay a pantalla completa. Cierre por botón,
-      //     backdrop o Escape (nunca atrapa al usuario). ===
+      // === El Camino como DRAWER (BLOQUE B) — componente EN LÍNEA (sin iframe):
+      //     AURELIUS_CAMINO.montar() lo pinta dentro del propio documento, así el
+      //     chat queda visible y NO hay recursión (la app ya no se embebe en sí
+      //     misma). Cierre por botón, backdrop o Escape (nunca atrapa al usuario). ===
       var drawer = document.getElementById("au-drawer");
       var backdrop = document.getElementById("au-backdrop");
-      var drawerFrame = document.getElementById("au-drawer-frame");
       var chemin = document.getElementById("au-chemin");
       var drawerCerrar = document.getElementById("au-drawer-close");
-      var drawerCargado = false;
+      var caminoAPI = null; // se monta EXACTAMENTE una vez; reabrir solo refresca
       function abrirDrawer() {
-        if (!drawerCargado) { drawerFrame.src = "camino.html"; drawerCargado = true; }
+        if (!caminoAPI) {
+          caminoAPI = window.AURELIUS_CAMINO.montar({
+            raiz: document.getElementById("au-camino"),
+            onCerrar: cerrarDrawer,
+            onTotemCreado: despertarTotem,
+          });
+        } else {
+          caminoAPI.refrescar();
+        }
         document.getElementById("au-drawer-title").textContent = I.t("path.title");
         drawer.setAttribute("data-abierto", "oui");
         drawer.setAttribute("aria-hidden", "false");
@@ -570,8 +585,8 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
         if (e.key === "Escape" && drawer.getAttribute("data-abierto") === "oui") { cerrarDrawer(); chemin.focus(); }
       });
 
-      // El Tótem DESPIERTA (BLOQUE A · recompensa de M0): el Camino (iframe) avisa
-      // al crear el Tótem → el busto de la cara se anima y saluda por su nombre.
+      // El Tótem DESPIERTA (BLOQUE A · recompensa de M0): el componente del Camino
+      // llama a onTotemCreado al crear el Tótem → el busto se anima y saluda.
       function despertarTotem(nombre) {
         if (nombre && fijarSoberano(nombre)) refrescarIdentidad();
         recargarEstado();
@@ -580,13 +595,8 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
         burbuja.cuerpo.textContent = I.t("wake.greet", { name: nombre || "" });
         log.scrollTop = log.scrollHeight;
       }
-      window.addEventListener("message", function (ev) {
-        if (ev.source !== drawerFrame.contentWindow) return; // solo del propio Camino
-        var d = ev.data || {};
-        if (d && d.tipo === "aurelius:totem-creado" && typeof d.nombre === "string") {
-          despertarTotem(d.nombre);
-        }
-      });
+      // (El Tótem ya no llega por postMessage: onTotemCreado es un callback directo
+      //  del componente en línea — ver montar() en abrirDrawer arriba.)
 
       // === Busto como sprite ANCLADO (Habla.png, sheet 4×3, celda 256×341). La
       //     cabeza NO se mueve: solo cambia background-position en el contenedor
