@@ -148,4 +148,30 @@ export const MISSIONS: readonly Mission[] = [
     },
     status: "locked",
   },
+  {
+    id: "tierra",
+    code: "M7",
+    tier: "local",
+    title: {
+      en: "The Earth",
+      es: "La Tierra",
+    },
+    objective: {
+      en: "The physical world enters your node on your terms: a real sensor reading, captured and signed offline.",
+      es: "El mundo físico entra a tu nodo en tus términos: una lectura de sensor real, capturada y firmada sin red.",
+    },
+    steps: {
+      en: [
+        "Horizon rite — pedagogy pending design; the slot is canon (the offline physical probe).",
+      ],
+      es: [
+        "Rito horizonte — pedagogía por diseñar; el slot es canon (la sonda física offline).",
+      ],
+    },
+    skill: {
+      en: "Embodiment: your node senses the physical world, sovereignly.",
+      es: "Encarnación: tu nodo percibe el mundo físico, soberanamente.",
+    },
+    status: "locked",
+  },
 ];
