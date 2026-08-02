@@ -1,0 +1,15 @@
+name: no-iframe
+
+# Guardián anti-recursión: Aurelius no puede reintroducir <iframe> (la cara se
+# embebía a sí misma vía camino.html y entraba en bucle). Falla el build si vuelve.
+on:
+  push:
+  pull_request:
+
+jobs:
+  no-iframe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prohibir <iframe> en Aurelius
+        run: bash scripts/check_no_iframe.sh
