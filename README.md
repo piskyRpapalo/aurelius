@@ -109,7 +109,7 @@ models than the RAM-only estimate suggests.
   - [x] M2 · The Water (local RAG memory, sign the manifest)
 - [x] Per-sovereign state separation (multi-user for trusted learners)
 - [x] Sovereign inventory surfaced from the host's own hardware audit
-- [ ] The Path missions **M3–M5** (Refuge · Signal · Pact)
+- [ ] The Path missions **M3–M6** (Refuge · Signal · Pact · Copper Bastion)
 - [ ] Real authentication (today: state separation only)
 - [ ] Test suite runnable standalone (Playwright configured; dependency install pending)
 
@@ -126,6 +126,7 @@ flowchart LR
   M2 -.-> M3["M3 · The Refuge<br/>(horizon)"]
   M3 -.-> M4["M4 · The Signal<br/>(horizon)"]
   M4 -.-> M5["M5 · The Pact<br/>(horizon)"]
+  M5 -.-> M6["M6 · The Copper Bastion<br/>(horizon)"]
   M0 -->|seal by hash| SIG(["✍ learner signs"])
   M1 -->|sign the result| SIG
   M2 -->|sign the manifest| SIG
@@ -142,6 +143,7 @@ flowchart LR
 | **M3** | The Refuge | Self-host / go offline *(horizon)* |
 | **M4** | The Signal | Local peer transfer *(horizon)* |
 | **M5** | The Pact | Own cryptographic key *(horizon)* |
+| **M6** | The Copper Bastion | Node hardening *(horizon)* |
 
 The scaffold retires as the learner climbs — help that never fades breeds
 dependence, not sovereignty.

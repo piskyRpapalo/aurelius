@@ -122,4 +122,30 @@ export const MISSIONS: readonly Mission[] = [
     },
     status: "locked",
   },
+  {
+    id: "baluarte",
+    code: "M6",
+    tier: "local",
+    title: {
+      en: "The Copper Bastion",
+      es: "El Baluarte de Cobre",
+    },
+    objective: {
+      en: "Harden your node: raise its copper rampart (defensive posture), logged locally (baluarte.log).",
+      es: "Endurece tu nodo: levanta su baluarte de cobre (postura defensiva), registrado en local (baluarte.log).",
+    },
+    steps: {
+      en: [
+        "Horizon rite — pedagogy pending design; the slot is canon.",
+      ],
+      es: [
+        "Rito horizonte — pedagogía por diseñar; el slot es canon.",
+      ],
+    },
+    skill: {
+      en: "Defense: your node stands, hardened, on its own.",
+      es: "Defensa: tu nodo se sostiene, endurecido, por sí mismo.",
+    },
+    status: "locked",
+  },
 ];

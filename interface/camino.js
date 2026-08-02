@@ -48,7 +48,7 @@ window.AURELIUS_CAMINO = (function () {
       return s ? path + (path.indexOf("?") >= 0 ? "&" : "?") + "soberano=" + encodeURIComponent(s) : path;
     }
 
-    var CAMINO = ["M0", "M1", "M2", "M3", "M4", "M5"];
+    var CAMINO = ["M0", "M1", "M2", "M3", "M4", "M5", "M6"];
 
     // Elementos estáticos, scoped a `raiz`. Los que el host no provee quedan null y
     // se ignoran (el drawer usa su propia barra/cierre; no trae cabecera del Camino).
