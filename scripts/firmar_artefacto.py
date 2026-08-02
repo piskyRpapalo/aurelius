@@ -4,10 +4,10 @@
 Calcula el SHA-256 de un archivo y escribe un LOG DE VALIDACIÓN junto a él
 (`<archivo>.sig.json`: nombre, hash SHA-256, timestamp ISO, tamaño en bytes).
 
-En M0–M2 el usuario AÚN NO TIENE claves criptográficas — las genera en M3 («El
-Bautismo»). Por eso este script prueba **INTEGRIDAD** (la huella inmutable del
+En M0–M2 el usuario AÚN NO TIENE claves criptográficas — las genera en M5 («El
+Pacto»). Por eso este script prueba **INTEGRIDAD** (la huella inmutable del
 archivo), NO **AUTORÍA**. La firma con clave Ed25519 (que prueba presencia humana)
-llega en M3, en un script APARTE: `firmar_con_clave.py` (aún no creado — ver el
+llega en M5, en un script APARTE: `firmar_con_clave.py` (aún no creado — ver el
 stub/TODO al final). Esta progresión hash → clave es Scaffolding Fading aplicado a
 la criptografía (§5 del canon): el andamio se retira a medida que sube la competencia.
 
@@ -60,7 +60,7 @@ def firmar(ruta: Path) -> RegistroFirma:
         "timestamp_iso": dt.datetime.now(dt.timezone.utc).isoformat(),
         "tamano_bytes": ruta.stat().st_size,
         "fase": "hash-M0-M2",
-        "prueba": "integridad (no autoria; la firma con clave Ed25519 llega en M3)",
+        "prueba": "integridad (no autoria; la firma con clave Ed25519 llega en M5)",
     }
 
 
@@ -82,19 +82,19 @@ def main(argv: list[str]) -> int:
     print(f"  SHA-256 : {registro['sha256']}")
     print(f"  tamaño  : {registro['tamano_bytes']} bytes")
     print(f"  log     : {destino}")
-    print("  prueba integridad, no autoria — la firma con clave llega en M3.")
+    print("  prueba integridad, no autoria — la firma con clave llega en M5.")
     return 0
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TODO · M3 «El Bautismo» — firma con CLAVE (progresión hash → clave, §5 del canon).
+# TODO · M5 «El Pacto» — firma con CLAVE (progresión hash → clave, §5 del canon).
 #
-# Cuando el usuario llegue a M3 generará su par Ed25519 (privada JAMÁS sale del
+# Cuando el usuario llegue a M5 generará su par Ed25519 (privada JAMÁS sale del
 # dispositivo). Entonces vivirá un script APARTE, `firmar_con_clave.py`, que:
 #   1. Carga la clave privada Ed25519 del usuario (p.ej. ~/.aurelius/keys/, 0600).
 #   2. Firma el archivo (o su hash) → `<archivo>.sig` (firma cruda) + `.sig.json`
 #      que ahora incluye `pubkey` y `signature`, probando AUTORÍA/presencia humana.
-#   3. Verifica con la pública. Dependencia: `cryptography` (Ed25519) — se añade en M3.
+#   3. Verifica con la pública. Dependencia: `cryptography` (Ed25519) — se añade en M5.
 # Este script (hash) NO se toca: los dos coexisten; el hash prueba integridad, la
 # clave prueba autoría. El andamio (hash) sigue disponible aunque suba la competencia.
 # ─────────────────────────────────────────────────────────────────────────────

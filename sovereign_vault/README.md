@@ -15,7 +15,7 @@ M5_Registro_Alba/   · M5 «El Pacto» + «El Registro del Alba» → voucher_ti
 ## El Acto de Firmar — progresión (§5 del canon)
 - **M0–M2 (El Descubrimiento):** firma pasiva por **hash SHA-256** (`scripts/firmar_artefacto.py`).
   Prueba **integridad** (la huella inmutable del archivo), no autoría.
-- **M3 (El Bautismo):** se introduce el **par de claves Ed25519** — la firma con clave
+- **M5 (El Pacto):** se introduce el **par de claves Ed25519** — la firma con clave
   (`scripts/firmar_con_clave.py`, aún no creado) prueba **autoría/presencia humana**.
 - **M4–M5 (El Ejercicio):** el usuario firma logs y compromisos con su clave.
 
