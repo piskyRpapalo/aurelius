@@ -1,0 +1,17 @@
+# Allowlist del check de canon M3 (scripts/canon_m3_check.py).
+#
+# Formato:  <ruta-relativa>:<subcadena literal presente en la línea infractora>
+# Cada línea es una tolerancia DELIBERADA y queda registrada en este commit
+# (así toda excepción tiene autoría y fecha en git, no vive escondida en el YAML).
+#
+# --- Excepciones ---
+# Flecha de transición del diagrama Mermaid del README: "M3 -.-> M4 (The Signal)"
+# describe el FLUJO del Camino (M3 lleva a M4), no re-define M3. Legítima.
+README.md:M3 -.-> M4
+#
+# Notas (NO son excepciones, pasan por diseño):
+#   · Las líneas-resumen del Camino (i18n, aurelius_face.html) emparejan M3 CON
+#     «El Refugio» → pasan R1 sin allowlist.
+#   · «El Baluarte de Cobre» (sovereign_vault/README.md) comparte renglón con
+#     «El Refugio» → pasa R1; su reubicación es decisión pendiente del Soberano,
+#     se documenta en el informe, no se allowlistea.

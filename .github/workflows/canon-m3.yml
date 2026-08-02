@@ -1,0 +1,16 @@
+name: canon-m3
+
+# Guardián del canon: M3 = El Refugio, y sólo M3. Falla el build si alguien
+# re-asocia M3 a otro hito (o el Refugio a otro slot). Excepciones deliberadas
+# viven versionadas en scripts/canon_m3_allowlist.txt.
+on:
+  push:
+  pull_request:
+
+jobs:
+  canon:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verificar canon M3 = El Refugio
+        run: python3 scripts/canon_m3_check.py
