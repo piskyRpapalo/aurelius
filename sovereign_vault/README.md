@@ -8,7 +8,7 @@ Cada misión guarda aquí lo que el usuario creó y selló con su propia mano �
 
 ```
 M1_Espejo_Roto/     · M1 «El Fuego» + «El Espejo Roto» → tiempo_perdido.md (+ .sig.json)
-M3_Baluarte_Cobre/  · M3 «El Refugio» + «El Baluarte de Cobre» → baluarte.log (+ .sig.json)
+M6_Baluarte_Cobre/  · M6 «El Baluarte de Cobre» → baluarte.log (+ .sig.json)
 M5_Registro_Alba/   · M5 «El Pacto» + «El Registro del Alba» → voucher_tiempo_001.json
 ```
 
