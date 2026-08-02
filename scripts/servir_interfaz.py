@@ -355,7 +355,7 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
             "timestamp_iso": _ahora_iso(),
             "tamano_bytes": len(datos),
             "fase": "hash-M0-M2",
-            "prueba": "integridad (no autoria; la firma con clave Ed25519 llega en M3)",
+            "prueba": "integridad (no autoria; la firma con clave Ed25519 llega en M5)",
         }
         destino.with_name(destino.name + ".sig.json").write_text(
             json.dumps(sig, ensure_ascii=False, indent=2), encoding="utf-8"
