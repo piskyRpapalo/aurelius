@@ -43,9 +43,12 @@ test.describe("aurelius_face · la cara", () => {
     test.skip(w > 430, "el mínimo táctil de 44px aplica a pantallas de dedo");
     await page.goto("/aurelius_face.html");
     await page.waitForTimeout(400);
+    // El header tiene varios clicables .au-chemin (The Path + Slate): se verifican
+    // TODOS, no uno solo — un locator estricto sobre la clase sería ambiguo.
     for (const sel of [".au-lang", ".au-chemin"]) {
-      const h = await page.locator(sel).evaluate((el) => Math.round(el.getBoundingClientRect().height));
-      expect(h, sel).toBeGreaterThanOrEqual(44);
+      const hs = await page.locator(sel).evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)));
+      expect(hs.length, sel).toBeGreaterThan(0);
+      for (const h of hs) expect(h, sel).toBeGreaterThanOrEqual(44);
     }
   });
 });
