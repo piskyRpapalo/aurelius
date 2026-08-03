@@ -1,0 +1,21 @@
+/* Badge del modo presentación de la cara (§5.3). Debe ser EVIDENTE en la captura:
+   declara que los valores fueron sustituidos — no es maquillaje. Amber sobre el
+   fondo oscuro de la cara. */
+#present-badge {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  padding: 6px 16px;
+  border-radius: 0 0 8px 8px;
+  background: var(--ambar, #f6a723);
+  color: #14140f;
+  font: 700 12px/1.2 ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  white-space: nowrap;
+}
+:root[data-present="1"] body { outline: 2px solid var(--ambar, #f6a723); outline-offset: -2px; }
