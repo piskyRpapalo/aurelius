@@ -30,6 +30,11 @@ window.AURELIUS_ORACULO = (function () {
   // corresponden a ~3.3B ACTIVOS. No se transfieren a arquitecturas densas.
   var ANCLA_VELOCIDAD = { arch: "moe", activos_b: 3.3, tok_s: 35 };
 
+  // Roofline para DENSOS (§5.1): el decode es memory-bound → cada token lee TODOS
+  // los pesos una vez → tok/s ≈ ancho_banda ÷ peso × η. Es DERIVACIÓN, no medición.
+  var BW_MEM_GBS = 80;     // ancho de banda de memoria ASUMIDO (Beelink DDR5 dual-ch ~80–90 GB/s)
+  var ETA_ROOFLINE = 0.75; // eficiencia típica del roofline (0.7–0.8)
+
   // footprint = RAM = f(parámetros TOTALES). Correcto para denso Y MoE: todos los
   // pesos residen en memoria aunque en un MoE solo una fracción compute por token.
   function footprint(paramsB, quant) {
@@ -54,11 +59,23 @@ window.AURELIUS_ORACULO = (function () {
     if (model.arch === "moe") {
       return { etiqueta: "ESTIMADO", texto: "velocidad [ESTIMADA] — MoE sin medir en este HW" };
     }
-    // Denso: la única medición que tenemos es de un MoE de ~3.3B activos. No aplica.
+    // Denso: NO se mide, pero SÍ se DERIVA por roofline (memory-bound). NO DATA es
+    // para lo que no sabes; esto se sabe por deducción → se etiqueta [DERIVADO] con
+    // la fórmula y el ancho de banda asumido, no se esconde ni se finge medido.
+    var q = "q4";
+    var qs = ("" + (model.quant || "")).toLowerCase();
+    if (qs.indexOf("q8") >= 0) q = "q8";
+    else if (qs.indexOf("f16") >= 0 || qs.indexOf("fp16") >= 0) q = "f16";
+    var pB = typeof model.active_b === "number" ? model.active_b : null; // denso: active = total
+    if (pB === null) {
+      return { etiqueta: "NO APLICABLE", texto: "velocidad [NO APLICABLE] — falta el tamaño para derivarla" };
+    }
+    var pesoGB = pB * (GB_POR_B[q] || GB_POR_B.q4);
+    var toks = Math.round((BW_MEM_GBS / pesoGB) * ETA_ROOFLINE);
     return {
-      etiqueta: "NO APLICABLE",
-      texto: "velocidad [NO APLICABLE] — la única medición (" + ANCLA_VELOCIDAD.tok_s +
-        " tok/s) es de un MoE de ~" + ANCLA_VELOCIDAD.activos_b + "B activos; un modelo denso es más lento y aquí no se estima a ojo",
+      etiqueta: "DERIVADO",
+      texto: "~" + toks + " tok/s [DERIVADO] — roofline BW÷peso×η (BW≈" + BW_MEM_GBS +
+        " GB/s asumido · η≈" + ETA_ROOFLINE + " · peso≈" + pesoGB.toFixed(1) + " GB)",
     };
   }
 
