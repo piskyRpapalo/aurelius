@@ -8,6 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
   <title>Aurelius · el Preceptor</title>
   <link rel="stylesheet" href="camino.css" />
+  <link rel="stylesheet" href="pizarra.css" />
   <style>
     /* Solar-punk oscuro: fondo #1a1a1a + vena violeta, ojo ámbar del busto. */
     :root {
@@ -249,6 +250,7 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
     <select class="au-lang" id="au-lang" aria-label="Language"></select>
     <span class="au-noverif" id="au-noverif" hidden>⚠ auto</span>
     <button type="button" class="au-chemin" id="au-chemin" aria-expanded="false" aria-controls="au-drawer">The Path ▸</button>
+    <button type="button" class="au-chemin" id="au-pizarra" aria-controls="au-pizarra-modal">⌨ Slate</button>
   </header>
 
   <main id="log">
@@ -292,9 +294,24 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
     </div>
   </aside>
 
+  <!-- La Pizarra (BLOQUE 4): terminal SIMULADO — componente EN LÍNEA del documento
+       único (SIN iframe, SIN página, SIN ruta). Cliente-side puro: no hay endpoint de
+       ejecución en el backend, ni desactivado. Lo que no existe no se puede explotar. -->
+  <div class="pz-modal" id="au-pizarra-modal" hidden role="dialog" aria-label="La Pizarra" aria-modal="true">
+    <div class="pz-backdrop" data-pz-cerrar></div>
+    <div class="pz-panel">
+      <div class="pz-bar">
+        <span class="pz-bar-t">La Pizarra</span>
+        <button type="button" class="pz-close" data-pz-cerrar aria-label="Close">✕</button>
+      </div>
+      <div id="au-pizarra-mount"></div>
+    </div>
+  </div>
+
   <script src="i18n.js"></script>
   <script src="oraculo.js"></script>
   <script src="camino.js"></script>
+  <script src="pizarra.js"></script>
   <script>
     "use strict";
     (function () {
@@ -583,6 +600,27 @@ EL ACTO DE FIRMAR (markdown): cuando pidas al usuario firmar un artefacto, prese
       backdrop.addEventListener("click", cerrarDrawer);
       document.addEventListener("keydown", function (e) {
         if (e.key === "Escape" && drawer.getAttribute("data-abierto") === "oui") { cerrarDrawer(); chemin.focus(); }
+      });
+
+      // === La Pizarra (BLOQUE 4) — modal de terminal SIMULADO, montado EN LÍNEA
+      //     (sin iframe/página/ruta). AURELIUS_PIZARRA no toca red ni backend. ===
+      var pizModal = document.getElementById("au-pizarra-modal");
+      var pizBtn = document.getElementById("au-pizarra");
+      var pizAPI = null;
+      function abrirPizarra() {
+        if (!pizAPI && window.AURELIUS_PIZARRA) {
+          pizAPI = window.AURELIUS_PIZARRA.montar(document.getElementById("au-pizarra-mount"));
+        }
+        pizModal.hidden = false; pizModal.setAttribute("aria-hidden", "false");
+        var inp = document.getElementById("pz-in"); if (inp) inp.focus();
+      }
+      function cerrarPizarra() { pizModal.hidden = true; pizModal.setAttribute("aria-hidden", "true"); }
+      if (pizBtn) pizBtn.addEventListener("click", abrirPizarra);
+      pizModal.querySelectorAll("[data-pz-cerrar]").forEach(function (el) {
+        el.addEventListener("click", cerrarPizarra);
+      });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !pizModal.hidden) { cerrarPizarra(); if (pizBtn) pizBtn.focus(); }
       });
 
       // El Tótem DESPIERTA (BLOQUE A · recompensa de M0): el componente del Camino
