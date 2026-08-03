@@ -94,6 +94,13 @@
     .on-q { font: 600 13px/1.3 ui-monospace, monospace; color: var(--vena); margin-bottom: 8px; letter-spacing: 0.02em; }
     .on-hw { background: var(--code); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 10px 12px; font: 400 13px/1.5 ui-monospace, monospace; color: var(--tenue); }
     .on-hw-ok { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font: 400 13px/1 ui-monospace, monospace; color: var(--texto); cursor: pointer; }
+    .on-pred-q { font: 400 13px/1.4 ui-monospace, monospace; color: var(--texto); margin-bottom: 8px; }
+    .on-pred-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .on-pred-row input { flex: 1 1 120px; min-width: 0; }
+    .on-pred-err { margin-top: 6px; font: 400 12px/1.4 ui-monospace, monospace; color: var(--error); }
+    .on-pred-err:empty { display: none; }
+    .on-pred-delta { margin-top: 8px; font: 600 13px/1.4 ui-monospace, monospace; color: var(--ambar); }
+    .on-pred-delta:empty { display: none; }
     .on-opts { display: flex; gap: 8px; flex-wrap: wrap; }
     .on-b { background: #17141d; color: var(--tenue); border: 1px solid var(--vena-tenue); border-radius: 8px; font: 600 12px/1 ui-monospace, monospace; padding: 10px 14px; min-height: 44px; cursor: pointer; }
     .on-b:hover { border-color: var(--vena); }
@@ -262,9 +269,18 @@
           + '<li><div class="on-q">' + esc(I.t("on.name")) + '</div>'
           + '<input type="text" id="m0-nom" placeholder="' + esc(I.t("m0.nom")) + '" /></li>'
           + '<li><div class="on-q">' + esc(I.t("on.hardware")) + '</div>'
+          // Predicción previa (Apéndice B.2): adivinar ANTES de revelar (Bjork).
+          + '<div class="on-pred" id="on-pred">'
+          + '<div class="on-pred-q">' + esc(I.t("on.predictQ")) + '</div>'
+          + '<div class="champ on-pred-row"><input type="number" id="on-pred-ram" min="1" max="4096" placeholder="' + esc(I.t("on.predictPh")) + '" />'
+          + '<button type="button" class="on-b" id="on-pred-btn">' + esc(I.t("on.predictReveal")) + '</button></div>'
+          + '<p class="on-nota">' + esc(I.t("on.predictWhy")) + '</p>'
+          + '<div class="on-pred-err" id="on-pred-err" role="alert"></div></div>'
+          + '<div class="on-hw-wrap" id="on-hw-wrap" hidden>'
           + '<div class="on-hw" id="on-hw">' + esc(I.t("on.hardwareDetecting")) + '</div>'
+          + '<div class="on-pred-delta" id="on-pred-delta"></div>'
           + '<label class="on-hw-ok"><input type="checkbox" id="on-hw-ok" checked /> ' + esc(I.t("on.hardwareConfirm")) + '</label>'
-          + '<div class="champ" id="on-hw-fix" hidden><input type="number" id="on-hw-ram" min="1" max="4096" placeholder="' + esc(I.t("on.hardwareCorrect")) + '" /></div></li>'
+          + '<div class="champ" id="on-hw-fix" hidden><input type="number" id="on-hw-ram" min="1" max="4096" placeholder="' + esc(I.t("on.hardwareCorrect")) + '" /></div></div></li>'
           + '<li><div class="on-q">' + esc(I.t("on.level")) + '</div>'
           + '<div class="on-opts" id="on-nivel">'
           + '<button type="button" class="on-b" data-v="principiante">' + esc(I.t("level.beginner")) + '</button>'
@@ -303,6 +319,33 @@
         // Hardware: NO se pregunta — el Oráculo lo detecta; se muestra y se confirma/corrige.
         var hwOk = document.getElementById("on-hw-ok");
         hwOk.addEventListener("change", function () { document.getElementById("on-hw-fix").hidden = hwOk.checked; });
+
+        // Predicción previa (Apéndice B.2): se RETIENE la RAM detectada hasta que
+        // el usuario apuesta; al revelar se pinta el análisis + la desviación.
+        var predBtn = document.getElementById("on-pred-btn");
+        var predInput = document.getElementById("on-pred-ram");
+        var predErr = document.getElementById("on-pred-err");
+        var deltaEl = document.getElementById("on-pred-delta");
+        var ramDetectada = null, deteccionLista = false, predichoGb = null;
+        function pintarDelta() {
+          if (predichoGb === null) return;
+          if (ramDetectada !== null) {
+            var diff = Math.round(Math.abs(predichoGb - ramDetectada) * 10) / 10;
+            var pct = ramDetectada > 0 ? Math.round((diff / ramDetectada) * 100) : 0;
+            deltaEl.textContent = I.t("on.predictDelta", { guess: predichoGb, real: ramDetectada, diff: diff, pct: pct });
+          } else if (deteccionLista) {
+            deltaEl.textContent = I.t("on.predictNoMeasure", { guess: predichoGb });
+          }
+        }
+        predBtn.addEventListener("click", function () {
+          var g = parseFloat(predInput.value);
+          if (!isFinite(g) || g <= 0) { predErr.textContent = I.t("on.predictErr"); predInput.focus(); return; }
+          predErr.textContent = ""; predichoGb = Math.round(g * 10) / 10;
+          document.getElementById("on-pred").hidden = true;
+          document.getElementById("on-hw-wrap").hidden = false;
+          pintarDelta();
+        });
+
         // Inventario (RAM real) + manifiesto de modelos: el Oráculo LEE del
         // manifiesto para nombrar tags concretos que caben — no los hardcodea.
         Promise.all([
@@ -313,11 +356,14 @@
           var hw = document.getElementById("on-hw");
           var ram = inv && inv.hardware && inv.hardware.hardware ? inv.hardware.hardware.ram_disponible_gb : null;
           if (window.AURELIUS_ORACULO && typeof ram === "number") {
+            ramDetectada = Math.round(ram * 10) / 10;
             hw.textContent = window.AURELIUS_ORACULO.resumen(window.AURELIUS_ORACULO.analizar(ram), manifiesto);
           } else {
             hw.textContent = I.t("on.hardwareUnknown"); // honest sensors: no lo estima a ojo
             hwOk.checked = false; document.getElementById("on-hw-fix").hidden = false;
           }
+          deteccionLista = true;
+          pintarDelta();
         });
 
         btn.addEventListener("click", async function () {

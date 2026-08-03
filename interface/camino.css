@@ -60,6 +60,14 @@
 .cm-scope .on-q { font: 600 13px/1.3 ui-monospace, monospace; color: var(--vena); margin-bottom: 8px; letter-spacing: 0.02em; }
 .cm-scope .on-hw { background: var(--code); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 10px 12px; font: 400 13px/1.5 ui-monospace, monospace; color: var(--tenue); }
 .cm-scope .on-hw-ok { display: inline-flex; align-items: center; gap: 8px; margin-top: 8px; font: 400 13px/1 ui-monospace, monospace; color: var(--texto); cursor: pointer; }
+/* Predicción previa (Apéndice B.2): adivinar antes de revelar. */
+.cm-scope .on-pred-q { font: 400 13px/1.4 ui-monospace, monospace; color: var(--texto); margin-bottom: 8px; }
+.cm-scope .on-pred-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cm-scope .on-pred-row input { flex: 1 1 120px; min-width: 0; }
+.cm-scope .on-pred-err { min-height: 0; margin-top: 6px; font: 400 12px/1.4 ui-monospace, monospace; color: var(--error); }
+.cm-scope .on-pred-err:empty { display: none; }
+.cm-scope .on-pred-delta { margin-top: 8px; font: 600 13px/1.4 ui-monospace, monospace; color: var(--ambar); }
+.cm-scope .on-pred-delta:empty { display: none; }
 .cm-scope .on-opts { display: flex; gap: 8px; flex-wrap: wrap; }
 .cm-scope .on-b { background: #17141d; color: var(--tenue); border: 1px solid var(--vena-tenue); border-radius: 8px; font: 600 12px/1 ui-monospace, monospace; padding: 10px 14px; min-height: 44px; cursor: pointer; }
 .cm-scope .on-b:hover { border-color: var(--vena); }

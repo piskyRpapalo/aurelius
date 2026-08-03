@@ -173,9 +173,19 @@ window.AURELIUS_CAMINO = (function () {
         + '<li><div class="on-q">' + esc(I.t("on.name")) + '</div>'
         + '<input type="text" id="m0-nom" placeholder="' + esc(I.t("m0.nom")) + '" /></li>'
         + '<li><div class="on-q">' + esc(I.t("on.hardware")) + '</div>'
+        // Predicción previa (Apéndice B.2): adivinar ANTES de revelar. El hueco
+        // entre lo que crees y lo medido es donde ocurre el aprendizaje (Bjork).
+        + '<div class="on-pred" id="on-pred">'
+        + '<div class="on-pred-q">' + esc(I.t("on.predictQ")) + '</div>'
+        + '<div class="champ on-pred-row"><input type="number" id="on-pred-ram" min="1" max="4096" placeholder="' + esc(I.t("on.predictPh")) + '" />'
+        + '<button type="button" class="on-b" id="on-pred-btn">' + esc(I.t("on.predictReveal")) + '</button></div>'
+        + '<p class="on-nota">' + esc(I.t("on.predictWhy")) + '</p>'
+        + '<div class="on-pred-err" id="on-pred-err" role="alert"></div></div>'
+        + '<div class="on-hw-wrap" id="on-hw-wrap" hidden>'
         + '<div class="on-hw" id="on-hw">' + esc(I.t("on.hardwareDetecting")) + '</div>'
+        + '<div class="on-pred-delta" id="on-pred-delta"></div>'
         + '<label class="on-hw-ok"><input type="checkbox" id="on-hw-ok" checked /> ' + esc(I.t("on.hardwareConfirm")) + '</label>'
-        + '<div class="champ" id="on-hw-fix" hidden><input type="number" id="on-hw-ram" min="1" max="4096" placeholder="' + esc(I.t("on.hardwareCorrect")) + '" /></div></li>'
+        + '<div class="champ" id="on-hw-fix" hidden><input type="number" id="on-hw-ram" min="1" max="4096" placeholder="' + esc(I.t("on.hardwareCorrect")) + '" /></div></div></li>'
         + '<li><div class="on-q">' + esc(I.t("on.level")) + '</div>'
         + '<div class="on-opts" id="on-nivel">'
         + '<button type="button" class="on-b" data-v="principiante">' + esc(I.t("level.beginner")) + '</button>'
@@ -214,6 +224,39 @@ window.AURELIUS_CAMINO = (function () {
       // Hardware: NO se pregunta — el Oráculo lo detecta; se muestra y se confirma/corrige.
       var hwOk = document.getElementById("on-hw-ok");
       hwOk.addEventListener("change", function () { document.getElementById("on-hw-fix").hidden = hwOk.checked; });
+
+      // Predicción previa (Apéndice B.2): se RETIENE la RAM detectada hasta que el
+      // usuario apuesta; al revelar se pinta el análisis + la desviación firmada.
+      // El hueco predicción↔medición es donde ocurre el aprendizaje (Bjork).
+      var predBtn = document.getElementById("on-pred-btn");
+      var predInput = document.getElementById("on-pred-ram");
+      var predErr = document.getElementById("on-pred-err");
+      var deltaEl = document.getElementById("on-pred-delta");
+      var ramDetectada = null;   // GB medidos (o null si el inventario no reporta)
+      var deteccionLista = false;
+      var predichoGb = null;
+
+      function pintarDelta() {
+        if (predichoGb === null) return;
+        if (ramDetectada !== null) {
+          var diff = Math.round(Math.abs(predichoGb - ramDetectada) * 10) / 10;
+          var pct = ramDetectada > 0 ? Math.round((diff / ramDetectada) * 100) : 0;
+          deltaEl.textContent = I.t("on.predictDelta", { guess: predichoGb, real: ramDetectada, diff: diff, pct: pct });
+        } else if (deteccionLista) {
+          // honest sensors: sin medición no se inventa un marcador — se declara.
+          deltaEl.textContent = I.t("on.predictNoMeasure", { guess: predichoGb });
+        }
+      }
+
+      predBtn.addEventListener("click", function () {
+        var g = parseFloat(predInput.value);
+        if (!isFinite(g) || g <= 0) { predErr.textContent = I.t("on.predictErr"); predInput.focus(); return; }
+        predErr.textContent = ""; predichoGb = Math.round(g * 10) / 10;
+        document.getElementById("on-pred").hidden = true;
+        document.getElementById("on-hw-wrap").hidden = false;
+        pintarDelta(); // si la detección aún no llegó, la pinta el .then de abajo
+      });
+
       // Inventario (RAM real) + manifiesto de modelos: el Oráculo LEE del manifiesto
       // para nombrar tags concretos que caben — no los hardcodea.
       Promise.all([
@@ -224,11 +267,14 @@ window.AURELIUS_CAMINO = (function () {
         var hw = document.getElementById("on-hw");
         var ram = inv && inv.hardware && inv.hardware.hardware ? inv.hardware.hardware.ram_disponible_gb : null;
         if (window.AURELIUS_ORACULO && typeof ram === "number") {
+          ramDetectada = Math.round(ram * 10) / 10;
           hw.textContent = window.AURELIUS_ORACULO.resumen(window.AURELIUS_ORACULO.analizar(ram), manifiesto);
         } else {
           hw.textContent = I.t("on.hardwareUnknown"); // honest sensors: no lo estima a ojo
           hwOk.checked = false; document.getElementById("on-hw-fix").hidden = false;
         }
+        deteccionLista = true;
+        pintarDelta(); // si el usuario ya reveló antes de que llegara la detección
       });
 
       btn.addEventListener("click", async function () {
