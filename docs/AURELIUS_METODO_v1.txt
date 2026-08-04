@@ -1,0 +1,483 @@
+AURELIUS - METODO PEDAGOGICO v1.0.0
+Doctrina de diseno. Texto plano absoluto.
+Fecha: 2026-08-04
+Autor: el Preceptor. Canoniza: el Soberano.
+Clase: doctrina. Rige bajo el Protocolo del MD Evolutivo.
+
+Metrica: porcentaje de modulos que cumplen la Regla Unica sin excepcion declarada.
+Umbral: no se enmienda sin al menos 3 sesiones reales registradas.
+Presupuesto: 24 KB. n_medicion: 3.
+
+====================================================================
+SECCION 0. QUE ES AURELIUS Y QUE NO ES
+====================================================================
+
+Aurelius es un preceptor local, portable y soberano. Corre sin GPU, en 8 GB de
+RAM, sobre el hardware que el usuario ya tiene. Su materia no es "programacion":
+es la fisica del computo que el usuario da por sabida sin haberla visto nunca.
+
+Aurelius NO es:
+  - Un curso. Un curso expone; Aurelius mide.
+  - Un juego con puntos. La recompensa es la medicion propia, no una insignia.
+  - Un sistema de castigo. Ver Seccion 1.
+  - Un producto de pago. El repositorio pide estrellas, no dinero.
+
+La frase que lo separa de todo lo demas: un tutorial te ensena que es un token;
+Aurelius te hace leer el contador de tokens de TU inferencia, en TU maquina, y
+firmar el numero que has visto.
+
+====================================================================
+SECCION 1. LA REGLA UNICA (el filtro de toda friccion)
+====================================================================
+
+TODA FRICCION DE AURELIUS DEBE SER PREDICCION O RECUPERACION.
+SI SOLO IMPONE UN COSTE, NO ENTRA.
+
+Test de tres preguntas, en orden. Basta un NO para rechazar el mecanismo:
+
+  1. Obliga al usuario a PREDECIR algo antes de que el sistema se lo muestre?
+  2. O le obliga a RECUPERAR algo de su memoria, o a RECONSTRUIR una causa a
+     partir de evidencia?
+  3. Si la respuesta a las dos anteriores es no: que aprende exactamente el
+     usuario del coste que se le impone? Si la respuesta es "a cumplir el
+     ritual", el mecanismo se descarta.
+
+Fundamento: el efecto de generacion y las dificultades deseables (Bjork) hablan
+de esfuerzo de RECUPERACION. El esfuerzo que construye memoria es el de traer
+algo a la mente, no el de sufrir una penalizacion. Un sistema que cierra el
+terminal del usuario no le hace recuperar nada: le hace perder trabajo. Lo que
+se aprende ahi no es a escribir mejor codigo, sino a temer al sistema.
+
+APLICACION - COMO SE REESCRIBE UN MECANISMO DE CASTIGO
+
+  Castigo original                     Version que si entra
+  ------------------------------------ ------------------------------------
+  Matar procesos al superar la          Preguntar a que temperatura crees que
+  temperatura umbral                    llegara tu bucle; luego mostrar la
+                                        curva real medida
+  Asfixiar la memoria del proceso       Pedir la prediccion del pico de memoria
+  hasta que aborte                      antes de ejecutar; comparar
+  Retirar el bit de ejecucion a los     Mostrar los scripts sin tocar en 90 dias
+  7 dias                                y preguntar que hacen, ANTES de mostrar
+                                        el codigo
+  Cerrar el shell tras N errores        Mostrar solo la linea del fallo, no la
+                                        razon; el usuario infiere la razon
+  Bloquear misiones por deuda           Marcar el tema como "sin base medida" y
+  acumulada                             recordarlo al abrirlo; nunca bloquear
+
+Misma fisica. Mismo rigor. Cero crueldad. Y todo pasa a cumplir el mecanismo de
+prediccion previa que ya es canon.
+
+EXCEPCION UNICA ADMITIDA: el Modo Catastrofe (Seccion 4), porque su friccion es
+recuperacion pura - el usuario diagnostica. Y aun asi es opt-in y reversible.
+
+====================================================================
+SECCION 2. EL ABECEDARIO UNIVERSAL
+====================================================================
+
+2.1 QUE CAMBIA RESPECTO A LA VERSION ANTERIOR
+
+El Abecedario deja de ser un modulo fundacional unico y pasa a ser un PATRON
+TRANSVERSAL: cada tema de Aurelius abre con su propio Abecedario. No se entra a
+un tema sin haber medido sus magnitudes en el hardware propio.
+
+Razon: el usuario no llega ignorante en bloque y sabio en bloque. Puede dominar
+la memoria y no saber que es un ohmio. El Abecedario por tema respeta eso.
+
+2.2 CONTRATO DEL ABECEDARIO (invariante para todos los temas)
+
+  - Entre 5 y 10 conceptos por tema. Menos de 5 no es una base; mas de 10 no se
+    termina en una sesion y se abandona.
+  - Cada concepto sigue SIEMPRE el mismo ciclo de cinco pasos:
+      (1) PREGUNTA      El sistema plantea el concepto sin definirlo.
+      (2) PREDICCION    El usuario escribe su respuesta o su numero estimado.
+                        Nada avanza sin este paso.
+      (3) MEDICION      El usuario ejecuta el comando o toma la medida fisica.
+      (4) EL HUECO      El sistema muestra prediccion y medicion juntas. El
+                        hueco entre ambas ES la leccion. No se corrige: se ve.
+      (5) FIRMA         El usuario firma el par. Queda en su registro.
+  - DOS RUTAS DE EVIDENCIA COMO MINIMO por concepto. Si la ruta primaria no
+    existe en esa maquina, se usa la secundaria. Si ninguna existe, se emite
+    NO DATA y el concepto se marca como no medido, con el motivo. Jamas se
+    inventa un valor plausible ni se muestra un ejemplo generico como si fuera
+    la medida del usuario.
+  - El sistema NUNCA bloquea el avance. Un tema sin base medida queda marcado
+    como tal y se recuerda al abrirlo. El usuario es un adulto.
+  - Todo el registro vive en texto plano, local, exportable y borrable por el
+    usuario. Es su diario, no vigilancia.
+
+2.3 ADVERTENCIA ELECTRICA (obligatoria, no negociable)
+
+  Todo tema que implique manipulacion electrica se limita a CORRIENTE CONTINUA
+  DE 24 VOLTIOS O MENOS. En la practica: 3.3 V, 5 V, 12 V, y pilas.
+
+  AURELIUS NO ENSENA NI PROPONE NINGUNA PRACTICA SOBRE RED ELECTRICA DOMESTICA
+  (110 V / 230 V CA), NI SOBRE BATERIAS DE ALTA CAPACIDAD, NI SOBRE
+  CONDENSADORES DE ALTA TENSION.
+
+  Esta advertencia aparece al inicio del tema, no en un pie de pagina, y no se
+  puede desactivar. Si un modulo futuro necesita saltarsela, no entra.
+
+  Regla adicional: toda medida electrica se hace con el circuito desconectado de
+  la fuente salvo cuando la medida exige lo contrario (tension), y en ese caso
+  el paso lo declara explicitamente.
+
+2.4 TEMAS SEMILLA Y SUS ABECEDARIOS
+
+Se construyen DE UNO EN UNO. Un tema terminado y usado vale mas que ocho
+esbozados. El orden es de mas fisico a mas abstracto, porque lo abstracto se
+apoya en lo fisico y no al reves.
+
+TEMA 1 - MAGNITUDES Y MEDIDA
+  Conceptos: que es una unidad y que es una escala; masa y peso; orden de
+  magnitud; el error de medida; precision frente a exactitud; la cifra
+  significativa.
+  Rutas de evidencia: bascula de cocina y objetos conocidos; regla y calibre si
+  lo hay. Ruta secundaria: pesos declarados en etiquetas de producto.
+  Prediccion tipo: "cuanto crees que pesa este objeto" antes de ponerlo en la
+  bascula. El hueco entre intuicion y bascula es la primera leccion de todo
+  Aurelius.
+
+TEMA 2 - ELECTRICIDAD CONTINUA (<= 24 V CC)
+  Conceptos: tension; corriente; resistencia; la ley de Ohm como relacion y no
+  como formula que se memoriza; potencia; energia frente a potencia; la caida
+  de tension.
+  Rutas de evidencia: multimetro sobre una pila y una resistencia. Ruta
+  secundaria: etiquetas de fuentes de alimentacion (entrada/salida declarada) y
+  calculo sobre ellas.
+  Prediccion tipo: predecir la corriente antes de medirla, dada la tension y la
+  resistencia; predecir el brillo relativo de un LED al cambiar la resistencia.
+  Advertencia de la Seccion 2.3 activa.
+
+TEMA 3 - COMPONENTES
+  Conceptos: resistencia y su codigo de colores; condensador; diodo y LED;
+  interruptor; el circuito cerrado; el cortocircuito y por que se evita.
+  Rutas de evidencia: componentes fisicos y multimetro. Ruta secundaria: lectura
+  de codigos de color en fotografias propias del usuario.
+  Prediccion tipo: leer el codigo de colores y predecir el valor antes de medir
+  con el ohmimetro. El hueco incluye la tolerancia declarada del componente.
+
+TEMA 4 - EL COMPUTO COMO FISICA
+  Conceptos: bit y byte; el ciclo de reloj; la instruccion; el vatio en el
+  silicio; el calor como producto inevitable del computo; el estrangulamiento
+  termico.
+  Rutas de evidencia: lectura de sensores del propio equipo y carga sintetica
+  controlada. Ruta secundaria: especificacion declarada del fabricante y
+  medida de tiempo de ejecucion.
+  Prediccion tipo: predecir cuantos grados subira el equipo tras 60 segundos de
+  carga en un nucleo.
+
+TEMA 5 - MEMORIA Y ALMACENAMIENTO
+  Conceptos: RAM frente a disco; la unidad real de un gigabyte; que ocupa un
+  proceso; la cache; por que cargar es lento y usar es rapido; el intercambio.
+  Rutas de evidencia: lectura del estado de memoria del sistema y tamano de
+  ficheros reales. Ruta secundaria: gestor de tareas grafico del sistema.
+  Prediccion tipo: predecir cuanta RAM ocupara un fichero de modelo al cargarse,
+  conociendo su tamano en disco. Es la prediccion que ya existe en el modulo
+  inicial y funciona.
+
+TEMA 6 - MODELOS DE LENGUAJE, DESDE ABAJO
+  Conceptos: el token y por que no es una palabra; el peso; la cuantizacion; el
+  contexto y su coste; la latencia de generacion; y - el mas importante - la
+  CALIBRACION: por que un modelo suena seguro justo cuando se equivoca.
+  Rutas de evidencia: contador de tokens del propio motor de inferencia y
+  tamano del fichero de pesos. Ruta secundaria: comparacion de dos ficheros de
+  cuantizacion distinta del mismo modelo.
+  Prediccion tipo: predecir cuantos tokens tendra una frase antes de tokenizarla.
+  Casi nadie acierta, y ese fallo es el que ensena.
+
+TEMA 7 - EL SISTEMA COMO ORGANISMO
+  Conceptos: el proceso; el sistema de ficheros; el permiso; el servicio; el
+  registro de eventos; la senal.
+  Rutas de evidencia: inspeccion del sistema propio. Ruta secundaria: registro
+  de eventos exportado.
+  Prediccion tipo: predecir cuantos procesos hay corriendo ahora mismo.
+
+TEMA 8 - REDES Y LIMITES
+  Conceptos: direccion; puerto; latencia; ancho de banda; el limite fisico de la
+  velocidad; lo local frente a lo remoto.
+  Rutas de evidencia: medida de latencia contra la puerta de enlace propia.
+  Ruta secundaria: NO DATA declarado si no hay red, con el tema marcado.
+  Prediccion tipo: predecir la latencia a la propia puerta de enlace y a un
+  servidor lejano, y razonar la diferencia por distancia fisica.
+
+CORRECCIONES DE CONTENIDO YA CANONIZADAS (Apendice B, vigentes)
+  - La inyeccion de prompts NO se detiene tratando la entrada como texto inerte.
+    Eso es una capa, y las capas ceden. El suelo es arquitectonico: el modelo no
+    tiene manos.
+  - LLaMA es de pesos abiertos con licencia restrictiva, no "ecosistema abierto".
+  - RLHF: los humanos ORDENAN respuestas, se entrena un modelo de recompensa, y
+    el aprendizaje por refuerzo va contra ese modelo, no contra los humanos.
+  - La calibracion es concepto obligatorio del Tema 6.
+
+====================================================================
+SECCION 3. EL ANCLAJE DE CALIBRACION
+====================================================================
+
+3.1 QUE MIDE
+
+La distancia entre lo que el usuario cree que sabe y lo que demuestra. No mide
+capacidad. No emite juicio. Registra trayectoria.
+
+3.2 MECANICA
+
+  Antes de cada modulo, el usuario declara y firma dos cosas:
+    - confianza: entero de 1 a 5 sobre su comprension del tema.
+    - prediccion: si espera completar el modulo sin ayuda (si / no).
+  Despues del modulo, el sistema registra el resultado observado:
+    - exito completo / exito parcial / no completado.
+
+3.3 LA FORMULA, VISIBLE Y EN EL DOCUMENTO
+
+  confianza_normalizada = (confianza - 1) / 4          -> valor entre 0 y 1
+  resultado_normalizado:  exito completo = 1.0
+                          exito parcial  = 0.5
+                          no completado  = 0.0
+  delta = confianza_normalizada - resultado_normalizado
+
+  delta positivo  -> sobreestimacion
+  delta negativo  -> infraestimacion
+  delta cercano a cero -> calibrado
+
+  El indicador que se muestra es la MEDIA MOVIL de los ultimos 5 modulos, nunca
+  un modulo aislado. Un dato suelto no dice nada sobre nadie.
+
+  La formula esta impresa en la interfaz. El usuario puede recalcularla a mano
+  con sus propios registros en texto plano y obtener el mismo numero. Una
+  metrica que no se puede reproducir a mano no es una medida: es un veredicto.
+
+3.4 PROHIBICIONES DEL ANCLAJE (suelo, no se enmiendan)
+
+  - CERO BIOMETRIA. Ni latencia entre pulsaciones, ni ritmo de escritura, ni
+    tiempo de pausa, ni camara, ni microfono. Nada que infiera el estado
+    interno del usuario a partir de su cuerpo.
+  - CERO OPACIDAD. Ningun ajuste oculto "para evitar que el usuario haga
+    trampas". Un sistema que oculta su formula al usuario para vigilarlo mejor
+    no es un preceptor: es un jefe malo.
+  - CERO JUICIO SOBRE LA PERSONA. Se permite: "en enero sobreestimabas 2 puntos;
+    en marzo, 0.4". Queda prohibido: "eres lento", "no se te da bien", "nivel
+    bajo". Se registra trayectoria, nunca veredicto de capacidad.
+  - CERO USO EXTERNO. El delta no se exporta, no se comparte, no se publica, no
+    se compara con otros usuarios. Es del usuario y solo del usuario.
+  - EL USUARIO PUEDE BORRARLO ENTERO en cualquier momento, sin friccion y sin
+    preguntas de confirmacion culpabilizadoras.
+
+3.5 QUE SE HACE CON EL DELTA
+
+  Nada automatico. El delta se muestra como curva historica y el usuario decide.
+  La unica adaptacion admitida es sugerir - nunca imponer - repasar un tema
+  cuando la sobreestimacion en el es persistente durante 5 modulos o mas.
+
+  Razon: la calibracion es una habilidad, no un diagnostico. Mostrar la curva ya
+  la mejora. Actuar sobre ella sin permiso convierte una herramienta de
+  autoconocimiento en un tutor que castiga.
+
+====================================================================
+SECCION 4. EL MODO CATASTROFE
+====================================================================
+
+4.1 QUE ES
+
+Aurelius rompe algo, y el usuario diagnostica. No es un examen: es la unica
+forma honesta de aprender a diagnosticar, porque el diagnostico no se puede
+practicar leyendo.
+
+Cumple la Regla Unica por recuperacion pura: el usuario debe reconstruir una
+causa a partir de evidencia. Es la friccion mejor justificada del sistema.
+
+4.2 LAS CINCO REGLAS DE SEGURIDAD (suelo)
+
+  R1. SANDBOX SIEMPRE. La catastrofe ocurre en un entorno desechable creado por
+      Aurelius para la sesion: ficheros propios, servicios propios, procesos
+      propios. Aurelius NUNCA rompe nada del sistema real del usuario, ni sus
+      datos, ni su configuracion, ni su red.
+  R2. REVERSIBLE EN UN PASO. Existe siempre un comando unico y visible que
+      deshace la catastrofe entera y devuelve el entorno a su estado inicial.
+      Se muestra al empezar, no al fallar.
+  R3. OPT-IN EXPLICITO. El modo no arranca solo, no se activa por progreso, no
+      aparece de sorpresa. El usuario lo elige cada vez.
+  R4. SALIDA SIEMPRE ABIERTA. Rendirse esta permitido en cualquier momento y no
+      penaliza. Al rendirse, el sistema muestra la causa y el razonamiento
+      completo. Rendirse enseñado vale mas que insistir a ciegas.
+  R5. CERO PERDIDA. Ninguna catastrofe puede destruir trabajo del usuario,
+      credenciales, historial ni el propio registro de Aurelius. Si un escenario
+      necesitase eso para funcionar, el escenario no entra.
+
+4.3 EL CICLO DE UNA CATASTROFE
+
+  (1) BRIEFING     Se declara el entorno afectado y el comando de reversion.
+  (2) EL FALLO     Aurelius rompe algo y muestra unicamente el SINTOMA, tal como
+                   lo veria alguien que llega a la maquina sin contexto.
+  (3) HIPOTESIS    El usuario escribe su hipotesis ANTES de investigar. Este
+                   paso es obligatorio: es la prediccion, y sin el la sesion es
+                   solo mirar registros.
+  (4) INVESTIGACION El usuario ejecuta lo que quiera dentro del sandbox.
+  (5) VEREDICTO    El usuario declara la causa raiz y propone el arreglo.
+  (6) EL HUECO     Aurelius muestra la causa real, junto a la hipotesis inicial
+                   del usuario. Se registra si la primera hipotesis era correcta
+                   - ese numero, y no el tiempo empleado, es lo que mide
+                   progreso en diagnostico.
+
+4.4 NIVELES
+
+  NIVEL I - UNA CAUSA, SINTOMA DIRECTO
+    Un solo fallo. El sintoma apunta hacia la causa. Ejemplo de forma: un
+    servicio no arranca y el registro de eventos dice exactamente por que.
+
+  NIVEL II - UNA CAUSA, SINTOMA ENGANOSO
+    Un solo fallo, pero el sintoma aparece lejos de la causa. El usuario debe
+    resistir la tentacion de arreglar donde duele.
+
+  NIVEL III - DOS CAUSAS ACOPLADAS
+    Dos fallos simultaneos donde arreglar uno no cambia el sintoma. Ensena la
+    leccion mas dificil: que "no ha mejorado" no significa "no era eso".
+
+  NIVEL LOCURA - opt-in dentro del opt-in
+    Varios fallos simultaneos, evidencia parcialmente contradictoria, y al menos
+    una pista que es un callejon sin salida legitimo. Reglas propias:
+      - Solo se desbloquea tras resolver 5 catastrofes de niveles I a III. No
+        por gatekeeping, sino porque sin base es frustracion pura y el usuario
+        abandona el proyecto entero.
+      - Mantiene R1 a R5 intactas. Locura significa dificil de diagnosticar,
+        JAMAS destructivo ni irreversible.
+      - Limite duro: nunca mas de 3 fallos simultaneos. Cuatro deja de ser
+        diagnostico y pasa a ser azar, y del azar no se aprende nada.
+      - Se permite rendirse igual que en cualquier otro nivel.
+
+4.5 CATALOGO SEMILLA - INCIDENTES REALES
+
+El material diferencial de Aurelius son incidentes que ocurrieron de verdad en
+un rack real, con causa raiz encontrada y cura verificada. Ningun curso los
+tiene. Estos son los que existen documentados y se convierten en escenarios:
+
+  C1 - LA MEMORIA QUE ESTABA LIBRE PERO NO LO ESTABA
+       Fallo de reserva de memoria en acelerador donde el sistema declaraba
+       memoria disponible que no podia usarse, porque la propia cache del
+       fichero del modelo la ocupaba. Ensena: "libre" es una palabra con letra
+       pequena. Nivel II.
+
+  C2 - LA ETIQUETA QUE CAMBIO DEBAJO
+       Una etiqueta de modelo sin sufijo empezo a apuntar a otra variante con
+       comportamiento distinto y no desactivable. Ensena: una referencia movil
+       no es una referencia. Nivel II.
+
+  C3 - EL CONTEXTO DECLARADO QUE NO CABIA
+       Un modelo declara una ventana de contexto enorme; asignarla sin medir
+       bloquea el motor de inferencia. Ensena: lo declarado no es lo disponible.
+       Nivel I.
+
+  C4 - LA GRAMATICA QUE ENVENENABA LA PETICION
+       Una longitud maxima declarada en la definicion de una herramienta se
+       expandia a una gramatica de repeticion que reventaba el servidor en el
+       primer turno, siempre, sin mensaje util. Ensena: el limite de un campo
+       lejano puede matar toda la peticion. Nivel III.
+
+  C5 - EL CONTACTO FISICO
+       Un error de protocolo en bus serie que parecia corrupcion de memoria
+       persistente y era un contacto fisico defectuoso. Ensena: la primera
+       hipotesis debe incluir el cobre. Nivel II.
+
+  Todos ellos se presentan anonimizados: sin nombres de nodo, sin direcciones,
+  sin rutas del rack. El incidente es el material; la infraestructura no se
+  publica.
+
+4.6 CANDIDATO A DELEGACION AL MODELO LOCAL
+
+La expansion de cada incidente a un escenario ejecutable completo (entorno
+sandbox, sintoma, pistas, comando de reversion, texto del briefing) es trabajo
+extenso, mecanico y verificable. Es exactamente lo que debe escribir el cerebro
+local y condensar el carbono. Un escenario por sesion.
+
+====================================================================
+SECCION 5. LO QUE NO ENTRA (registro de descartes, con motivo)
+====================================================================
+
+  - Cualquier mecanismo que mate procesos, cierre terminales, retire permisos o
+    bloquee avance como penalizacion. Motivo: Regla Unica.
+  - Cualquier inferencia biometrica sobre el usuario. Motivo: Seccion 3.4.
+  - El avatar criptografico entre pares con firma post-cuantica. Motivo:
+    estrategico. Aurelius es una carta de presentacion en IA de borde; una capa
+    de notaria criptografica entre nodos hace que el proyecto se lea como
+    criptomoneda. Audiencia equivocada. Archivado, no destruido.
+  - La numeracion M0-M48. Motivo: existen tres numeraciones contradictorias en
+    el material de origen. Se sustituye por nombre mas identificador textual
+    unico. Ver el arsenal.
+  - Todo coste declarado sin medida ("0 W", "carga cognitiva alta"). Motivo:
+    numero sin origen. Se sustituye por NO DATA hasta que exista medicion.
+
+====================================================================
+SECCION 6. PROMPT PARA CLAUDE CODE - AUTOCONTENIDO, LISTO PARA PEGAR
+====================================================================
+
+--- INICIO DEL PROMPT ---
+
+MISION: implantar el Metodo v1 en Aurelius. Solo la FASE 1.
+
+CONTEXTO (no necesitas memoria externa; todo lo necesario esta aqui):
+Aurelius es un preceptor local que ensena la fisica del computo. Su doctrina
+pedagogica acaba de canonizarse en el fichero AURELIUS_METODO_v1.txt, en la raiz
+de la documentacion del repositorio de Aurelius. Leelo entero antes de tocar
+nada. La regla que gobierna todo el diseno es: toda friccion debe ser prediccion
+o recuperacion; si solo impone un coste, no entra.
+
+FASE 1 - SOLO ESTO:
+
+1. Auditoria de conformidad. Recorre los modulos y mecanismos que YA existen en
+   el repositorio y clasifica cada uno en una tabla de texto plano:
+     CUMPLE       - tiene prediccion previa o recuperacion.
+     REESCRIBIBLE - impone coste, pero la Seccion 1 muestra como convertirlo.
+     DESCARTAR    - impone coste sin conversion posible.
+   Una linea por mecanismo, con fichero y linea. No modifiques nada todavia.
+   Salida a docs/AUDITORIA_METODO_v1.md.
+
+2. El Anclaje. Implementa el registro de calibracion de la Seccion 3: dos
+   ficheros de texto plano (uno de declaraciones previas, uno de resultados), la
+   formula exacta tal como esta escrita, la media movil de 5, y la curva
+   historica. Prohibido absolutamente: cualquier senal biometrica, cualquier
+   ajuste oculto, cualquier texto que juzgue a la persona. La formula debe
+   quedar impresa en la interfaz y ser reproducible a mano por el usuario.
+   Incluye la funcion de borrado total sin friccion.
+
+3. La advertencia electrica de la Seccion 2.3 como componente reutilizable, que
+   se renderiza al inicio de cualquier tema marcado como electrico y no se puede
+   desactivar.
+
+4. Tests: la formula del delta con casos limite (confianza 1 y 5, los tres
+   resultados); que la media movil ignora los modulos sin resultado; que el
+   borrado deja el registro vacio y no corrompe el resto.
+
+INVARIANTES:
+  - Editar el codigo fuente, nunca artefactos de compilacion.
+  - Sin dependencias nuevas sin justificar.
+  - Cero rutas absolutas, cero nombres de maquina, cero usuarios en ruta, cero
+    direcciones de red en nada que se publique.
+  - El gate de tipos debe quedar en cero errores y la suite de tests en verde.
+  - Commits atomicos, uno por bloque, mensaje descriptivo.
+  - SIN git push. Propones; el Soberano firma.
+
+REGLA DE PARADA: ante cualquier ambiguedad, PARA y pregunta. No adivines.
+
+FORMATO DE REPORTE, obligatorio, maximo 12 lineas:
+  RONDA METODO-1 . aurelius@<rama>
+  HECHO      <hash> . <una linea por commit>
+  BLOQUEADO  <item> <- <dependencia exacta>
+  DECIDE     <una pregunta, o "nada">
+  VERIFICADO <estado del gate de tipos y de la suite>
+
+Cierra con entre 3 y 6 SUGERENCIAS accionables con coste S/M/L, anexadas al
+fichero de pendientes del repositorio.
+
+PARA al terminar la Fase 1. No encadenes fases.
+
+--- FIN DEL PROMPT ---
+
+====================================================================
+CHANGELOG
+====================================================================
+
+v1.0.0 (2026-08-04) - Creacion. Destila el material de deliberacion de las olas
+de arquitectura externa aplicando la Regla Unica. Se conservan el Abecedario
+(generalizado a patron por tema, a peticion del Soberano), el Anclaje (purgado
+de biometria y de opacidad) y se crea el Modo Catastrofe con sus cinco reglas de
+seguridad y el nivel Locura acotado. Se descarta el bloque de mecanismos
+punitivos por incompatibilidad con la Regla Unica.

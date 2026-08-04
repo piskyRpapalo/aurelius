@@ -1,0 +1,225 @@
+ARSENAL AURELIUS - REGISTRO DE ARCHIVADOS v1.0.0
+Texto plano absoluto. Fecha: 2026-08-04.
+Autor: el Preceptor. Canoniza: el Soberano.
+Clase: operativo. Companion de ARSENALAURELIUS_DEFINITIVO.txt.
+
+QUE ES ESTE FICHERO
+El cementerio del arsenal, con lapidas legibles. Nada se borra: se archiva con
+el motivo escrito, para que dentro de seis meses nadie reproponga lo mismo sin
+saber por que se descarto.
+
+REGLA DE RESCATE
+Una entrada vuelve al registro solo con una propuesta motivada que resuelva
+EXPLICITAMENTE el motivo de archivo, y con firma del Soberano. El identificador
+de un modulo archivado no se reutiliza jamas para otra cosa.
+
+LOS CUATRO MOTIVOS
+  [R1] Coste sin aprendizaje. Impone friccion que no es prediccion ni
+       recuperacion. Violacion de la Regla Unica del Metodo.
+  [R2] Fuera de alcance publico. Criptografia entre pares, red de nodos,
+       infraestructura del rack. Audiencia equivocada para Aurelius.
+  [R3] Isomorfo. Duplica a un modulo existente con menos valor anadido.
+  [R4] Sensor inventado o fisicamente imposible. Violacion de honest sensors.
+
+====================================================================
+BLOQUE A - PROPUESTAS DE LA ULTIMA OLA
+====================================================================
+
+EL DIQUE  [aur:dique]
+  Progenitor: La Bola de Hierro.
+  Colision: sistemas de ficheros por control de recursos por modelado predictivo.
+  Motivo: [R3] su unica aportacion real - pedir la prediccion del tamano optimo
+  de buffer antes de ejecutar - ya se absorbe en la reescritura de [aur:bola].
+  Nota: la parte de prediccion era buena. Se conserva ahi, no aqui.
+
+EL ESPEJO DE AGUA  [aur:espejo-agua]
+  Progenitor: La Resonancia y El Vidrio.
+  Colision: analisis forense por confianza cero por prediccion de llamadas al
+  sistema.
+  Motivo: [R2] su premisa es la ejecucion de artefactos recibidos de otros nodos,
+  y Aurelius es local. Sin red entre pares, el modulo no tiene sujeto.
+  Nota: el mecanismo - predecir por escrito las llamadas al sistema antes de
+  ejecutar algo ajeno - es excelente y se recupera como escenario del Modo
+  Catastrofe, donde si tiene sujeto.
+
+EL VORTICE  [aur:vortice]
+  Progenitor: El Ancla Encefalica y La Resonancia.
+  Colision: termodinamica por teoria de la informacion por criptografia.
+  Motivo: [R4] doble. Primero, sustituye el sensor termico ausente por una fuente
+  de aleatoriedad del sistema, que es inventar dato donde corresponde NO DATA.
+  Segundo, desbloquea un modulo que propone transferir estado a un nodo apagado
+  mediante pulsos en bus serie: un nodo sin energia no recibe nada.
+
+EL YUNQUE  [aur:yunque]
+  Progenitor: La Sordina y El Anclaje.
+  Colision: escalado de frecuencia por metacognicion.
+  Motivo: [R1] y [R3]. Degrada el rendimiento del equipo como castigo por
+  sobreestimacion metacognitiva, y duplica a [aur:cencerro]. Ademas su
+  simulacion propuesta - una espera artificial en el terminal - no reproduce el
+  efecto que dice reproducir.
+
+EL CADENAZO  [aur:cadenazo]
+  Progenitor: La Resonancia y La Gramatica del Silencio.
+  Colision: analisis sintactico por integridad criptografica.
+  Motivo: [R2] y [R1]. Depende de transferencias entre nodos, y exige firma solo
+  DESPUES del rechazo: el usuario nunca predice nada, solo obedece.
+
+LA COSECHA FISICA  [aur:cosecha]
+  Progenitor: El Martillo y El Anclaje.
+  Colision: electronica digital por integridad criptografica.
+  Motivo: [R3] frente a la Mision 2 del canon, que cubre el mismo terreno con
+  menos hardware exigido. Ademas persistia en formato binario donde la doctrina
+  exige texto plano, y desbloqueaba un modulo inexistente.
+  Nota de rescate: si algun dia Aurelius soporta lectura de sensores por bus
+  serie, esta entrada es la primera candidata a volver.
+
+EL PENDULO  [aur:pendulo]
+  Progenitor: El Cencerro Termodinamico.
+  Colision: fisica de memoria por bloqueo cognitivo.
+  Motivo: [R4], y lo detecto y lo declaro su propio autor. La mayoria de equipos
+  no expone por software la frecuencia de memoria que el modulo necesita leer.
+  Autopurga correcta y bien argumentada.
+
+EL FILTRO DE RETROALIMENTACION  [aur:filtro-retro]
+  Progenitor: El Precipicio.
+  Colision: teoria del control por mensajes de compilador.
+  Motivo: [R3]. Isomorfo a un modulo que a su vez esta en reescritura. No se
+  archiva por malo, sino por prematuro: si [aur:precipicio] se reescribe bien,
+  este sobra.
+
+====================================================================
+BLOQUE B - MECANISMOS PUNITIVOS
+====================================================================
+
+Todos comparten motivo [R1]. Se listan por separado porque son el grupo mas
+numeroso del material de origen y conviene que la lista sea visible.
+
+LA TRAMPA DE CAPABILITIES  [aur:trampa]
+  Colision: seguridad del sistema por pedagogia socratica.
+  Motivo: [R1]. Revocacion silenciosa de permisos sin comunicarlo al usuario. La
+  opacidad deliberada contra el propio alumno es incompatible con el Metodo.
+
+EL TRIBUNAL  [aur:tribunal]
+  Colision: proceso judicial por control de acceso.
+  Motivo: [R1]. Modo ciego punitivo. Sin prediccion, sin recuperacion.
+
+LA CLEPSIDRA  [aur:clepsidra]
+  Colision: cronometria por gestion de energia.
+  Motivo: [R1]. Bloqueo por tiempo o bateria. El coste no ensena nada; solo
+  impide.
+
+LA SINAPSIS LENTA  [aur:sinapsis]
+  Colision: neurobiologia por limitacion de entrada.
+  Motivo: [R1]. Bloquea la entrada de material nuevo tras N firmas. La intencion
+  - evitar el atracon - es buena; el mecanismo es una puerta cerrada.
+  Nota de rescate: convertida en aviso en lugar de bloqueo, volveria.
+
+LA FRUSTRACION SOCRATICA  [aur:frustracion]
+  Colision: mayeutica por generacion adversarial.
+  Motivo: [R1] y [R3]. Su nucleo util queda cubierto por [aur:catastrofe], que
+  produce la misma friccion con hipotesis previa obligatoria y salida abierta.
+
+EL TATUAJE  [aur:tatuaje]
+  Colision: memoria motora por telemetria de escritura.
+  Motivo: [R1] y prohibicion expresa: se apoya en latencia entre pulsaciones.
+  Ninguna inferencia biometrica entra en Aurelius. Ver Metodo, seccion 3.4.
+
+LA MIGRANA  [aur:migrana]
+  Colision: olvido inducido por gestion de obsolescencia.
+  Motivo: [R1] y mecanica no cerrada. Purga conocimiento que declara obsoleto
+  sin criterio auditable ni intervencion del usuario. Un sistema que decide
+  solo que debes olvidar no es un preceptor.
+
+EL CATARO  [aur:cataro]
+  Colision: compresion por reconstruccion mnemonica.
+  Motivo: [R3]. Se solapa con [aur:eco] y con [aur:autopsia] sin diferenciarse.
+
+EL NUDO CIEGO  [aur:nudo]
+  Colision: criptografia por depuracion a ciegas.
+  Motivo: [R1] y mecanica no cerrada. Fragmenta claves en el entorno sin definir
+  protocolo de recuperacion ni via de escape para quien se bloquea.
+
+====================================================================
+BLOQUE C - FUERA DE ALCANCE PUBLICO
+====================================================================
+
+Todos [R2]. Aurelius es local, sin red entre pares, sin identidad criptografica
+distribuida.
+
+EL PACTO  [aur:pacto]              Identidad criptografica post-cuantica.
+LA SENAL  [aur:senal]              Transferencia entre nodos por medio fisico.
+LA RESONANCIA  [aur:resonancia]    Intercambio con arboles de resumen.
+EL ANCLA ENCEFALICA [aur:ancla]    Atomicidad post-cuantica del estado.
+LA PRIMERA ESPADA [aur:espada]     Sello de nodo.
+EL MICELIO  [aur:micelio]          Sincronizacion sobre red superpuesta.
+                                   (Ya purgado en origen por depender de
+                                   infraestructura centralizada.)
+LA ESPORA  [aur:espora]            Aislamiento para un segundo operador.
+EL REFUGIO  [aur:refugio]          Publicacion propia con servidor local.
+EL BALUARTE DE COBRE [aur:baluarte] Tres capas de defensa de sistema.
+EL CODICE LUZ  [aur:codice-luz]    Canalizaciones sin copia intermedia.
+LA CANTERA  [aur:cantera]          Pruebas aleatorias masivas en agrupacion.
+EL CEMENTERIO DE NODOS [aur:cementerio-nodos]  Revocacion distribuida.
+                                   (Distinto de [aur:cementerio], que queda en
+                                   deliberacion en su version local.)
+
+Nota general del bloque: ninguno es mal modulo. Todos son el proyecto
+equivocado. Si algun dia existe una version federada de Aurelius, este bloque es
+su punto de partida y esta escrito, no perdido.
+
+====================================================================
+BLOQUE D - ISOMORFOS Y WIDGETS
+====================================================================
+
+Todos [R3]. Eran ejercicios de construccion que alimentaban a otro modulo, no
+modulos con valor propio.
+
+EL SISMOGRAFO [aur:sismografo]  Vigilancia termica. Cubierto por [aur:faro].
+EL TRADUCTOR  [aur:traductor]   Conversion de lectura cruda. Cubierto por
+                                el Abecedario del tema 3.
+EL NOTARIO    [aur:notario]     Firma automatica de registros. Cubierto por
+                                [aur:templado].
+EL CARTOGRAFO [aur:cartografo]  Grafo de dependencias. Isomorfo a [aur:telar].
+EL TELAR      [aur:telar]       Visor de dependencias. Isomorfo al anterior.
+                                Se archivan los dos y se conserva la idea.
+EL ESCRIBANO  [aur:escribano]   Validador de gramatica. Cubierto por
+                                [aur:gramatica], que ademas la hace escribir.
+EL BASAMENTO  [aur:basamento]   Inspector del sistema. Cubierto por [aur:faro].
+EL HUSILLO    [aur:husillo]     Analizador de bus serie universal.
+                                Nota: la colision de dominios mas original de
+                                todo el bloque. Primera candidata a rescate si
+                                Aurelius incorpora sensores fisicos.
+EL CENOBIO    [aur:cenobio]     Visor de calibracion. Cubierto por [aur:anclaje],
+                                que ya produce y muestra la curva.
+EL MARTILLO   [aur:martillo]    Lectura cruda de bus serie en hexadecimal.
+                                Cubierto por la Mision 2 con menos hardware.
+
+====================================================================
+NOTA FINAL - LO QUE ESTE FICHERO DEMUESTRA
+====================================================================
+
+Se recibieron 62 modulos con nombre. Nueve entran a canon. Treinta y uno se
+archivan aqui.
+
+Eso no es un fracaso del material de origen: es el trabajo funcionando. Generar
+propuestas se ha vuelto casi gratuito; juzgarlas cuesta exactamente lo mismo que
+siempre. El unico modo de que un proyecto sobreviva a esa asimetria es tener un
+cementerio con lapidas legibles y la disciplina de escribir en ellas.
+
+====================================================================
+PROMPT PARA CLAUDE CODE
+====================================================================
+
+PROMPT BLOQUEADO: falta decidir si el registro de archivados se publica en el
+repositorio publico o queda en la documentacion interna. Es una decision del
+Soberano y tiene consecuencias: publicado, ensena criterio a quien lea el
+proyecto y es material didactico de primer orden; no publicado, evita que un
+lector confunda un modulo archivado con una funcion planeada.
+
+Recomendacion del Preceptor para cuando decidas: publicarlo, con la cabecera
+"REGISTRO DE ARCHIVADOS - NADA DE LO QUE SIGUE SE VA A CONSTRUIR" en la primera
+linea. Un proyecto que ensena a descartar vale mas que uno que solo ensena a
+proponer.
+
+Este fichero se despliega junto con los otros dos mediante el prompt del
+documento ARSENALAURELIUS_DEFINITIVO.txt, tarea 1. No necesita prompt propio.

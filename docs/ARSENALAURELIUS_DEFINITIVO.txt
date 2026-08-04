@@ -1,0 +1,419 @@
+ARSENAL AURELIUS - REGISTRO CONSOLIDADO v1.0.0
+Texto plano absoluto. Fecha: 2026-08-04.
+Autor: el Preceptor. Canoniza: el Soberano.
+Clase: operativo. Rige bajo el Protocolo del MD Evolutivo.
+
+ADVERTENCIA DE LECTURA, EN LA PRIMERA LINEA PORQUE IMPORTA
+Este documento es un REGISTRO, no una lista de obras aprobadas. Un modulo que
+aparece aqui NO esta autorizado a construirse por el hecho de aparecer. Cada
+entrada lleva un ESTADO, y solo el estado CANON autoriza construccion.
+
+Motivo: el material de origen declaraba costes ("0 W", "0 tokens", "carga
+cognitiva alta") en decenas de modulos sin una sola medicion detras. Esos
+numeros se han sustituido por NO DATA. Un numero sin origen no es un dato, y
+canonizarlo en bloque habria metido cientos de cifras falsas en el Codice.
+
+====================================================================
+PESTANA 1. RESUMEN EJECUTIVO
+====================================================================
+
+1.1 QUE SE HA HECHO
+
+Se recibieron tres olas de propuestas de arquitectura externa. Se han fusionado
+en un registro unico, filtrado por la Regla Unica de AURELIUS_METODO_v1.txt
+(toda friccion es prediccion o recuperacion; si solo impone coste, no entra).
+
+1.2 CIFRAS REALES
+
+  Modulos con nombre distinto identificados en el material de origen:  62
+  Modulos en estado CANON (construibles):                               9
+  Modulos en estado DELIBERACION (buena idea, sin mecanica cerrada):   14
+  Modulos en estado REESCRITURA (valiosos, violan la Regla Unica):      8
+  Modulos ARCHIVADOS (ver fichero de sugerencias):                     31
+  Costes declarados que se han convertido en NO DATA:                  ~180
+
+  El material de origen afirmaba "43 modulos vivos". Esa cifra NO es
+  reproducible: entre las tres olas hay tres numeraciones contradictorias. El
+  mismo identificador designa modulos distintos segun la ola, y el mismo modulo
+  lleva identificadores distintos. La cifra 43 se registra como NO VERIFICADA.
+
+1.3 LA DECISION DE GEOMETRIA MAS IMPORTANTE: MUERE LA NUMERACION
+
+Se abolen los identificadores numericos. Cada modulo se designa por NOMBRE mas
+IDENTIFICADOR TEXTUAL UNICO en minusculas y sin acentos.
+
+  Antes:  M30 La Sordina  /  M16 La Sordina   (ambas existian)
+  Ahora:  La Sordina  [aur:sordina]
+
+Motivo: tres numeraciones incompatibles ya en el material de partida, y ninguna
+con dueno. Un identificador textual no colisiona en silencio: colisiona en voz
+alta, en el momento de escribirlo.
+
+REGLA: el identificador se asigna una sola vez y no se reutiliza jamas, ni
+siquiera si el modulo se archiva. El identificador de un modulo muerto queda
+muerto.
+
+1.4 CRITERIO DE ESTADO
+
+  CANON         Mecanica cerrada, cumple la Regla Unica, coste medible o medido,
+                y aporta algo que ningun otro modulo aporta. Construible.
+  REESCRITURA   Idea valiosa cuya mecanica actual impone coste sin aprendizaje.
+                Entra a CANON cuando se reescriba segun la Seccion 1 del Metodo.
+  DELIBERACION  Buena intuicion, mecanica no cerrada o solapada con otro modulo.
+                No se construye. No se descarta.
+  ARCHIVADO     Ver ARSENALAURELIUS_SUGERENCIAS.txt.
+
+====================================================================
+PESTANA 2. MUTACIONES CONSOLIDADAS
+====================================================================
+
+2.1 ESTADO CANON - LOS NUEVE CONSTRUIBLES
+
+M-01  EL ABECEDARIO  [aur:abecedario]                          CANON
+      Que hace: cada tema abre midiendo sus magnitudes en el hardware propio.
+      Ciclo de cinco pasos: pregunta, prediccion, medicion, hueco, firma.
+      Mutacion aplicada: deja de ser modulo unico y pasa a PATRON TRANSVERSAL,
+      con Abecedario propio por tema. Decision del Soberano, 2026-08-04.
+      Cumple la Regla: prediccion en el paso 2, obligatoria.
+      Coste: NO DATA. Se medira en la primera sesion real.
+      Especificacion completa: AURELIUS_METODO_v1.txt seccion 2.
+
+M-02  EL ANCLAJE  [aur:anclaje]                                CANON
+      Que hace: mide la distancia entre confianza declarada y resultado
+      observado. Formula visible, media movil de 5, curva historica.
+      Mutacion aplicada: PURGADA toda inferencia biometrica y toda opacidad
+      deliberada. La propuesta original derivaba el delta de la latencia entre
+      pulsaciones y ocultaba el algoritmo al usuario "para evitar trampas".
+      Eso es vigilancia contra el propio usuario y viola tres suelos.
+      Cumple la Regla: la declaracion previa ES la prediccion.
+      Coste: NO DATA. Dos ficheros de texto plano.
+      Especificacion completa: AURELIUS_METODO_v1.txt seccion 3.
+
+M-03  EL MODO CATASTROFE  [aur:catastrofe]                     CANON
+      Que hace: Aurelius rompe algo en un entorno desechable; el usuario
+      diagnostica. Niveles I, II, III y Locura.
+      Origen: propuesta del Soberano, 2026-08-04.
+      Mutacion aplicada al entrar: cinco reglas de seguridad (sandbox,
+      reversible en un paso, opt-in, salida siempre abierta, cero perdida) y
+      limite duro de 3 fallos simultaneos en nivel Locura.
+      Cumple la Regla: recuperacion pura, con hipotesis previa obligatoria.
+      Coste: NO DATA.
+      Especificacion completa: AURELIUS_METODO_v1.txt seccion 4.
+
+M-04  LA GRAMATICA DEL SILENCIO  [aur:gramatica]               CANON
+      Que hace: el usuario ESCRIBE la gramatica que rechazaria una salida
+      corrupta, en lugar de consumirla ya hecha.
+      Por que es canon: efecto de generacion puro, y ensena lo unico que de
+      verdad limita a un modelo. Ademas existe material real: el incidente C4
+      del catalogo de catastrofes es precisamente una gramatica que envenenaba
+      una peticion entera. Se ensena con un fallo que ocurrio de verdad.
+      Cumple la Regla: generacion, que es la forma mas fuerte de recuperacion.
+      Coste: NO DATA. Herramientas FOSS: NO DATA hasta fijar el validador.
+
+M-05  EL TEMPLADO  [aur:templado]                              CANON
+      Que hace: registro de eventos de aprendizaje, solo de anexion, en texto
+      plano, con resumen criptografico por entrada.
+      Por que es canon: es el soporte fisico del Codice del usuario. Sin el, ni
+      el Anclaje ni el Abecedario tienen donde vivir.
+      Cumple la Regla: no es friccion, es infraestructura.
+      Coste: NO DATA.
+
+M-06  EL CRISOL  [aur:crisol]                                  CANON
+      Que hace: valida que la evidencia que aporta el usuario corresponde a su
+      hardware real, no a un ejemplo copiado. Si el usuario declara un consumo
+      imposible para su equipo, el Crisol lo marca.
+      Por que es canon: es honest sensors aplicado al alumno. Sin el, el
+      Abecedario se puede completar copiando y pegando, y no ensena nada.
+      Advertencia de diseno: marca, NO bloquea, y jamas juzga a la persona.
+      Coste: NO DATA.
+
+M-07  EL FARO  [aur:faro]                                      CANON
+      Que hace: lectura en vivo de los sensores del equipo del usuario, en
+      texto plano, con antiguedad del dato declarada.
+      Por que es canon: es la fuente de medicion del Abecedario en los temas 4,
+      5 y 7. Si el sensor no responde, NO DATA, jamas un valor plausible.
+      Coste: NO DATA.
+
+M-08  EL ECO  [aur:eco]                                        CANON
+      Que hace: recuperacion espaciada. Al reabrir un tema, pide reconstruir de
+      memoria lo medido antes de mostrar el registro.
+      Por que es canon: practica de recuperacion en su forma mas directa.
+      Advertencia de diseno: no penaliza el fallo. Muestra el hueco.
+      Coste: NO DATA.
+
+M-09  EL FOSIL  [aur:fosil]                                    CANON (reescrito)
+      Que hace en su version aprobada: muestra los artefactos del usuario sin
+      tocar en 90 dias y le pide explicar que hacen ANTES de mostrarle el codigo.
+      Mutacion aplicada: la version original obligaba a refactorizar bajo
+      amenaza de perder funcionalidad. Eso es coste. La version aprobada es
+      recuperacion: recordar el propio codigo.
+      Coste: NO DATA.
+
+2.2 ESTADO REESCRITURA - OCHO CON VALOR, MECANICA A CONVERTIR
+
+Todos violan hoy la Regla Unica. Todos tienen conversion conocida. Ninguno se
+construye hasta reescribirse.
+
+  LA SORDINA        [aur:sordina]     Mata procesos por temperatura.
+                                      Conversion: predecir la curva termica.
+  LA BOLA DE HIERRO [aur:bola]        Asfixia la memoria hasta abortar.
+                                      Conversion: predecir el pico de memoria.
+  LA VENA           [aur:vena]        Retira el permiso de ejecucion a los 7 dias.
+                                      Conversion: absorbida por [aur:fosil].
+  LA MORATORIA      [aur:moratoria]   Bloquea el avance por deuda acumulada.
+                                      Conversion: marcar "sin base", no bloquear.
+  EL PRECIPICIO     [aur:precipicio]  Cierra el terminal por tasa de error.
+                                      Conversion: mostrar la linea, no la razon.
+  EL FILO DE TERMIOS[aur:termios]     Purga el buffer si detecta copiar y pegar.
+                                      Conversion: pedir que explique lo pegado.
+  EL YUGO DE SISMOS [aur:yugo]        Inyecta fallos de sistema al usuario.
+                                      Conversion: absorbido por [aur:catastrofe].
+  EL CENCERRO       [aur:cencerro]    Baja la frecuencia del equipo por errores.
+                                      Conversion: mostrar la correlacion, no actuar.
+
+2.3 ESTADO DELIBERACION - CATORCE
+
+El Espejo [aur:espejo] . El Pulso [aur:pulso] . La Pirca [aur:pirca] . El Vidrio
+[aur:vidrio] . La Autopsia [aur:autopsia] . El Intersticio [aur:intersticio] .
+La Migrana [aur:migrana] . El Alambique [aur:alambique] . El Vacio [aur:vacio] .
+El Dorsal [aur:dorsal] . El Palacio de Inodos [aur:inodos] . El Cronolito
+[aur:cronolito] . La Erosion [aur:erosion] . El Cementerio [aur:cementerio].
+
+Nota sobre las tres ultimas: son las propuestas mejor construidas de todo el
+material de origen (mecanica por nivel, NO DATA honesto, texto plano, mock
+explicito). No entran a CANON solo porque Aurelius aun no tiene el tronco que
+las sostiene. Son las primeras candidatas a promocion cuando exista.
+
+Nota sobre El Pulso: queda en DELIBERACION con una condicion previa - si su
+mecanica implica telemetria de pulsacion de teclas, no entra nunca. Ver 3.4 del
+Metodo.
+
+====================================================================
+PESTANA 3. ARQUITECTURA HEXELION
+====================================================================
+
+3.1 ACLARACION DE ALCANCE, IMPORTANTE
+
+HEXELION es el sistema del Soberano. AURELIUS es un proyecto separado, publico,
+sin acceso al rack. El material de origen los mezclo en un solo documento y eso
+es una fuga de arquitectura, no un diseno.
+
+Lo que sigue describe UNICAMENTE la interfaz local de Aurelius, que en el
+material de origen se llamaba "Hexelion". Se le retira ese nombre para no
+colisionar con el sistema real. Se llama EL TABLERO.
+
+3.2 EL TABLERO - COMO CRECE
+
+  Estado inicial: un fichero de texto plano con una linea por tema, todas
+  marcadas SIN MEDIR. No hay graficos. No hay nada que el usuario no se haya
+  ganado midiendo.
+  Al completar el Abecedario de un tema, la linea de ese tema pasa a MEDIDO y
+  el Tablero gana un panel: la lectura en vivo correspondiente a ese tema.
+  Cada panel muestra siempre la antiguedad del DATO, no la del refresco.
+  Ausencia de dato es NO DATA visible, nunca un panel vacio que parezca sano.
+  El fichero de texto plano sigue existiendo siempre. Todo el sistema debe poder
+  leerse con herramientas de texto sin la interfaz.
+
+3.3 LO QUE SE RETIRA DEL DISENO ORIGINAL
+
+  - La red entre pares con confianza cero, arboles de resumen criptografico e
+    intercambio por codigos graficos. Motivo: audiencia equivocada, ver seccion
+    5 del Metodo.
+  - El mapa topologico de nodos soberanos. Mismo motivo.
+  - La replica de estado entre nodos. Aurelius es local. Punto.
+
+3.4 REPLICABILIDAD - EL CRITERIO QUE DECIDE
+
+  Aurelius debe arrancar en una maquina que no es la del autor, sin su nombre de
+  equipo, sin sus rutas, sin su red, y sin GPU. Todo modulo que no cumpla esto
+  no entra, por bueno que sea. Es el criterio que separa un proyecto publico de
+  la configuracion personal de alguien.
+
+====================================================================
+PESTANA 4. LAS CINCO MISIONES CANONICAS
+====================================================================
+
+Se sustituyen las cinco misiones criptograficas del material de origen por
+cinco ritos de paso alineados con los temas del Metodo. Motivo: las anteriores
+desembocaban todas en firma criptografica entre pares, que sale del alcance.
+
+MISION 1 - LA BASCULA
+  Prerequisito: ninguno.
+  Construye: el primer registro firmado de prediccion y medida.
+  Rito: predecir el peso de tres objetos, medirlos, ver el hueco, firmarlo.
+  Desbloquea: el Tablero y el patron del Abecedario.
+  Nivel de hardware: 0. Cualquier maquina, mas una bascula de cocina.
+  Colision: metrologia por metacognicion.
+  Justificacion: la primera leccion no es tecnica. Es que tu intuicion tiene un
+  error medible, y que ese error se puede reducir.
+
+MISION 2 - EL CIRCUITO
+  Prerequisito: Mision 1.
+  Construye: un circuito de corriente continua medido con multimetro.
+  Rito: predecir la corriente antes de medirla, con tension y resistencia
+  conocidas.
+  Desbloquea: los temas 2 y 3.
+  Nivel de hardware: 1. Multimetro, pila, resistencias, LED.
+  ADVERTENCIA: 24 V de corriente continua como maximo. Jamas red domestica.
+  Colision: ley de Ohm por prediccion previa.
+  Justificacion: es el punto donde el usuario toca por primera vez la fisica que
+  hay debajo de todo lo demas.
+
+MISION 3 - EL CALOR
+  Prerequisito: Mision 2.
+  Construye: la curva termica del equipo propio bajo carga controlada.
+  Rito: predecir cuantos grados subira el equipo en 60 segundos de carga.
+  Desbloquea: el tema 4 y el modulo [aur:faro].
+  Nivel de hardware: 1. El equipo del usuario.
+  Colision: termodinamica por eficiencia de codigo.
+  Justificacion: cada ciclo es un vatio y cada vatio es un grado. Hasta que no
+  se mide, es una frase; despues, es una curva propia.
+
+MISION 4 - EL TOKEN
+  Prerequisito: Mision 3.
+  Construye: la primera inferencia local medida de punta a punta.
+  Rito: predecir cuantos tokens tendra una frase, y cuanta memoria ocupara el
+  modelo al cargarse. Casi nadie acierta ninguna de las dos.
+  Desbloquea: el tema 6, incluida la CALIBRACION.
+  Nivel de hardware: 1. Sin GPU, 8 GB de RAM.
+  Colision: tokenizacion por calibracion de la confianza.
+  Justificacion: es donde el usuario descubre que el modelo suena igual de
+  seguro cuando acierta y cuando se equivoca.
+
+MISION 5 - LA CATASTROFE
+  Prerequisito: Mision 4 y tres catastrofes de nivel I resueltas.
+  Construye: un diagnostico de causa raiz escrito y firmado.
+  Rito: recibir un sintoma, escribir una hipotesis ANTES de investigar, hallar
+  la causa, y ver el hueco entre la primera hipotesis y la causa real.
+  Desbloquea: los niveles II y III del Modo Catastrofe.
+  Nivel de hardware: 1.
+  Colision: diagnostico forense por prediccion previa.
+  Justificacion: diagnosticar no se aprende leyendo. Es la unica habilidad del
+  sistema que exige que algo se haya roto de verdad.
+
+====================================================================
+PESTANA 5. ROADMAP DEL TOKEN
+====================================================================
+
+5.1 VEREDICTO: DIFERIDO
+
+El material de origen definia un recorrido de tres estados para el modelo local,
+terminando en un "avatar criptografico entre pares" con firma dual
+post-cuantica, certificados de competencia transferibles y notaria entre nodos.
+
+ESTADO: DIFERIDO SIN FECHA. No es un rechazo tecnico; la propuesta era coherente
+consigo misma. Es un rechazo estrategico, y conviene que quede escrito el
+motivo: Aurelius existe, entre otras cosas, para acreditar a su autor en IA de
+borde y computo fisico. Un notario criptografico entre nodos hace que el
+proyecto se lea como criptomoneda ante exactamente la audiencia que importa.
+
+5.2 EL ROADMAP QUE SI RIGE
+
+  ESTADO 1 - INSTRUMENTO (hoy)
+  El modelo local es un instrumento de medida mas, junto al multimetro y la
+  bascula. El usuario lo mide: tokens, memoria, latencia, temperatura. No le
+  pregunta nada todavia. Se estudia el instrumento antes de usarlo.
+  Modelo fijado en fichero de configuracion propio, con ventana de contexto
+  explicita. Motivo: una etiqueta sin sufijo puede cambiar de variante debajo
+  (incidente C2), y una ventana declarada enorme bloquea el motor en equipos sin
+  acelerador (incidente C3).
+
+  ESTADO 2 - INTERLOCUTOR CALIBRADO
+  El modelo responde, y cada respuesta va acompanada de la pregunta del tema 6:
+  como de seguro suena, y como de acertado fue. El usuario aprende a calibrar su
+  confianza EN LA MAQUINA con el mismo instrumento con que calibra la suya.
+  Prerequisito: Mision 4 completada.
+
+  ESTADO 3 - ADVERSARIO UTIL
+  El modelo genera las catastrofes y las salidas corruptas que el usuario debe
+  cazar con su propia gramatica. Es el uso mas honesto de un modelo pequeno:
+  producir friccion valida, no verdad.
+  Prerequisito: [aur:gramatica] en produccion.
+
+  No hay estado 4. El modelo no firma nada. El modelo no representa a nadie.
+
+====================================================================
+PESTANA 6. VARIANTES DE RESERVA
+====================================================================
+
+Contenido completo en ARSENALAURELIUS_SUGERENCIAS.txt, con nombre, progenitor,
+colision y motivo de archivo por linea.
+
+Resumen: 31 entradas archivadas. Los cuatro grupos de motivo, por frecuencia:
+  1. Coste sin aprendizaje (violacion de la Regla Unica) - el grupo mayor.
+  2. Fuera de alcance publico (criptografia entre pares, red de nodos).
+  3. Isomorfo a un modulo ya existente con menos valor anadido.
+  4. Fisicamente imposible o con sensor inventado (violacion de honest sensors).
+
+REGLA DE RESCATE: una entrada archivada vuelve al registro solo con una
+propuesta motivada que resuelva explicitamente el motivo de archivo, y con firma
+del Soberano. El archivo no es una papelera: es un cementerio con lapidas
+legibles.
+
+====================================================================
+PROMPT PARA CLAUDE CODE - AUTOCONTENIDO, LISTO PARA PEGAR
+====================================================================
+
+--- INICIO DEL PROMPT ---
+
+MISION: implantar el registro del arsenal en el repositorio de Aurelius. Solo
+esto. No construyas ningun modulo.
+
+CONTEXTO (todo lo necesario esta aqui, no necesitas memoria externa):
+El proyecto Aurelius acaba de consolidar su registro de modulos en el fichero
+ARSENALAURELIUS_DEFINITIVO.txt, junto con ARSENALAURELIUS_SUGERENCIAS.txt y
+AURELIUS_METODO_v1.txt. Los tres van en la raiz de la documentacion del
+repositorio. Cada modulo tiene un ESTADO: CANON, REESCRITURA, DELIBERACION o
+ARCHIVADO. Solo CANON autoriza construccion. Los identificadores numericos han
+sido abolidos y sustituidos por identificadores textuales entre corchetes con
+el prefijo "aur".
+
+TAREAS:
+
+1. Coloca los tres ficheros en la carpeta de documentacion, tal cual, sin
+   reformatear ni convertir a otro formato. Son texto plano a proposito.
+
+2. Crea un indice de una sola tabla en texto plano, docs/INDICE_ARSENAL.md, con
+   una fila por modulo: identificador, nombre, estado, y fichero donde vive su
+   especificacion. Ordenado por estado y luego alfabeticamente.
+
+3. Recorre TODO el repositorio buscando referencias a identificadores numericos
+   de modulo con el formato de una letra M seguida de digitos. Por cada
+   aparicion, anota fichero y linea en docs/MIGRACION_IDENTIFICADORES.md, con
+   el identificador textual que le corresponde segun el registro, o NO
+   RESOLUBLE si el registro no permite determinarlo sin ambiguedad.
+   NO HAGAS EL REEMPLAZO. Solo el inventario. El reemplazo lo firma el Soberano
+   despues de leer los casos no resolubles.
+
+4. Anade a la comprobacion automatica del repositorio una regla que falle si
+   aparece un identificador nuevo con formato numerico en el codigo o la
+   documentacion. La numeracion esta abolida y la comprobacion debe defenderlo.
+
+INVARIANTES:
+  - No construyas ningun modulo. Este trabajo es de registro.
+  - Cero rutas absolutas, nombres de maquina, usuarios en ruta o direcciones de
+    red en nada que se publique.
+  - Commits atomicos con mensaje descriptivo. SIN git push.
+  - Ante ambiguedad, PARA y pregunta.
+
+FORMATO DE REPORTE, obligatorio, maximo 12 lineas:
+  RONDA ARSENAL-1 . aurelius@<rama>
+  HECHO      <hash> . <una linea por commit>
+  MEDIDO     <numero de referencias numericas halladas> . <cuantas no resolubles>
+  BLOQUEADO  <item> <- <dependencia exacta>
+  DECIDE     <una pregunta, o "nada">
+
+Cierra con entre 3 y 6 SUGERENCIAS con coste S/M/L anexadas al fichero de
+pendientes. PARA al terminar.
+
+--- FIN DEL PROMPT ---
+
+====================================================================
+CHANGELOG
+====================================================================
+
+v1.0.0 (2026-08-04) - Creacion. Consolida tres olas de propuesta externa en un
+registro unico con estados. Abole la numeracion. Sustituye ~180 costes
+declarados sin medicion por NO DATA. Retira del alcance la capa criptografica
+entre pares y el mapa de nodos. Renombra la interfaz local a EL TABLERO para no
+colisionar con el sistema del Soberano.
