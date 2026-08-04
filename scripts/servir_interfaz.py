@@ -12,6 +12,11 @@ escribe ficheros — esta API sí):
                                     Cabeceras: X-Nombre, X-Ext (png|jpg|webp). Cuerpo = bytes de la imagen.
     POST /api/modulo/completar   → M1/M2: {modulo:"M1"|"M2", prueba:"<sha256>"} — el
                                     usuario firmó en SU terminal (IronClaw); aquí se registra.
+    GET  /api/anclaje            → El Anclaje (Método v1 §3): las dos listas + el
+                                    contenido CRUDO de sus dos ficheros de texto plano.
+    POST /api/anclaje/declaracion→ {modulo, confianza:1-5, sin_ayuda:bool} ANTES del módulo.
+    POST /api/anclaje/resultado  → {modulo, resultado:"completo"|"parcial"|"no"} DESPUÉS.
+    POST /api/anclaje/borrar     → borrado total del registro de calibración, sin fricción.
 
 La verdad del estado vive en `sovereign_vault/estado_del_soberano.json`. Cierre
 limpio con Ctrl-C o SIGTERM (systemd).
@@ -57,6 +62,12 @@ ESTADO_LEGADO: Path = VAULT / "estado_del_soberano.json"
 SLUG_MAX: int = 40
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")  # lista blanca estricta
 M0_DIR: Path = VAULT / "M0_Totem"
+# EL ANCLAJE (Metodo v1 §3): dos ficheros de TEXTO PLANO por soberano — uno de
+# declaraciones previas, uno de resultados observados. Separados a proposito: la
+# declaracion se firma ANTES del modulo y el resultado se anota DESPUES, y tenerlos
+# en el mismo fichero invitaria a editar la prediccion sabiendo ya como acabo.
+# Son de anexion: una correccion es una linea nueva, no una linea reescrita.
+ANCLAJE_DIR: Path = VAULT / "anclaje"
 # Auditoría de hardware honesta: se INVOCA (no se toca) un script externo si el
 # operador lo configura por env. Sin él, el inventario rinde "desconocido"
 # (honest sensors). Sin ruta del núcleo hardcodeada — portable.
@@ -78,6 +89,32 @@ ORDEN: tuple[str, ...] = ("M0", "M1", "M2", "M3", "M4", "M5")
 EXT_PERMITIDAS: frozenset[str] = frozenset({"png", "jpg", "jpeg", "webp"})
 MAX_TOTEM_BYTES: int = 8 * 1024 * 1024  # 8 MB — un avatar, no un vídeo
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+# Identificador de modulo del Anclaje: misma lista blanca estricta que el slug de
+# soberano. Opaco a proposito — el Anclaje no sabe ni le importa que modulos
+# existen, asi que la abolicion de la numeracion (arsenal 1.3) no le afecta.
+MODULO_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
+RESULTADOS: tuple[str, ...] = ("completo", "parcial", "no")
+CONFIANZA_MIN: int = 1
+CONFIANZA_MAX: int = 5
+
+# Cabeceras de los dos ficheros. Llevan la formula IMPRESA (Metodo §3.3) para que
+# el fichero se pueda recalcular a mano sin abrir la interfaz ni este codigo.
+CABECERA_DECLARACIONES: str = (
+    "# ANCLAJE · DECLARACIONES PREVIAS. Una linea por modulo, firmada ANTES de empezarlo.\n"
+    "# Separado por tabuladores.  fecha\tmodulo\tconfianza(1-5)\tespera_sin_ayuda(si|no)\n"
+    "# confianza_normalizada = (confianza - 1) / 4      -> valor entre 0 y 1\n"
+    "# Este fichero es TUYO: texto plano, local, exportable y borrable cuando quieras.\n"
+    "# Solo se anota la FECHA, jamas la hora ni cuanto tardaste: el tiempo empleado\n"
+    "# no mide nada sobre ti y no se recoge (Metodo §3.4 y §4.5).\n"
+)
+CABECERA_RESULTADOS: str = (
+    "# ANCLAJE · RESULTADOS OBSERVADOS. Una linea por modulo, anotada DESPUES de terminarlo.\n"
+    "# Separado por tabuladores.  fecha\tmodulo\tresultado(completo|parcial|no)\n"
+    "# resultado_normalizado:  completo = 1.0   parcial = 0.5   no = 0.0\n"
+    "# delta = confianza_normalizada - resultado_normalizado\n"
+    "# delta positivo -> sobreestimacion · negativo -> infraestimacion · ~0 -> calibrado\n"
+    "# El indicador es la MEDIA MOVIL de los ultimos 5 modulos, nunca un modulo suelto.\n"
+)
 
 _ESTADO_BASE: dict[str, Any] = {
     "nombre": None,
@@ -196,6 +233,112 @@ def _sha256_bytes(datos: bytes) -> str:
     return h.hexdigest()
 
 
+# ─────────────────────────── EL ANCLAJE (Metodo v1 §3) ───────────────────────
+# Mide la distancia entre lo que el usuario CREE que sabe y lo que demuestra. No
+# mide capacidad. No emite juicio. Registra trayectoria.
+#
+# PROHIBICIONES QUE ESTE CODIGO DEBE SEGUIR CUMPLIENDO (Metodo §3.4, son suelo):
+#   · CERO BIOMETRIA. Aqui no entra latencia entre pulsaciones, ritmo de escritura,
+#     tiempo de pausa, camara ni microfono. Por eso se guarda la FECHA y no la hora:
+#     con hora de declaracion y hora de resultado se podria derivar cuanto tardo el
+#     usuario, y ese numero no mide nada sobre el.
+#   · CERO OPACIDAD. No hay ningun ajuste que no este escrito en la cabecera del
+#     propio fichero. Nada se corrige "por detras" para detectar trampas.
+#   · CERO JUICIO. Este modulo no produce ni una cadena de texto sobre la persona.
+#   · CERO USO EXTERNO. Estos ficheros no se exportan ni se comparan con nadie.
+#   · BORRADO TOTAL sin friccion, ver _borrar_anclaje().
+
+
+def _hoy_iso() -> str:
+    """Fecha (no instante) en UTC. Deliberadamente sin hora: ver §3.4 arriba."""
+    return _dt.datetime.now(_dt.timezone.utc).date().isoformat()
+
+
+def _ruta_anclaje(slug: str, tipo: str) -> Path:
+    """Ruta de un fichero del Anclaje, ANCLADA a ANCLAJE_DIR (misma defensa en
+    profundidad que _ruta_estado: aunque el slug burlara la validacion, jamas
+    sale del directorio). `tipo` es 'declaraciones' o 'resultados'."""
+    if tipo not in ("declaraciones", "resultados"):
+        raise ValueError(f"tipo de fichero del anclaje desconocido: {tipo!r}")
+    p = (ANCLAJE_DIR / f"{slug}.{tipo}.tsv").resolve()
+    if not str(p).startswith(str(ANCLAJE_DIR.resolve()) + "/"):
+        raise ValueError(f"slug fuera del directorio del anclaje: {slug!r}")
+    return p
+
+
+def _leer_tsv(ruta: Path, campos: tuple[str, ...]) -> list[dict[str, str]]:
+    """Lee un TSV del Anclaje, defensivo. Ignora comentarios, lineas vacias y
+    lineas con un numero de columnas que no cuadra — un fichero editado a mano y
+    mal cerrado degrada perdiendo esa linea, jamas reventando el registro entero
+    (es el diario del usuario: tiene derecho a abrirlo con un editor)."""
+    if not ruta.exists():
+        return []
+    try:
+        crudo = ruta.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    filas: list[dict[str, str]] = []
+    for linea in crudo.splitlines():
+        if not linea.strip() or linea.lstrip().startswith("#"):
+            continue
+        partes = linea.split("\t")
+        if len(partes) != len(campos):
+            continue
+        filas.append({c: partes[i].strip() for i, c in enumerate(campos)})
+    return filas
+
+
+def _leer_crudo(ruta: Path) -> str:
+    """Contenido literal del fichero, para que la interfaz pueda ENSENARLO. La
+    doctrina exige que el usuario pueda recalcular la media a mano con sus propios
+    registros; para eso tiene que poder verlos tal cual estan en disco."""
+    if not ruta.exists():
+        return ""
+    try:
+        return ruta.read_text(encoding="utf-8")
+    except OSError:
+        return ""
+
+
+def _anexar_anclaje(slug: str, tipo: str, cabecera: str, campos: list[str]) -> None:
+    """Anexa una linea. Solo de anexion: una correccion es una linea nueva. Si el
+    fichero no existe todavia, nace con su cabecera (que lleva la formula impresa)."""
+    ruta = _ruta_anclaje(slug, tipo)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    nuevo = not ruta.exists()
+    with ruta.open("a", encoding="utf-8") as f:
+        if nuevo:
+            f.write(cabecera)
+        f.write("\t".join(campos) + "\n")
+
+
+def _leer_anclaje(slug: str | None) -> dict[str, Any]:
+    """Registro completo del Anclaje de un soberano. Sin identidad → registro
+    vacio EN MEMORIA (la pagina se pinta igual, con NO DATA honesto)."""
+    if slug is None:
+        return {"declaraciones": [], "resultados": [], "crudo": {"declaraciones": "", "resultados": ""}}
+    d = _ruta_anclaje(slug, "declaraciones")
+    r = _ruta_anclaje(slug, "resultados")
+    return {
+        "declaraciones": _leer_tsv(d, ("fecha", "modulo", "confianza", "sin_ayuda")),
+        "resultados": _leer_tsv(r, ("fecha", "modulo", "resultado")),
+        "crudo": {"declaraciones": _leer_crudo(d), "resultados": _leer_crudo(r)},
+    }
+
+
+def _borrar_anclaje(slug: str) -> None:
+    """Borrado TOTAL del registro de calibracion, sin friccion (Metodo §3.4: el
+    usuario puede borrarlo entero en cualquier momento, sin preguntas de
+    confirmacion culpabilizadoras).
+
+    Borra los dos ficheros del Anclaje y NADA MAS. El estado del Camino, el Totem
+    y las pruebas del usuario no se tocan: borrar tu diario de calibracion no te
+    cuesta tu progreso."""
+    for tipo in ("declaraciones", "resultados"):
+        with contextlib.suppress(OSError):
+            _ruta_anclaje(slug, tipo).unlink(missing_ok=True)
+
+
 def _genesis_hw() -> dict[str, Any]:
     """Invoca el script externo de auditoría de hardware (AURELIUS_GENESIS_PY) por
     subprocess — NO lo toca (su guardia isinstance es inviolable). Si falla o no
@@ -301,6 +444,9 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
         if ruta == "/api/estado":
             self._json(_leer_estado(self._slug_peticion()))
             return
+        if ruta == "/api/anclaje":
+            self._json(_leer_anclaje(self._slug_peticion()))
+            return
         if ruta == "/api/inventario":
             inv = _inventario()
             slug = self._slug_peticion()
@@ -321,6 +467,12 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
                 self._post_completar()
             elif ruta == "/api/preferencia":
                 self._post_preferencia()
+            elif ruta == "/api/anclaje/declaracion":
+                self._post_anclaje_declaracion()
+            elif ruta == "/api/anclaje/resultado":
+                self._post_anclaje_resultado()
+            elif ruta == "/api/anclaje/borrar":
+                self._post_anclaje_borrar()
             else:
                 self._json({"error": "ruta desconocida"}, 404)
         except Exception as e:  # degradación honesta, nunca 500 opaco sin cuerpo
@@ -439,6 +591,87 @@ class Manejador(http.server.SimpleHTTPRequestHandler):
         if slug is not None:
             _escribir_estado(slug, estado)
         self._json({"ok": True, "persistido": slug is not None, "estado": estado})
+
+    # ---- El Anclaje (Metodo v1 §3) ----
+    def _cuerpo_json(self) -> dict[str, Any] | None:
+        """Cuerpo JSON de la peticion, o None si no parsea (ya respondido 400)."""
+        try:
+            cuerpo = json.loads(self._leer_cuerpo() or b"{}")
+        except json.JSONDecodeError:
+            self._json({"error": "JSON inválido"}, 400)
+            return None
+        if not isinstance(cuerpo, dict):
+            self._json({"error": "el cuerpo debe ser un objeto JSON"}, 400)
+            return None
+        return cuerpo
+
+    def _slug_o_409(self) -> str | None:
+        """Identidad requerida para ESCRIBIR en el registro (el registro vive por
+        soberano). La lectura sin identidad rinde registro vacio, no un error."""
+        slug = self._slug_peticion()
+        if slug is None:
+            self._json({"error": "sin identidad: forja tu Tótem (M0) para tener registro"}, 409)
+            return None
+        return slug
+
+    def _post_anclaje_declaracion(self) -> None:
+        """Declaracion PREVIA: confianza 1-5 y si espera completarlo sin ayuda.
+        Se firma ANTES del modulo — es la prediccion, y por eso el Anclaje cumple
+        la Regla Unica. El servidor no comprueba que sea "antes": no puede, y
+        fingir que puede seria opacidad. La honestidad del orden es del usuario."""
+        cuerpo = self._cuerpo_json()
+        if cuerpo is None:
+            return
+        modulo = str(cuerpo.get("modulo", "")).strip().lower()
+        if not MODULO_RE.match(modulo):
+            self._json({"error": "modulo inválido (minúsculas, [a-z0-9-], máx. 40)"}, 400)
+            return
+        conf = cuerpo.get("confianza")
+        if not isinstance(conf, int) or isinstance(conf, bool) or not (CONFIANZA_MIN <= conf <= CONFIANZA_MAX):
+            self._json({"error": f"confianza debe ser un entero de {CONFIANZA_MIN} a {CONFIANZA_MAX}"}, 400)
+            return
+        sin_ayuda = cuerpo.get("sin_ayuda")
+        if not isinstance(sin_ayuda, bool):
+            self._json({"error": "sin_ayuda debe ser true o false"}, 400)
+            return
+        slug = self._slug_o_409()
+        if slug is None:
+            return
+        _anexar_anclaje(
+            slug, "declaraciones", CABECERA_DECLARACIONES,
+            [_hoy_iso(), modulo, str(conf), "si" if sin_ayuda else "no"],
+        )
+        self._json({"ok": True, "anclaje": _leer_anclaje(slug)})
+
+    def _post_anclaje_resultado(self) -> None:
+        """Resultado OBSERVADO tras el modulo: completo / parcial / no completado.
+        Tres valores y ninguno mas: el Metodo fija la escala y el codigo no la
+        amplia por su cuenta, porque cada valor nuevo cambia la formula."""
+        cuerpo = self._cuerpo_json()
+        if cuerpo is None:
+            return
+        modulo = str(cuerpo.get("modulo", "")).strip().lower()
+        if not MODULO_RE.match(modulo):
+            self._json({"error": "modulo inválido (minúsculas, [a-z0-9-], máx. 40)"}, 400)
+            return
+        resultado = str(cuerpo.get("resultado", "")).strip().lower()
+        if resultado not in RESULTADOS:
+            self._json({"error": f"resultado debe ser uno de: {', '.join(RESULTADOS)}"}, 400)
+            return
+        slug = self._slug_o_409()
+        if slug is None:
+            return
+        _anexar_anclaje(slug, "resultados", CABECERA_RESULTADOS, [_hoy_iso(), modulo, resultado])
+        self._json({"ok": True, "anclaje": _leer_anclaje(slug)})
+
+    def _post_anclaje_borrar(self) -> None:
+        """Borrado total, sin friccion y sin preguntas (Metodo §3.4). Borra los dos
+        ficheros del Anclaje y nada mas: el Camino del usuario queda intacto."""
+        slug = self._slug_o_409()
+        if slug is None:
+            return
+        _borrar_anclaje(slug)
+        self._json({"ok": True, "anclaje": _leer_anclaje(slug)})
 
 
 def _construir_servidor(host: str, puerto: int) -> socketserver.TCPServer:

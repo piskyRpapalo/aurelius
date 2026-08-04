@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
+  <title>The Anchor · Aurelius</title>
+  <link rel="stylesheet" href="anclaje.css" />
+  <style>
+    :root {
+      --fondo: #1a1a1a; --panel: #201d26; --vena: #a97bff; --vena-tenue: #6b4fa0;
+      --ambar: #f6a723; --texto: #e8e4dc; --tenue: #9a94a8; --ok: #7bd88f; --error: #ff6b6b;
+      --code: #14121a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: radial-gradient(120% 90% at 50% 0%, #241f2e 0%, var(--fondo) 60%);
+      color: var(--texto); font-family: "Georgia", serif; min-height: 100vh; padding: 0 0 48px;
+    }
+    header {
+      display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+      border-bottom: 1px solid var(--vena-tenue);
+      background: linear-gradient(90deg, rgba(169,123,255,0.08), transparent);
+      position: sticky; top: 0; z-index: 5; backdrop-filter: blur(6px);
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.03em; }
+    .an-lang { margin-left: auto; background: var(--code); color: var(--texto); border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 8px 10px; font: 600 13px/1 ui-monospace, monospace; cursor: pointer; min-height: 44px; }
+    .an-lang:focus-visible { outline: 2px solid var(--vena); outline-offset: 2px; }
+    a.retour { color: var(--tenue); font: 500 12px/1 ui-monospace, monospace; text-decoration: none; border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 0 12px; min-height: 44px; display: inline-flex; align-items: center; white-space: nowrap; }
+    a.retour:hover { color: var(--texto); border-color: var(--vena); }
+    .an-noverif { font: 500 10px/1 ui-monospace, monospace; color: var(--ambar); white-space: nowrap; }
+    main { max-width: 760px; margin: 0 auto; padding: 20px; }
+    .an-intro { color: var(--tenue); font-style: italic; line-height: 1.6; margin: 0 0 20px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="an-titulo">The Anchor</h1>
+    <span class="an-noverif" id="an-noverif" hidden>machine-translated · unreviewed</span>
+    <select class="an-lang" id="an-lang" aria-label="language"></select>
+    <a class="retour" id="an-retour" href="aurelius_face.html">← Aurelius</a>
+  </header>
+
+  <main class="an-scope">
+    <p class="an-intro" id="an-intro"></p>
+    <div id="an-zone"></div>
+  </main>
+
+  <script src="i18n.js"></script>
+  <script src="anclaje.js"></script>
+  <script>
+    /* Página del Anclaje. A diferencia de camino.html —que arrastra una copia
+       inline de camino.js y por tanto dos implementaciones que pueden divergir—
+       aquí la lógica vive SOLO en anclaje.js y esta página la carga. Una sola
+       fórmula en el repositorio: si hubiera dos, una acabaría mintiendo. */
+    (function () {
+      var I = window.AURELIUS_I18N;
+      var sel = document.getElementById("an-lang");
+      I.locales.forEach(function (loc) {
+        var o = document.createElement("option");
+        o.value = loc; o.textContent = I.nombre[loc];
+        sel.appendChild(o);
+      });
+
+      var montado = null;
+
+      function aplicarIdioma() {
+        document.documentElement.lang = I.locale;
+        document.title = I.t("an.title") + " · Aurelius";
+        document.getElementById("an-titulo").textContent = I.t("an.title");
+        document.getElementById("an-intro").textContent = I.t("an.intro");
+        document.getElementById("an-retour").textContent = I.t("path.back");
+        document.getElementById("an-noverif").hidden = I.esVerificado();
+        if (sel.value !== I.locale) sel.value = I.locale;
+      }
+
+      sel.addEventListener("change", function (ev) {
+        I.set(ev.target.value);
+        aplicarIdioma();
+        if (montado) montado.refrescar();
+      });
+
+      aplicarIdioma();
+      montado = window.AURELIUS_ANCLAJE.montar({ raiz: document });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+/* El Anclaje de calibración (Método v1 §3). Scoped bajo .an-scope para no
+   filtrarse a la cara si algún día se monta en un panel, igual que camino.css.
+   Requiere del host: --fondo --panel --vena --vena-tenue --ambar --texto --tenue
+   --ok --error --code.
+
+   Nota de diseño con doctrina detrás: NO hay color de alarma para el delta. Ni
+   rojo para "sobreestimación" ni verde para "calibrado". Sobreestimar no es
+   portarse mal — es un dato sobre una habilidad que se entrena, y pintarlo de
+   rojo sería el juicio que §3.4 prohíbe, colado por la hoja de estilos. Los tres
+   estados comparten el mismo ámbar del sistema. */
+
+.an-scope .an-card {
+  background: var(--panel); border: 1px solid var(--vena-tenue); border-left: 3px solid var(--vena);
+  border-radius: 14px; padding: 20px; margin-bottom: 16px;
+}
+.an-scope .an-card h2 { margin: 0 0 10px; font-size: 20px; }
+.an-scope .an-nota { color: var(--tenue); font-style: italic; margin: 8px 0 0; line-height: 1.5; }
+.an-scope .an-lbl { display: block; font: 600 12px/1 ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--vena); margin-bottom: 8px; }
+
+/* Indicador — el número crudo siempre visible junto a la etiqueta, para que la
+   etiqueta nunca sustituya al dato. */
+.an-scope .an-valor { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.an-scope .an-num { font: 700 40px/1 ui-monospace, monospace; color: var(--ambar); }
+.an-scope .an-et { font: 500 14px/1.3 ui-monospace, monospace; color: var(--tenue); }
+.an-scope .an-nodata { font: 600 13px/1.5 ui-monospace, monospace; color: var(--tenue); margin: 0; }
+
+/* La fórmula y los ficheros crudos: monoespaciado y seleccionable. El usuario
+   tiene que poder copiarlos para rehacer la cuenta a mano. */
+.an-scope .an-formula, .an-scope .an-serie, .an-scope .an-fichero {
+  background: var(--code); border: 1px solid var(--vena-tenue); border-radius: 8px;
+  padding: 12px; margin: 0 0 10px; overflow-x: auto;
+  font: 400 12px/1.6 ui-monospace, "SFMono-Regular", monospace; color: var(--texto);
+  white-space: pre; user-select: text;
+}
+.an-scope .an-formula { color: #d7ffd7; }
+.an-scope .an-fichero { color: var(--tenue); max-height: 260px; overflow-y: auto; }
+
+/* Curva histórica. El SVG es comodidad; la serie en texto de debajo es el
+   contrato (todo debe poder leerse sin la interfaz). */
+.an-scope .an-svg { width: 100%; height: auto; display: block; margin-bottom: 12px; }
+.an-scope .an-linea { fill: none; stroke: var(--ambar); stroke-width: 2; }
+.an-scope .an-svg circle { fill: var(--ambar); }
+.an-scope .an-cero { stroke: var(--vena-tenue); stroke-width: 1; stroke-dasharray: 4 4; }
+.an-scope .an-eje { fill: var(--tenue); font: 400 10px ui-monospace, monospace; }
+
+.an-scope .an-campo { margin-top: 14px; }
+.an-scope .an-campo label { display: block; font: 600 12px/1 ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: var(--vena); margin-bottom: 8px; }
+.an-scope input[type="text"] {
+  width: 100%; background: var(--code); color: var(--texto); border: 1px solid var(--vena-tenue);
+  border-radius: 8px; padding: 10px; font: 400 14px/1 ui-monospace, monospace; min-height: 44px;
+}
+.an-scope input[type="text"]:focus-visible { outline: 2px solid var(--vena); outline-offset: 1px; }
+
+.an-scope .an-radios { display: flex; gap: 8px; flex-wrap: wrap; }
+.an-scope .an-radio {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  border: 1px solid var(--vena-tenue); border-radius: 8px; padding: 0 12px; min-height: 44px;
+  font: 500 14px/1 ui-monospace, monospace; color: var(--texto); background: var(--code);
+}
+.an-scope .an-radio:hover { border-color: var(--vena); }
+.an-scope .an-radio:focus-within { outline: 2px solid var(--vena); outline-offset: 1px; }
+
+.an-scope .an-btn {
+  margin-top: 16px; background: var(--vena); color: var(--fondo); border: none; border-radius: 8px;
+  font: 700 13px/1 ui-monospace, monospace; padding: 0 18px; min-height: 44px; cursor: pointer;
+}
+.an-scope .an-btn:hover { filter: brightness(1.1); }
+.an-scope .an-btn:disabled { opacity: 0.5; cursor: progress; }
+
+/* Borrado: sobrio, ni escondido ni alarmante. Es un derecho del usuario sobre su
+   propio diario, no una zona de peligro. */
+.an-scope .an-card-borrar { border-left-color: var(--tenue); }
+.an-scope .an-btn-borrar { background: transparent; color: var(--tenue); border: 1px solid var(--vena-tenue); }
+.an-scope .an-btn-borrar:hover { color: var(--texto); border-color: var(--texto); filter: none; }
+
+.an-scope .an-aviso { margin-top: 12px; font: 500 13px/1.4 ui-monospace, monospace; color: var(--tenue); min-height: 1em; }
+.an-scope .an-aviso.ok { color: var(--ok); }
+.an-scope .an-aviso.err { color: var(--error); }
