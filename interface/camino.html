@@ -109,6 +109,7 @@
     .on-nota { margin: 8px 0 0; font: italic 400 11px/1.5 "Georgia", serif; color: var(--ambar); }
   </style>
   <link rel="stylesheet" href="present.css" />
+  <link rel="stylesheet" href="aviso_electrico.css" />
 </head>
 <body>
   <header>
@@ -126,6 +127,11 @@
   <script src="i18n.js"></script>
   <script src="oraculo.js"></script>
   <script src="present.js"></script>
+  <!-- Advertencia eléctrica (Método §2.3). Se carga aquí, donde se pintan las
+       vistas de módulo, para que el día que exista un tema eléctrico la
+       advertencia ya esté disponible en su punto de montaje. Hoy ningún tema lo
+       es: la Fase 1 no autoriza construir temas. -->
+  <script src="aviso_electrico.js"></script>
   <script>
     "use strict";
     (function () {

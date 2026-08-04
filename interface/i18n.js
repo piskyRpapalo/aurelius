@@ -143,6 +143,14 @@ window.AURELIUS_I18N = (function () {
       "an.wiped": "Record wiped. It is empty.",
       "an.errModule": "Module identifier: lowercase, [a-z0-9-], max 40.",
       "an.errIncomplete": "Fill in every field before signing.",
+      // ── Advertencia eléctrica (Método §2.3). NO NEGOCIABLE. Al traducir esto
+      //    no se suaviza, no se abrevia y no se mueve a un pie de página. El
+      //    límite de 24 V CC y la prohibición de red doméstica son literales.
+      "elec.title": "Electrical safety — direct current, 24 V maximum",
+      "elec.limit": "Every electrical topic in Aurelius is limited to DIRECT CURRENT OF 24 VOLTS OR LESS. In practice: 3.3 V, 5 V, 12 V, and batteries.",
+      "elec.never": "Aurelius NEVER teaches or proposes any practice on domestic mains (110 V / 230 V AC), on high-capacity batteries, or on high-voltage capacitors.",
+      "elec.measure": "Every electrical measurement is taken with the circuit disconnected from its source — except when the measurement requires otherwise (voltage), and in that case the step says so explicitly.",
+      "elec.unreviewed": "This warning is shown in English: nobody has reviewed it in the language you picked, and a safety text is not something to leave to machine translation.",
     },
     es: {
       "face.sub": "el Preceptor · IronClaw",
@@ -266,6 +274,12 @@ window.AURELIUS_I18N = (function () {
       "an.wiped": "Registro borrado. Está vacío.",
       "an.errModule": "Identificador de módulo: minúsculas, [a-z0-9-], máx. 40.",
       "an.errIncomplete": "Rellena todos los campos antes de firmar.",
+      // ── Advertencia eléctrica (Método §2.3). NO NEGOCIABLE. ─────────────────
+      "elec.title": "Seguridad eléctrica — corriente continua, 24 V máximo",
+      "elec.limit": "Todo tema eléctrico de Aurelius se limita a CORRIENTE CONTINUA DE 24 VOLTIOS O MENOS. En la práctica: 3.3 V, 5 V, 12 V y pilas.",
+      "elec.never": "Aurelius NO ENSEÑA NI PROPONE ninguna práctica sobre red eléctrica doméstica (110 V / 230 V CA), ni sobre baterías de alta capacidad, ni sobre condensadores de alta tensión.",
+      "elec.measure": "Toda medida eléctrica se hace con el circuito desconectado de la fuente — salvo cuando la medida exige lo contrario (tensión), y en ese caso el paso lo declara explícitamente.",
+      "elec.unreviewed": "Esta advertencia se muestra en inglés: nadie la ha revisado en el idioma que has elegido, y un texto de seguridad no se deja a una traducción automática.",
     },
     fr: {
       "face.sub": "le Précepteur · IronClaw",
@@ -389,6 +403,12 @@ window.AURELIUS_I18N = (function () {
       "an.wiped": "Registre effacé. Il est vide.",
       "an.errModule": "Identifiant de module : minuscules, [a-z0-9-], max. 40.",
       "an.errIncomplete": "Remplis tous les champs avant de signer.",
+      // ── Avertissement électrique (Méthode §2.3). NON NÉGOCIABLE. ────────────
+      "elec.title": "Sécurité électrique — courant continu, 24 V maximum",
+      "elec.limit": "Tout sujet électrique d'Aurelius se limite au COURANT CONTINU DE 24 VOLTS OU MOINS. En pratique : 3,3 V, 5 V, 12 V et des piles.",
+      "elec.never": "Aurelius N'ENSEIGNE NI NE PROPOSE aucune pratique sur le secteur domestique (110 V / 230 V CA), ni sur des batteries de grande capacité, ni sur des condensateurs haute tension.",
+      "elec.measure": "Toute mesure électrique se fait circuit débranché de sa source — sauf quand la mesure exige le contraire (tension), et dans ce cas l'étape le déclare explicitement.",
+      "elec.unreviewed": "Cet avertissement s'affiche en anglais : personne ne l'a relu dans la langue que tu as choisie, et un texte de sécurité ne se laisse pas à une traduction automatique.",
     },
     // ── pt/de/el/ru: SIN revisar humano (verified:false). Se traducen las claves
     //    cortas de UI; la prosa técnica larga cae a INGLÉS (mejor que doctrina mal

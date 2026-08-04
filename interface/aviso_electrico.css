@@ -1,0 +1,44 @@
+/* Advertencia eléctrica (Método v1 §2.3). Sin .scope: esta advertencia se monta
+   dentro de cualquier tema eléctrico, viva donde viva, y no debe depender de que
+   el host recuerde envolverla en una clase. Requiere del host las variables
+   --panel --ambar --texto --tenue --error --code.
+
+   Es lo único de Aurelius que se pinta con color de alarma. En el resto del
+   sistema el color de alarma está prohibido — un delta no es una emergencia. Aquí
+   sí: 24 V no es una preferencia de diseño, es el límite entre un tema que se
+   puede practicar y uno que manda a alguien al hospital. */
+
+.ae-aviso {
+  border: 2px solid var(--ambar);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(246,167,35,0.10), rgba(246,167,35,0.02));
+  padding: 16px 18px;
+  margin: 0 0 20px;
+}
+
+.ae-aviso .ae-cabecera {
+  font: 700 13px/1.3 ui-monospace, "SFMono-Regular", monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  margin-bottom: 10px;
+}
+
+.ae-aviso p { margin: 0 0 8px; line-height: 1.55; color: var(--texto); }
+.ae-aviso p:last-child { margin-bottom: 0; }
+
+/* La prohibición en negrita: es la línea que no se cruza. */
+.ae-aviso .ae-jamas { font-weight: 700; color: var(--ambar); }
+.ae-aviso .ae-medida { color: var(--tenue); font-style: italic; }
+.ae-aviso .ae-idioma {
+  font: 500 12px/1.4 ui-monospace, monospace; color: var(--ambar);
+  border-top: 1px solid rgba(246,167,35,0.3); padding-top: 8px; margin-top: 10px;
+}
+
+/* Impresión: si alguien imprime un tema para llevárselo al banco de trabajo, la
+   advertencia va con él. Sería absurdo que se perdiera justo en el papel que se
+   lee al lado del multímetro. */
+@media print {
+  .ae-aviso { border-color: #000; background: none; }
+  .ae-aviso .ae-cabecera, .ae-aviso .ae-jamas { color: #000; }
+}
