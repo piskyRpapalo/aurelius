@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """corredor.py · corredor canónico de Aurelius.
 
-Ejecuta las 19 suites (14 unittest + 5 propias), cuenta los tests,
+Ejecuta las 20 suites (15 unittest + 5 propias), cuenta los tests,
 y falla cerrado si falta una suite o si alguna no pasa.
 No es interactivo. Determinista. Sin buffering.
 """
@@ -13,7 +13,7 @@ import sys
 SUITES_UNITTEST = [
     "test_descarga.py", "test_estado.py", "test_fuga.py",
     "test_guardrails.py", "test_interprete.py", "test_leitmotivs.py",
-    "test_recuperacion.py", "test_silencio.py", "test_voz_cyber.py", "test_frontera.py", "test_andamio.py", "test_fusible.py", "test_identidad.py", "test_costura.py",
+    "test_recuperacion.py", "test_silencio.py", "test_voz_cyber.py", "test_frontera.py", "test_andamio.py", "test_fusible.py", "test_identidad.py", "test_costura.py", "test_traza.py",
 ]
 SUITES_PROPIAS = [
     "test_cara.py", "test_idioma.py", "test_manifest.py",
