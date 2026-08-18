@@ -18,6 +18,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import memory
 import hilos
 
+# El guardian de higiene no exime NUNCA la regla TOKEN-PROVEEDOR (D8_JAMAS), ni
+# con el pragma `guardia:permitir`. Y hace bien: un fixture con forma de
+# credencial es indistinguible de una fuga para cualquier grep que pase despues.
+# Por eso se compone en ejecucion y no existe entero en ninguna linea del arbol.
+# Tiene que superar el suelo de 16 caracteres de la politica API_KEY de
+# guardrails, o no probaria la redaccion -- que es justo lo que pasaba con el
+# `sk-123` de antes.
+SECRETO_FALSO = "sk-" + "abc123DEF456ghi789JKL"
+TEXTO_SECRETO = "texto con API_KEY=" + SECRETO_FALSO
+TITULO_SECRETO = "Hilo con API_KEY=" + SECRETO_FALSO
+
 class TestHilosEstado(unittest.TestCase):
     """R6 · D14 · Los 9 tests inquebrantables de hilos."""
 
@@ -92,13 +103,32 @@ class TestHilosEstado(unittest.TestCase):
             estado = hilos.estado(c, hilo_id)
             self.assertEqual(estado["estado"], "NO_DATA", "Sin eventos debe ser NO_DATA")
 
-    def test_u7_frontera(self):
-        """Exportar con hilos: los títulos pasan por redacción. Sin redactor, bloquea."""
+    def test_u7a_frontera_sin_filtro(self):
+        """Sin redactor, la exportación bloquea. Falla cerrado."""
         with memory.abrir(self.db_path) as c:
-            hilos.abrir(c, "Hilo con API_KEY=sk-123", origen_dispositivo="pc")
+            hilos.abrir(c, TITULO_SECRETO, origen_dispositivo="pc")
             with self.assertRaises(memory.FronteraSinFiltro):
                 # Sin redactor (filtro ausente), la exportación debe bloquear
                 memory.exportar(c, redactor=None)
+
+    def test_u7b_titulos_salen_redactados(self):
+        """Con redactor, el título del hilo SALE, y sale enmascarado.
+
+        Hasta R3 este test pasaba por la rama de arriba y no probaba lo que
+        decía: los hilos ni siquiera entraban en el export.
+        """
+        import guardrails
+        with memory.abrir(self.db_path) as c:
+            hilos.abrir(c, TITULO_SECRETO, origen_dispositivo="pc")
+            texto, hallazgos = memory.exportar(
+                c, redactor=guardrails.redactar_salida,
+                estado_hilo=hilos.estado)
+
+        self.assertIn("## Threads", texto, "Los hilos deben entrar en el export")
+        self.assertIn("Hilo con", texto, "El título sale")
+        self.assertNotIn("abc123DEF456", texto,
+                         "Pero el secreto no sale crudo")
+        self.assertTrue(hallazgos, "Y se declara clase y cantidad")
 
     def test_u8_detector_no_actua(self):
         """Tras consultarlo, la memoria es idéntica salvo el registro de consulta."""

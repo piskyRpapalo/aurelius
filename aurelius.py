@@ -35,6 +35,7 @@ except ImportError:
     FUGA_DISPONIBLE = False
 import descarga as _descarga
 import estado as _estado
+import hilos as _hilos
 
 RUTA_DEFECTO = os.path.expanduser("~/.aurelius/memory.db")
 
@@ -560,6 +561,8 @@ def main():
     ap.add_argument("--db", default=RUTA_DEFECTO)
     ap.add_argument("--view", action="store_true")
     ap.add_argument("--export", action="store_true")
+    ap.add_argument("--registro", action="store_true",
+                    help="qué cruzó la frontera y qué se frenó")
     ap.add_argument("--backup", nargs="?", const="", metavar="FILE",
                     help="verified copy of the whole memory, WAL included")
     a = ap.parse_args()
@@ -579,6 +582,24 @@ def main():
             print(M.mensaje_estado(est, rec))
             return 1
         return respaldo(a.db, a.backup or None)
+    if a.registro:
+        if est == "SIN_ESQUEMA":
+            print(M.mensaje_estado(est, rec))
+            return 1
+        with M.abrir(a.db) as c:
+            filas = M.resumen_salidas(c)
+        if not filas:
+            print("Registro de frontera: NO_DATA (nada ha cruzado todavía).")
+            return 0
+        # Sin color: el estado se lee por palabra, no por tinta (D10).
+        print("=== REGISTRO DE FRONTERA ===")
+        print("{:<4} {:<21} {:<12} {:<10} {}".format(
+            "id", "cuando", "canal", "estado", "motivo"))
+        for f in filas:
+            print("{:<4} {:<21} {:<12} {:<10} {}".format(
+                f["id"], f["cuando"], f["canal"], f["estado"], f["motivo"]))
+        print("(lo que salió no se guarda aquí: este registro se puede enseñar)")
+        return 0
     if a.view or a.export:
         if est == "SIN_ESQUEMA":
             print(M.mensaje_estado(est, rec))
@@ -590,45 +611,57 @@ def main():
                 # NO_DATA cae al de por defecto sin decir una palabra.
                 paso6_vista(c, TX.normalizar(M.leer_perfil(c, "language")))
                 return 0
+            # --- R3 · CONTRATO: UNA SOLA PUERTA ---------------------------
+            # Antes esto eran dos llamadas sueltas -- exportar() y luego
+            # registrar_salida() -- y esa segunda llamada era, literalmente, una
+            # segunda frontera: hasheaba el texto YA REDACTADO, con lo que el
+            # registro no podía probar qué salió. Ahora la inspección humana
+            # viaja como `confirmar` y corre DENTRO de la puerta.
+            def _preparar_export(crudo):
+                red = cargar_redactor()
+                if red is None:
+                    raise M.FronteraSinFiltro(
+                        "export blocked: no redaction filter provided. "
+                        "Nothing leaves this machine unfiltered.")
+                try:
+                    texto_red, hallazgos_red = red(crudo)
+                except Exception as e:
+                    raise M.FronteraSinFiltro(
+                        "export blocked: redaction filter failed "
+                        f"({type(e).__name__}).") from e
+                return {"texto": texto_red, "hallazgos": hallazgos_red}
+
+            def _inspeccionar(texto, hallazgos):
+                print("=== FRONTERA DE SALIDA (INSPECCIÓN) ===")
+                print(texto)
+                print("=======================================")
+                total = sum(h["count"] for h in hallazgos)
+                detalle = ", ".join(
+                    "{}x{}".format(h["policy"], h["count"]) for h in hallazgos)
+                print("<!-- redacted: {} items · {} -->".format(
+                    total, detalle or "none"))
+                try:
+                    resp = input("¿Aprobar salida para registro? (s/n): ")
+                except EOFError:
+                    return False  # No interactivo: se muestra, no se registra.
+                return resp.strip().lower() == "s"
+
             try:
-                texto, hallazgos = M.exportar(c, redactor=cargar_redactor())
+                salida = M.cruzar_frontera(
+                    c, 'cli_export', M._exportar_crudo(c, estado_hilo=_hilos.estado),
+                    _preparar_export, confirmar=_inspeccionar)
+            except M.SalidaNoAprobada:
+                print("BLOCKED · Salida no aprobada. No se registra ni se exporta.")
+                return 2
             except M.FronteraSinFiltro as e:
                 print(f"BLOCKED · {e}", file=sys.stderr)
                 return 2
 
-            # --- R2 · CONTRATO: preparar → mostrar → salir → registrar ---
-            print("=== FRONTERA DE SALIDA (INSPECCIÓN) ===")
-            print(texto)
-            print("=======================================")
-            total = sum(h["count"] for h in hallazgos)
-            detalle = ", ".join(
-                "{}x{}".format(h["policy"], h["count"]) for h in hallazgos)
-            print("<!-- redacted: {} items · {} -->".format(
-                total, detalle or "none"))
-
-            # Mostrar (inspección humana)
-            try:
-                resp = input("¿Aprobar salida para registro? (s/n): ").strip().lower()
-            except EOFError:
-                resp = "n"  # No interactivo: no se registra, solo se muestra.
-
-            if resp == "s":
-                # Registrar (log en SQLite)
-                hash_original = hashlib.sha256(texto.encode('utf-8')).hexdigest()
-                try:
-                    M.registrar_salida(c, 'cli_export', texto, hallazgos, hash_original)
-                    print("OK · Salida registrada en la frontera.")
-                except Exception as e_reg:
-                    print(f"ERROR · No se pudo registrar la salida: {e_reg}", file=sys.stderr)
-                    return 3
-                # Salir (imprimir a stdout para copiar)
-                print("\n--- COPIAR TEXPO ABAJO ---")
-                print(texto)
-                print("--- FIN DEL TEXTO ---")
-                return 0
-            else:
-                print("BLOCKED · Salida no aprobada. No se registra ni se exporta.")
-                return 2
+            print("OK · Salida registrada en la frontera.")
+            print("\n--- COPIAR TEXTO DE ABAJO ---")
+            print(salida["texto"])
+            print("--- FIN DEL TEXTO ---")
+            return 0
     banderas = arranque(a.db)
     return sesion(a.db)
 

@@ -23,6 +23,7 @@ from __future__ import annotations
 import contextlib
 import os
 import sqlite3
+import threading
 from datetime import datetime, timezone
 
 import textos as TX
@@ -104,13 +105,23 @@ create table if not exists salidas (
     canal         text not null default 'NO_DATA',
     texto         text not null,
     hallazgos     text not null default '[]',
-    hash_original text not null
+    hash_original text not null,
+    estado        text not null default 'ok',
+    motivo        text not null default 'NO_DATA'
 );
 """
 
 
 class FronteraSinFiltro(Exception):
     """Se intento exportar sin filtro de redaccion. Falla cerrado."""
+
+
+class SalidaSinPuerta(Exception):
+    """Se intento registrar una salida sin cruzar por `cruzar_frontera`."""
+
+
+class SalidaNoAprobada(Exception):
+    """La persona miro la salida y dijo que no. No se registra ni sale."""
 
 
 class RespaldoNoVerificado(Exception):
@@ -584,63 +595,153 @@ def restaurar(respaldo, destino):
             f"It was renamed to {roto} and must not be trusted as a memory.")
     return destino, despues
 
-def registrar_salida(c, canal, texto_redactado, hallazgos, hash_original):
+# La puerta se abre desde dentro, y por un solo hilo. Con una global bastaria
+# hoy -- el CLI es un proceso de un hilo --, pero el puente del tailnet mete un
+# servidor en este mismo proceso, y alli dos turnos a la vez convertirian la
+# bandera en una puerta abierta por accidente.
+_paso = threading.local()
+
+# Los mensajes de estas excepciones son fijos y no llevan fragmento del texto:
+# se pueden guardar enteros. Se comparan por NOMBRE en vez de importar
+# guardrails o fusible aqui: la dependencia del arbol va producto -> memoria, y
+# no se invierte por comodidad.
+_MOTIVOS_CITABLES = ("EnvioBloqueado", "SinInspeccion", "RespuestaBloqueada",
+                     "FronteraSinFiltro")
+
+
+def _motivo(e):
+    """Por que se bloqueo, sin arrastrar el texto que lo provoco.
+
+    De una excepcion ajena solo se guarda el NOMBRE del tipo: su mensaje puede
+    llevar dentro el fragmento que la causo, y el registro se ensena.
+    """
+    nombre = type(e).__name__
+    if nombre in _MOTIVOS_CITABLES:
+        return f"{nombre}: {e}"
+    return nombre
+
+
+def asegurar_tablas(c):
+    """Crea las tablas jovenes si faltan y anyade las columnas nuevas.
+
+    No vale con hacerlo en `crear()`: una memoria que ya existe no vuelve a
+    pasar por ahi nunca, y las tablas que llegaron despues (salidas en R2, hilos
+    en D14) no aparecen solas. Medido contra la memoria viva del Soberano
+    (2026-08-18): nacida antes de las dos, no tenia ninguna.
+
+    Idempotente y aditivo: cero DELETE, cero DROP, cero valores tocados.
+    """
+    c.executescript(ESQUEMA_SALIDAS + ESQUEMA_HILOS)
+    for columna, defecto in (("estado", "'ok'"), ("motivo", f"'{AUSENTE}'")):
+        try:
+            c.execute(f"alter table salidas add column {columna} "
+                      f"text not null default {defecto}")
+        except sqlite3.OperationalError:
+            pass  # La columna ya existe (D12: migracion aditiva)
+
+
+def registrar_salida(c, canal, texto_redactado, hallazgos, hash_original,
+                     estado="ok", motivo=AUSENTE):
     """Registra una salida que cruzo la frontera. Append-only, nunca se borra.
 
     Simetrico a la doctrina de memoria: lo que salio, salio, y queda constancia.
     Falla cerrado si la insercion falla: sin registro, no hay salida valida.
+
+    Esto NO es la puerta: es el cuaderno de la puerta. Llamarlo a mano levanta
+    SalidaSinPuerta, porque una segunda ruta al registro es una segunda puerta,
+    y una frontera con dos puertas no es una frontera.
     """
     import json
-    c.execute(ESQUEMA_SALIDAS)  # idempotente: crea la tabla si no existe
+    if not getattr(_paso, "abierto", False):
+        raise SalidaSinPuerta(
+            "registrar_salida no se llama a mano: toda salida cruza por "
+            "cruzar_frontera(). Una segunda ruta al registro es una segunda "
+            "puerta.")
+    asegurar_tablas(c)
     hallazgos_json = json.dumps(hallazgos, ensure_ascii=False)
     cur = c.execute(
-        "insert into salidas (canal, texto, hallazgos, hash_original) "
-        "values (?, ?, ?, ?)",
-        (canal, texto_redactado, hallazgos_json, hash_original)
+        "insert into salidas "
+        "(canal, texto, hallazgos, hash_original, estado, motivo) "
+        "values (?, ?, ?, ?, ?, ?)",
+        (canal, texto_redactado, hallazgos_json, hash_original, estado, motivo)
     )
     c.commit()  # durabilidad ANTES de devolver
     return cur.lastrowid
 
 
 
-def cruzar_frontera(c, canal, texto_original, preparar_fn):
+def cruzar_frontera(c, canal, texto_original, preparar_fn, confirmar=None):
     """Puerta única de salida. Falla cerrado si cualquier paso falla.
 
-    Orquesta el flujo completo: preparar -> registrar.
-    Las dos preparaciones existentes (preparar_salida_andamio y preparar_envio)
-    desembocan aquí. Nadie sale por otro sitio.
+    Orquesta el flujo entero: preparar -> (confirmar) -> registrar. Las tres
+    preparaciones del árbol -- preparar_envio (guardrails), preparar_respuesta
+    (fusible) y preparar_salida_andamio -- desembocan aquí. Nadie sale por otro
+    sitio: fuera de esta función, `registrar_salida` levanta SalidaSinPuerta.
+
+    QUÉ CUENTA COMO BLOQUEO, Y POR QUÉ
+    ----------------------------------
+    El registro anota los veredictos del FILTRO -- guardrails, fusible, falta de
+    inspección --, no las decisiones de la persona. Un `confirmar` que dice que
+    no NO escribe fila: que alguien decida no exportar su propia memoria no es un
+    evento de seguridad, es su criterio, y anotarlo sería vigilarla en su propia
+    máquina. Se anota lo que la máquina frenó, no lo que la persona eligió.
 
     Args:
         c: conexión a la base de datos
-        canal: canal de salida (e.g., "andamio", "ia_externa")
+        canal: canal de salida (e.g., "cli_export", "ia_externa", "modelo_local")
         texto_original: el texto a enviar (antes de redactar)
-        preparar_fn: función de preparación (preparar_salida_andamio o preparar_envio)
+        preparar_fn: función de preparación: texto -> dict con "texto"/"hallazgos",
+            o texto plano
+        confirmar: opcional, (texto_redactado, hallazgos) -> bool. Corre ENTRE
+            preparar y registrar, para que la inspección humana no necesite una
+            segunda puerta.
 
     Returns:
         dict con {"estado": "ok", "texto": redactado, "hallazgos": [...], "id_salida": int}
 
     Raises:
-        SinInspeccion: si el prompt no fue inspeccionado (andamio)
-        EnvioBloqueado: si el filtro falla (guardrails)
+        SalidaNoAprobada: si `confirmar` dice que no (y no deja fila)
+        lo que levante `preparar_fn` (EnvioBloqueado, RespuestaBloqueada,
+            SinInspeccion...), después de dejar la fila del bloqueo
     """
     import hashlib
 
-    # Paso 1: preparación (valida inspección o redacta)
-    resultado = preparar_fn(texto_original)
-
-    # Paso 2: extraer texto redactado y hallazgos
-    if isinstance(resultado, dict):
-        # preparar_envio() devuelve dict
-        texto_redactado = resultado["texto"]
-        hallazgos = resultado.get("hallazgos", [])
-    else:
-        # preparar_salida_andamio() devuelve string
-        texto_redactado = resultado
-        hallazgos = []
-
-    # Paso 3: registrar la salida
+    # La huella se calcula sobre el ORIGINAL, no sobre lo redactado: un registro
+    # que hashea su propia redacción no puede probar qué salió de aquí.
     hash_original = hashlib.sha256(texto_original.encode('utf-8')).hexdigest()
-    id_salida = registrar_salida(c, canal, texto_redactado, hallazgos, hash_original)
+
+    _paso.abierto = True
+    try:
+        # Paso 1: preparación (valida inspección, redacta, o inspecciona la respuesta)
+        try:
+            resultado = preparar_fn(texto_original)
+        except Exception as e:
+            # Constancia ANTES de re-lanzar: un bloqueo del que no queda rastro
+            # es indistinguible de un bloqueo que nunca ocurrió.
+            registrar_salida(c, canal, AUSENTE, [], hash_original,
+                             estado="bloqueado", motivo=_motivo(e))
+            raise
+
+        # Paso 2: extraer texto redactado y hallazgos
+        if isinstance(resultado, dict):
+            # preparar_envio() y preparar_respuesta() devuelven dict
+            texto_redactado = resultado["texto"]
+            hallazgos = resultado.get("hallazgos", [])
+        else:
+            # preparar_salida_andamio() devuelve string
+            texto_redactado = resultado
+            hallazgos = []
+
+        # Paso 3: la inspección humana, si la hay. No deja fila (ver arriba).
+        if confirmar is not None and not confirmar(texto_redactado, hallazgos):
+            raise SalidaNoAprobada(
+                "la salida no fue aprobada: no se registra ni sale nada")
+
+        # Paso 4: registrar la salida
+        id_salida = registrar_salida(c, canal, texto_redactado, hallazgos,
+                                     hash_original)
+    finally:
+        _paso.abierto = False
 
     return {
         "estado": "ok",
@@ -648,6 +749,20 @@ def cruzar_frontera(c, canal, texto_original, preparar_fn):
         "hallazgos": hallazgos,
         "id_salida": id_salida
     }
+
+
+def resumen_salidas(c, limite=50):
+    """Qué salió y qué se frenó. Sin el texto, y no por descuido.
+
+    Lo mira la persona y puede mirarlo el modelo conversacional: por eso la
+    columna `texto` no aparece aquí. Un registro que hay que redactar para poder
+    enseñarlo es un registro que no se enseña.
+    """
+    asegurar_tablas(c)
+    filas = c.execute(
+        "select id, cuando, canal, estado, motivo, hallazgos, hash_original "
+        "from salidas order by id desc limit ?", (limite,)).fetchall()
+    return [dict(f) for f in filas]
 
 
 
@@ -690,17 +805,14 @@ def importar(c, ruta_ext):
         con_ext.close()
 
 
-def exportar(c, redactor=None, incluir_archivados=False):
-    """Markdown legible para llevarselo. La redaccion ocurre AQUI y solo aqui.
+def _exportar_crudo(c, incluir_archivados=False, estado_hilo=None):
+    """Compone el markdown SIN redactar. No sale de aqui: se lo come la frontera.
 
-    `redactor` es la funcion del producto (guardrails): texto -> (texto, hallazgos).
-    No se importa ni se copia desde otro arbol: se inyecta.
-    Sin redactor NO se devuelve texto. Falla cerrado.
+    `estado_hilo` es la funcion de `hilos` -- (c, id) -> {"estado", ...} -- y se
+    INYECTA, igual que el redactor. El esquema de los hilos vive en este modulo
+    (ESQUEMA_HILOS), pero su conducta no, y `memory` no importa `hilos`.
     """
-    if redactor is None:
-        raise FronteraSinFiltro(
-            "export blocked: no redaction filter provided. "
-            "Nothing leaves this machine unfiltered.")
+    asegurar_tablas(c)
     filas = _filas(c, incluir_archivados)
     partes = ["# My memory", "", vista_recuento(c), "", "## Memories", ""]
     for f in filas:
@@ -716,7 +828,37 @@ def exportar(c, redactor=None, incluir_archivados=False):
         for e in enlaces:
             partes.append(f"- {idx.get(e['from_engram'], AUSENTE)} "
                           f"--({e['label']})--> {idx.get(e['to_engram'], AUSENTE)}")
-    crudo = "\n".join(partes)
+    # Los hilos tambien son memoria de la persona, y su titulo lo escribio ella:
+    # si no salieran, el export mentiria por omision. Salen por la MISMA frontera
+    # que todo lo demas, asi que el redactor los ve.
+    try:
+        hilos_filas = [dict(r) for r in c.execute(
+            "select id, titulo from hilos order by id")]
+    except sqlite3.OperationalError:
+        hilos_filas = []  # Memoria anterior a D14: no hay seccion que inventar
+    if hilos_filas:
+        partes += ["", "## Threads", ""]
+        for h in hilos_filas:
+            est = AUSENTE
+            if estado_hilo is not None:
+                est = estado_hilo(c, h["id"]).get("estado", AUSENTE)
+            titulo = h["titulo"]
+            partes.append(f"- {titulo} [{est}]")
+    return "\n".join(partes)
+
+
+def exportar(c, redactor=None, incluir_archivados=False, estado_hilo=None):
+    """Markdown legible para llevarselo. La redaccion ocurre AQUI y solo aqui.
+
+    `redactor` es la funcion del producto (guardrails): texto -> (texto, hallazgos).
+    No se importa ni se copia desde otro arbol: se inyecta.
+    Sin redactor NO se devuelve texto. Falla cerrado.
+    """
+    if redactor is None:
+        raise FronteraSinFiltro(
+            "export blocked: no redaction filter provided. "
+            "Nothing leaves this machine unfiltered.")
+    crudo = _exportar_crudo(c, incluir_archivados, estado_hilo)
     # Un filtro ausente y un filtro roto son el mismo riesgo: en los dos casos
     # nadie ha redactado el texto. Sin este try la excepcion del redactor se
     # propaga tal cual — el export no devuelve nada, pero el fallo llega como

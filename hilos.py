@@ -7,8 +7,16 @@ D16: El detector habla al arrancar en una sola línea.
 from __future__ import annotations
 from datetime import datetime
 
+import memory as _memory
+
 def abrir(c, titulo: str, origen_dispositivo: str = "NO_DATA") -> int:
-    """Abre un nuevo hilo y registra el evento 'abierto'."""
+    """Abre un nuevo hilo y registra el evento 'abierto'.
+
+    Se asegura el esquema antes de escribir: una memoria nacida antes de D14 no
+    tiene estas tablas, y el producto no puede reventar contra la memoria de
+    quien lleva mas tiempo usandolo.
+    """
+    _memory.asegurar_tablas(c)
     cur = c.execute(
         "INSERT INTO hilos (titulo, origen_dispositivo) VALUES (?, ?)",
         (titulo, origen_dispositivo)
