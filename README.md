@@ -1,4 +1,21 @@
+<div align="center">
+
+<img src="assets/aurelius-up.png" width="640"
+     alt="Pixel-art sprite sheet, four frames on one strip: a white marble bust of a bearded classical figure against a flat grey ground. In the first frame the marble is whole; in the second thin cracks run across the face; in the third the marble breaks open to show dark machinery underneath and one lit amber eye; in the fourth more of the surface has come away and loose fragments float beside the head.">
+
 # Aurelius
+
+**Your memory, in one file you can carry. It starts empty and says so.**
+
+<img src="https://img.shields.io/badge/Python-3.10%2B-2F6B4F?style=flat" alt="Python 3.10 or newer">
+<img src="https://img.shields.io/badge/dependencies-standard%20library%20only-A9762B?style=flat" alt="Dependencies: standard library only">
+<img src="https://img.shields.io/badge/storage-one%20local%20file-2F6B4F?style=flat" alt="Storage: one local file">
+<img src="https://img.shields.io/badge/code-MIT-57534E?style=flat" alt="Code licence: MIT">
+<img src="https://img.shields.io/badge/prose-CC%20BY--SA%204.0-57534E?style=flat" alt="Prose licence: CC BY-SA 4.0">
+
+</div>
+
+---
 
 > **Sin un modelo local instalado, Aurelius no conversa: pregunta y recuerda.**
 > Esa es la descripción honesta. El cerebro y la voz se descargan en el primer arranque, con tu consentimiento.
@@ -24,6 +41,33 @@ your machine, in a single file, in your own words.
 - It does **not** delete. Archiving is a column, not a folder.
 - It does **not** need the network, a GPU, or any dependency beyond Python 3 and its standard library.
 - It does **not** search yet. With a handful of memories, search is a solution to a problem you do not have.
+
+## What the fuse does not catch
+
+Aurelius inspects what the model writes before you ever see it as a command.
+That inspector — the fuse — matches **structural shapes**: the form of a
+destructive command, not a list of forbidden words. It reads the text with line
+continuations and spacing normalised first, so breaking a command across lines
+does not walk past it.
+
+State plainly what that buys you, and what it does not:
+
+- It is a **deny list of shapes**, and a deny list is never finished. It knows
+  the shapes written into it and nothing else. A destructive command in a shape
+  nobody anticipated goes straight through.
+- It reads **form, not meaning**. It does not run the command, does not resolve
+  variables, does not unwrap encodings, and cannot tell a real instruction from
+  a quoted example. Something harmful wrapped in an indirection it does not
+  model is something it does not see.
+- **Not catching anything is not a verdict of safe.** It is the absence of a
+  match, which is a different statement and a much weaker one.
+
+The fuse **slows things down; it does not stand in for you.** It exists so that
+the obvious case does not reach you disguised as a suggestion — not so that you
+can stop reading. The last check is yours, and there is no version of this
+program in which it stops being yours.
+
+> **Aviso de Seguridad:** El fusible de alucinación inspecciona la salida del modelo en busca de comandos destructivos, pero *no es completo*. Frena, no sustituye a la persona. La última comprobación la haces tú.
 
 ## Use
 
@@ -87,6 +131,10 @@ anything.
 Inside: the Slate (everything your memory holds, gaps declared, and two ways to
 take it with you) and the Path (the eight steps). Frame maps and the animation
 contract are in [ASSETS.md](ASSETS.md).
+
+The two sprite sheets above and in `assets/` are four frames on one strip. This
+page shows the whole strip, unanimated: a README cannot run the animation, and a
+still that pretended to be one frame would be hiding what the file actually is.
 
 ## Language / Idioma
 
@@ -175,7 +223,7 @@ uv run --python 3.12 ./bin/pruebas ; echo "salida=$?"
 ```
 
 **Not** `uv run --python 3.12 python3 -m unittest discover`. That runs 145 of
-the 225 tests for the reason described above — `discover` does not find the
+the 254 tests for the reason described above — `discover` does not find the
 five suites with their own runner — and it prints its report to stderr while
 the cases print to stdout, so a `tail` on the output shows the end of a museum
 escape and no test count at all. It exits 0. A green that covers 64% and says
@@ -194,43 +242,18 @@ exactly what this program does not do anywhere else. The note goes to stderr,
 so piping output stays clean. The range lives in `interprete.py`, in one place,
 so this table and the program cannot drift apart.
 
-## License
-
-Dual license, one file each — the text that governs is theirs, not this summary:
-
-- Code: MIT — [LICENSE](LICENSE)
-- Prose and lore: CC BY-SA 4.0 — [LICENSE-PROSE](LICENSE-PROSE)
-
-**Scope of the MIT license.** This MIT license applies to all Python source
-code (`*.py`), shell scripts (`*.sh`), and configuration files in this
-repository.
-
-The prose, documentation, and lore (including but not limited to `README.md`
-and all `.md` files) are licensed separately under CC BY-SA 4.0 (see
-LICENSE-PROSE).
-
-This paragraph used to live at the bottom of `LICENSE` itself. It was moved
-here so that `LICENSE` holds the canonical MIT text and nothing else: GitHub
-identifies a licence by comparing that file against the canonical wording, and
-an appendix — however true — made it report `Other` instead of MIT. The terms
-did not change; only where they are written.
-
-## Contact
-
-davidpecero@gmail.com
-
 ## Verification
 
 To check that everything works on your machine:
 
     bin/pruebas
 
-It runs the 13 suites — **225 tests** — and the two sabotage modes. It prints
+It runs the 19 suites — **254 tests** — and the two sabotage modes. It prints
 the per-suite breakdown and **which interpreter it ran on**, so the number can
 be checked instead of believed: a figure without its machine is a rumour with
 decimals.
 
-Do not use `python3 -m unittest discover` for this. It sees 8 of the 13 suites:
+Do not use `python3 -m unittest discover` for this. It sees 8 of the 19 suites:
 the other five bring their own runner and `discover` does not find them, so it
 says `OK` having run barely half. An OK that covers half is not an OK, and that
 is why `bin/pruebas` exists.
@@ -267,5 +290,41 @@ Two more things are in Spanish **by design**, and are not oversights:
 - The comments and docstrings inside the code. The reasoning of this project
   is written in Spanish; the interface it presents to the world is in English.
 
+## Contact
 
-> **Aviso de Seguridad:** El fusible de alucinación inspecciona la salida del modelo en busca de comandos destructivos, pero *no es completo*. Frena, no sustituye a la persona. La última comprobación la haces tú.
+**[Open an issue](https://github.com/piskyRpapalo/aurelius/issues)** — that is
+the working channel today, and the one that gets an answer.
+
+For anything that should not be public before it is fixed, `SECURITY.md` has
+the private route and the response targets it actually commits to.
+
+A direct channel to the author's own hardware is planned. It is not live.
+
+## License
+
+Dual license, one file each — the text that governs is theirs, not this summary:
+
+- Code: MIT — [LICENSE](LICENSE)
+- Prose and lore: CC BY-SA 4.0 — [LICENSE-PROSE](LICENSE-PROSE)
+- Sprites (`assets/*.png`): `NO_DATA` — see the note below.
+
+**Scope of the MIT license.** This MIT license applies to all Python source
+code (`*.py`), shell scripts (`*.sh`), and configuration files in this
+repository.
+
+The prose, documentation, and lore (including but not limited to `README.md`
+and all `.md` files) are licensed separately under CC BY-SA 4.0 (see
+LICENSE-PROSE).
+
+**The sprites are the open question.** `ASSETS.md` states that they travel
+under "la licencia del repo: Apache-2.0". This repository has no Apache-2.0
+licence in it: `LICENSE` is MIT and `LICENSE-PROSE` is CC BY-SA 4.0. Until the
+author says which of the three actually governs `assets/*.png`, this line reads
+`NO_DATA` rather than guessing, because a licence invented in a README is worse
+than an absent one.
+
+This paragraph used to live at the bottom of `LICENSE` itself. It was moved
+here so that `LICENSE` holds the canonical MIT text and nothing else: GitHub
+identifies a licence by comparing that file against the canonical wording, and
+an appendix — however true — made it report `Other` instead of MIT. The terms
+did not change; only where they are written.

@@ -9,7 +9,7 @@ contrato de animación que la cara está obligada a respetar.
 
 Los dos sprites fueron **generados por el Soberano** en su propio nodo. No
 provienen de un banco de imágenes, no llevan marca de agua ajena y no arrastran
-condiciones de terceros. Viajan bajo **la licencia del repo: Apache-2.0**, la
+condiciones de terceros. Viajan bajo **la licencia del repo: CC BY-SA 4.0**, la
 misma que el código — quien clona el repo recibe la cara con los mismos
 derechos que recibe `memory.py`.
 
