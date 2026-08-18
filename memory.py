@@ -82,6 +82,31 @@ create table if not exists profile (
 # Append-only: nunca se borra una fila. Lo que salio, salio, y queda constancia.
 
 # D14: Esquema de Hilos y Eventos (Event Sourcing)
+# D69 · la capa de BORRADORES. Lo que propone la maquina vive aqui y NO en
+# `engrams`: la memoria firmada es lo que la persona escribio o lo que la
+# persona ascendio, nunca lo que un modelo creyo entender.
+#
+# `engrama_id` y `motivo` no estaban en el encargo y se anaden declarandolo:
+# sin el primero, promover borraria la unica prueba de que aquello lo propuso
+# la maquina -- y el CHECK de `origin` en engrams no se migra (D69), asi que la
+# procedencia no cabe alli. Sin el segundo, "descartar deja constancia" seria
+# constancia de que se descarto, pero no de por que.
+#
+# Cero DELETE y cero DROP: los tres estados son valores de una columna, y la
+# capa no se vacia nunca.
+ESQUEMA_BORRADORES = """
+create table if not exists borradores (
+    id         integer primary key autoincrement,
+    cuando     text not null default (datetime('now')),
+    texto      text not null,
+    estado     text not null default 'pendiente'
+               check (estado in ('pendiente', 'promovido', 'descartado')),
+    origen     text not null default 'NO_DATA',
+    engrama_id integer references engrams(id),
+    motivo     text not null default 'NO_DATA'
+);
+"""
+
 ESQUEMA_HILOS = """
 CREATE TABLE IF NOT EXISTS hilos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -122,6 +147,14 @@ class SalidaSinPuerta(Exception):
 
 class SalidaNoAprobada(Exception):
     """La persona miro la salida y dijo que no. No se registra ni sale."""
+
+
+class PromocionSinPersona(Exception):
+    """Se intento ascender un borrador a memoria firmada sin acto de la persona."""
+
+
+class BorradorNoEncontrado(Exception):
+    """El borrador citado no existe. Que no exista es dato, no obstaculo."""
 
 
 class RespaldoNoVerificado(Exception):
@@ -177,7 +210,8 @@ def crear(ruta):
     carpeta = os.path.dirname(os.path.abspath(ruta))
     os.makedirs(carpeta, exist_ok=True)
     with abrir(ruta) as c:
-        c.executescript(ESQUEMA + ESQUEMA_PERFIL + ESQUEMA_SALIDAS + ESQUEMA_HILOS)
+        c.executescript(ESQUEMA + ESQUEMA_PERFIL + ESQUEMA_SALIDAS
+                        + ESQUEMA_HILOS + ESQUEMA_BORRADORES)
         # D12: Migracion aditiva. Si la DB es vieja, le anyade la columna.
         try:
             c.execute("ALTER TABLE engrams ADD COLUMN origen_dispositivo TEXT NOT NULL DEFAULT 'NO_DATA'")
@@ -631,7 +665,7 @@ def asegurar_tablas(c):
 
     Idempotente y aditivo: cero DELETE, cero DROP, cero valores tocados.
     """
-    c.executescript(ESQUEMA_SALIDAS + ESQUEMA_HILOS)
+    c.executescript(ESQUEMA_SALIDAS + ESQUEMA_HILOS + ESQUEMA_BORRADORES)
     for columna, defecto in (("estado", "'ok'"), ("motivo", f"'{AUSENTE}'")):
         try:
             c.execute(f"alter table salidas add column {columna} "
@@ -765,6 +799,95 @@ def resumen_salidas(c, limite=50):
     return [dict(f) for f in filas]
 
 
+
+
+# --- componente 4b · D69 · la capa de borradores --------------------------
+
+def proponer_borrador(c, texto, origen="aurelius"):
+    """Aurelius propone. No escribe memoria: deja una propuesta esperando.
+
+    Es la mitad de la maquina en IronClaw: el gerente escribe por quien no
+    puede, y la persona firma. Esta funcion no toca `engrams` ni de lejos.
+    """
+    if texto is None or str(texto).strip() == "":
+        raise ValueError("un borrador sin texto no es una propuesta")
+    asegurar_tablas(c)
+    cur = c.execute(
+        "insert into borradores (texto, origen) values (?, ?)",
+        (texto, origen))
+    c.commit()      # durabilidad ANTES de devolver
+    return cur.lastrowid
+
+
+def leer_borradores(c, estado=None):
+    """Los borradores, o solo los de un estado. La capa no se vacia nunca."""
+    asegurar_tablas(c)
+    if estado is None:
+        filas = c.execute("select * from borradores order by id")
+    else:
+        filas = c.execute(
+            "select * from borradores where estado = ? order by id", (estado,))
+    return [dict(f) for f in filas]
+
+
+def promover_a_engrama(c, borrador_id, acto_persona=False, why=None,
+                       where_ref=None, learned="", origen_dispositivo=AUSENTE):
+    """Asciende un borrador a memoria firmada. Solo lo hace la persona.
+
+    `acto_persona` no es una cortesia de la firma: es la firma. Un llamante que
+    lo pone en cierto esta declarando que hubo un acto humano, y esa declaracion
+    es lo unico que separa esta capa de un bucle autonomo escribiendo memoria
+    (IronClaw). Por eso el defecto es falso y no hay atajo.
+
+    Devuelve la fila del engrama nuevo, igual que `escribir_engrama`.
+
+    El engrama nace con `origin='persona'` porque la promocion ES su acto, y
+    porque el CHECK de `origin` no se migra (D69). La prueba de que aquello lo
+    propuso la maquina no se pierde: la fila del borrador queda en 'promovido'
+    apuntando al engrama que llego a ser.
+    """
+    if not acto_persona:
+        raise PromocionSinPersona(
+            "un borrador solo asciende por acto de la persona: la maquina "
+            "propone, la persona firma")
+    asegurar_tablas(c)
+    fila = c.execute(
+        "select * from borradores where id = ?", (borrador_id,)).fetchone()
+    if fila is None:
+        raise BorradorNoEncontrado(f"no hay borrador con id {borrador_id}")
+    if fila["estado"] != "pendiente":
+        raise PromocionSinPersona(
+            f"el borrador {borrador_id} ya esta en '{fila['estado']}': "
+            "una promocion no se repite")
+    # `escribir_engrama` devuelve la FILA, no el id: se sigue su convencion en
+    # vez de inventar otra a media casa.
+    engrama = escribir_engrama(
+        c, what=fila["texto"], why=why, where_ref=where_ref, learned=learned,
+        origin="persona", origen_dispositivo=origen_dispositivo)
+    c.execute(
+        "update borradores set estado = 'promovido', engrama_id = ? where id = ?",
+        (engrama["id"], borrador_id))
+    c.commit()
+    return engrama
+
+
+def descartar_borrador(c, borrador_id, motivo=AUSENTE):
+    """Descarta un borrador. La fila SE QUEDA: descartar no es borrar.
+
+    Cero DELETE, como en el resto de esta memoria. Que la persona dijera que no
+    a una propuesta es parte de su historia con la maquina, y borrarlo dejaria
+    la capa contando solo los aciertos.
+    """
+    asegurar_tablas(c)
+    fila = c.execute(
+        "select * from borradores where id = ?", (borrador_id,)).fetchone()
+    if fila is None:
+        raise BorradorNoEncontrado(f"no hay borrador con id {borrador_id}")
+    c.execute(
+        "update borradores set estado = 'descartado', motivo = ? where id = ?",
+        (motivo, borrador_id))
+    c.commit()
+    return borrador_id
 
 
 # --- componente 5 · la frontera -------------------------------------------
