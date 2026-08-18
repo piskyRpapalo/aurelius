@@ -280,15 +280,31 @@ def t14():
     html, _ = generar(ruta)
     estado = json.loads(re.search(r"var DATOS = (\{.*?\});\n", html, re.S).group(1))
     camino = estado["camino"]
-    assert camino["cifras"] == {"perfil": 0, "recuerdos": 0, "sello": False}, \
-        f"una instalación limpia declara {camino['cifras']}"
+    # Se comprueban los VALORES, no la forma del dict: añadir un contador nuevo
+    # es legítimo; que un contador mienta en limpio, no.
+    for clave, valor in camino["cifras"].items():
+        assert valor in (0, False), \
+            f"una instalación limpia declara {clave}={valor}"
     hechos = [p for p, e in camino["estado"].items() if e == "hecho"]
     assert not hechos, f"en limpio ya hay peldaños dados por hechos: {hechos}"
-    assert camino["estado"]["M1"] == "no_medible", \
-        "el peldaño que no se puede medir no se declara como tal"
+    # Los dos que no se pueden medir lo DICEN. M1 porque el cerebro no vive
+    # dentro del fichero; M7 porque nadie ha escrito qué cuenta como éxito
+    # firmado. Declararlos es más honesto que pintarlos sin empezar.
+    for p in ("M1", "M7"):
+        assert camino["estado"][p] == "no_medible", \
+            f"{p} no se puede medir y no se declara como tal"
     assert all(camino["estado"][p] == "sin_empezar"
-               for p in ("M3", "M4", "M5", "M6", "M7")), \
-        "hay peldaños futuros con estado inventado"
+               for p in ("M3", "M4", "M5", "M6")), \
+        "hay peldaños con estado inventado"
+    # Y el camino es modular: núcleo y opcionales, sin solaparse.
+    assert camino["nucleo"] == ["M0", "M1", "M2"], \
+        f"el núcleo cambió sin decirlo: {camino['nucleo']}"
+    assert camino["opcionales"] == ["M3", "M4", "M5", "M6", "M7"], \
+        f"las side quests cambiaron sin decirlo: {camino['opcionales']}"
+    assert not set(camino["nucleo"]) & set(camino["opcionales"]), \
+        "un peldaño no puede ser obligatorio y opcional a la vez"
+    assert camino["punto_decision"] is False, \
+        "en limpio no hay nada que decidir: el núcleo no está hecho"
 
 
 @caso("15 · cada peldaño enseña QUÉ lo da por hecho, y cómo refrescar")
@@ -537,6 +553,109 @@ def t27():
     reales = len(re.findall(r"data:audio/wav;base64,", html))
     assert declarados == reales, \
         f"declara {declarados} clips de voz y lleva {reales}"
+
+
+# --- el camino modular · nucleo, decision, side quests --------------------
+
+def _camino(html):
+    return json.loads(re.search(r"var DATOS = (\{.*?\});\n", html, re.S).group(1))["camino"]
+
+
+@caso("28 · cada side quest se enciende con lo que la mide, y solo con eso")
+def t28():
+    """Hasta hoy M3-M7 estaban fijas en sin_empezar: nadie las miraba.
+
+    Cada una tiene ahora su medida en la memoria. Este caso enciende una sola y
+    comprueba que las hermanas NO se contagian — un peldaño que se enciende por
+    lo que hizo otro es una barra de carga con pasos.
+    """
+    import guardrails
+    import hilos as H
+
+    # M5 · un sendero abierto, y nada mas
+    ruta = base_con_recuerdos()
+    with M.abrir(ruta) as c:
+        H.abrir(c, "trabajo en progreso", origen_dispositivo="pc")
+    camino = _camino(generar(ruta)[0])
+    assert camino["estado"]["M5"] == "hecho", "abrir un hilo debe encender M5"
+    for otro in ("M3", "M4", "M6"):
+        assert camino["estado"][otro] == "sin_empezar", \
+            f"{otro} se encendio sin que nadie lo hiciera"
+
+    # M4 · una salida que cruzo de verdad
+    ruta = base_con_recuerdos()
+    with M.abrir(ruta) as c:
+        M.cruzar_frontera(c, "cli_export", "texto que cruza",
+                          guardrails.preparar_envio)
+    camino = _camino(generar(ruta)[0])
+    assert camino["estado"]["M4"] == "hecho", "una salida real debe encender M4"
+    assert camino["estado"]["M6"] == "sin_empezar", \
+        "una salida limpia no es una cicatriz"
+
+    # M6 · una cicatriz: el filtro paro algo y quedo constancia
+    ruta = base_con_recuerdos()
+    original = guardrails._politicas_efectivas
+    try:
+        guardrails._politicas_efectivas = lambda: []
+        with M.abrir(ruta) as c:
+            try:
+                M.cruzar_frontera(c, "ia_externa", "algo con secreto",
+                                  guardrails.preparar_envio)
+            except guardrails.EnvioBloqueado:
+                pass
+    finally:
+        guardrails._politicas_efectivas = original
+    camino = _camino(generar(ruta)[0])
+    assert camino["estado"]["M6"] == "hecho", "un bloqueo debe encender M6"
+    assert camino["estado"]["M4"] == "sin_empezar", \
+        "lo que se paro no salio: M4 no puede darse por hecho"
+
+    # M3 · las seis salas de la fuga
+    ruta = base_con_recuerdos()
+    with M.abrir(ruta) as c:
+        c.executescript("""
+            create table if not exists fuga_sala (
+                sala integer primary key, nombre text not null default 'NO_DATA',
+                entrado_en text not null default (datetime('now')),
+                salido_en text not null default 'NO_DATA',
+                minutos integer not null default -1,
+                estado text not null default 'entrada',
+                concepto text not null default 'NO_DATA');""")
+        for i in range(1, 4):
+            c.execute("insert into fuga_sala (sala, estado) values (?, 'completada')", (i,))
+        c.commit()
+    camino = _camino(generar(ruta)[0])
+    assert camino["estado"]["M3"] == "empezado", \
+        f"tres salas de seis es empezado, no {camino['estado']['M3']}"
+    assert camino["cifras"]["salas"] == 3
+
+
+@caso("29 · el nucleo abre la decision, y las side quests siguen sin hacerse")
+def t29():
+    """Terminar el nucleo no arrastra a nadie por las cinco opcionales."""
+    ruta = base_con_recuerdos()
+    # El sello de M2 es un fichero al lado de la memoria.
+    open(os.path.join(os.path.dirname(ruta), "manifest-latest.txt"), "w").close()
+
+    camino = _camino(generar(ruta)[0])
+    assert camino["estado"]["M2"] == "hecho", "con recuerdos y sello, M2 esta hecho"
+    assert camino["punto_decision"] is True, \
+        "acabado el nucleo, la decision tiene que estar abierta"
+    sin_hacer = [p for p in camino["opcionales"]
+                 if camino["estado"][p] in ("sin_empezar", "no_medible")]
+    assert len(sin_hacer) == 5, \
+        f"las cinco side quests siguen sin hacerse; estan {sin_hacer}"
+
+
+@caso("30 · la cara dice cual es nucleo, cual opcional, y que deja cada una")
+def t30():
+    """Un peldano opcional sin ventaja declarada es un peldano que nadie elige."""
+    html, _ = generar(base_con_recuerdos("es"))
+    for clave in ("cm_opcional", "cm_nucleo", "cm_decision"):
+        assert clave in html, f"falta el rotulo {clave}"
+    for p in ("M3", "M4", "M5", "M6", "M7"):
+        assert f"cm_ventaja_{p}" in html, f"{p} no declara que deja para el proyecto"
+        assert f"cm_prueba_{p}" in html, f"{p} no dice que lo da por hecho"
 
 
 def main():

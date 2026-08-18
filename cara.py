@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import sqlite3
 import json
 import os
 import sys
@@ -88,6 +89,22 @@ CARA_TEXTOS = {
         "cm_prueba_M0": "the two questions that are not memories: {perfil}/2 answered",
         "cm_prueba_M1": "the brain does not live inside this file, so this page cannot check it",
         "cm_prueba_M2": "{recuerdos} memories written · seal: {sello}",
+        # Las side quests. Cada una dice QUE la da por hecha y QUE deja para el
+        # proyecto: un peldano opcional sin ventaja declarada es un peldano que
+        # nadie elige.
+        "cm_prueba_M3": "{salas}/6 rooms finished",
+        "cm_prueba_M4": "{huellas} crossings recorded",
+        "cm_prueba_M5": "{senderos} paths opened",
+        "cm_prueba_M6": "{cicatrices} scars on record",
+        "cm_prueba_M7": "no one has written down what counts as a signed success, so this page will not invent it",
+        "cm_ventaja_M3": "gives you: a way to work without noise",
+        "cm_ventaja_M4": "gives you: you have seen your own words leave",
+        "cm_ventaja_M5": "gives you: unfinished is a state, not a debt",
+        "cm_ventaja_M6": "gives you: an error that leaves a mark can be read",
+        "cm_ventaja_M7": "gives you: less explaining, because you need less",
+        "cm_opcional": "optional",
+        "cm_nucleo": "core",
+        "cm_decision": "The core is done. From here you choose: go straight to your project, or take a side quest. Both are the path.",
         "cm_pendiente": "no way to measure this one yet — it will not be shown as progress until there is",
         "cm_refrescar": ("This page is a snapshot. To bring it up to date, "
                          "regenerate it — it reads your memory and your seal as they are now:"),
@@ -127,6 +144,19 @@ CARA_TEXTOS = {
         "cm_prueba_M0": "las dos preguntas que no son recuerdos: {perfil}/2 contestadas",
         "cm_prueba_M1": "el cerebro no vive dentro de este fichero, así que esta página no puede comprobarlo",
         "cm_prueba_M2": "{recuerdos} recuerdos escritos · sello: {sello}",
+        "cm_prueba_M3": "{salas}/6 salas terminadas",
+        "cm_prueba_M4": "{huellas} cruces registrados",
+        "cm_prueba_M5": "{senderos} senderos abiertos",
+        "cm_prueba_M6": "{cicatrices} cicatrices en el registro",
+        "cm_prueba_M7": "nadie ha escrito qué cuenta como éxito firmado, así que esta página no se lo inventa",
+        "cm_ventaja_M3": "te deja: una forma de trabajar sin ruido",
+        "cm_ventaja_M4": "te deja: has visto salir tus propias palabras",
+        "cm_ventaja_M5": "te deja: lo sin terminar es un estado, no una deuda",
+        "cm_ventaja_M6": "te deja: un error que deja marca se puede leer",
+        "cm_ventaja_M7": "te deja: menos explicación, porque te hace menos falta",
+        "cm_opcional": "opcional",
+        "cm_nucleo": "núcleo",
+        "cm_decision": "El núcleo está hecho. A partir de aquí eliges: ir directo a tu proyecto, o hacer una side quest. Las dos son el camino.",
         "cm_pendiente": "todavía no hay forma de medir este — no se pintará como progreso hasta que la haya",
         "cm_refrescar": ("Esta página es una foto. Para ponerla al día, "
                          "regenérala — lee tu memoria y tu sello tal como están ahora:"),
@@ -153,6 +183,14 @@ CAMINO = {
 # falsa, y el producto entero existe para no hacer eso.
 PELDANOS = ("M0", "M1", "M2", "M3", "M4", "M5", "M6", "M7")
 
+# El nucleo es de todos. Lo demas se elige, de una en una y en cualquier orden.
+NUCLEO = ("M0", "M1", "M2")
+OPCIONALES = ("M3", "M4", "M5", "M6", "M7")
+
+# Las seis salas de la fuga (M3). Vive aqui y en fuga.py: si algun dia
+# discrepan, el rojo del camino lo dice antes que la persona.
+TOTAL_SALAS = 6
+
 
 def progreso_camino(c, ruta_db):
     """El estado real de los ocho peldanos. En instalacion limpia, todo a cero."""
@@ -164,6 +202,19 @@ def progreso_camino(c, ruta_db):
     sello = os.path.exists(os.path.join(
         os.path.dirname(os.path.abspath(ruta_db)), "manifest-latest.txt"))
 
+    # Las tablas jovenes pueden faltar en una memoria vieja, y la fuga monta la
+    # suya aparte. Contar lo que no existe es cero, no una excepcion.
+    def cuenta(sql):
+        try:
+            return c.execute(sql).fetchone()[0]
+        except sqlite3.OperationalError:
+            return 0
+
+    salas = cuenta("select count(*) from fuga_sala where estado='completada'")
+    huellas = cuenta("select count(*) from salidas where estado='ok'")
+    cicatrices = cuenta("select count(*) from salidas where estado='bloqueado'")
+    senderos = cuenta("select count(*) from hilos")
+
     estado = {}
     estado["M0"] = ("hecho" if contestadas == 2 else
                     "empezado" if contestadas else "sin_empezar")
@@ -172,12 +223,30 @@ def progreso_camino(c, ruta_db):
     estado["M1"] = "no_medible"
     estado["M2"] = ("hecho" if recuerdos and sello else
                     "empezado" if recuerdos else "sin_empezar")
-    for p in ("M3", "M4", "M5", "M6", "M7"):
-        estado[p] = "sin_empezar"
+
+    # --- las side quests · opcionales, sueltas, y AHORA medidas ---------
+    # Hasta hoy estas cinco estaban fijas en "sin_empezar", que es decir que
+    # nadie las mira. Cuatro se pueden medir con lo que ya existe en la
+    # memoria; la quinta se declara, que es lo que se hace con lo que no hay.
+    estado["M3"] = ("hecho" if salas >= TOTAL_SALAS else
+                    "empezado" if salas else "sin_empezar")
+    estado["M4"] = "hecho" if huellas else "sin_empezar"
+    estado["M5"] = "hecho" if senderos else "sin_empezar"
+    estado["M6"] = "hecho" if cicatrices else "sin_empezar"
+    # Retirar el andamiaje exige saber que cuenta como exito firmado, y eso no
+    # esta escrito en ninguna parte. Se declara igual que M1.
+    estado["M7"] = "no_medible"
+
     return {
         "estado": estado,
         "cifras": {"perfil": contestadas, "recuerdos": recuerdos,
-                   "sello": bool(sello)},
+                   "sello": bool(sello), "salas": salas, "huellas": huellas,
+                   "senderos": senderos, "cicatrices": cicatrices},
+        # El nucleo se hace; las side quests se eligen. Un camino que obliga a
+        # pasar por las ocho no es un camino: es un pasillo.
+        "nucleo": list(NUCLEO),
+        "opcionales": list(OPCIONALES),
+        "punto_decision": estado["M2"] == "hecho",
     }
 
 
@@ -816,13 +885,40 @@ function pintarCamino() {
       prueba.textContent = t("cm_prueba_M2")
         .replace("{recuerdos}", cifras.recuerdos)
         .replace("{sello}", cifras.sello ? "✓" : DATOS.ausente);
+    } else if (id === "M7") {
+      prueba.textContent = t("cm_prueba_M7");
     } else {
-      prueba.textContent = t("cm_pendiente");
+      prueba.textContent = t("cm_prueba_" + id)
+        .replace("{salas}", cifras.salas)
+        .replace("{huellas}", cifras.huellas)
+        .replace("{senderos}", cifras.senderos)
+        .replace("{cicatrices}", cifras.cicatrices);
     }
     caja.appendChild(prueba);
 
+    // Nucleo u opcional, dicho en la propia fila: quien mira el Camino tiene
+    // que poder ver de un vistazo que NO esta obligado a las ocho.
+    var marca = document.createElement("div");
+    marca.className = "nota"; marca.style.margin = "2px 0 0";
+    var esOpcional = (DATOS.camino.opcionales || []).indexOf(id) >= 0;
+    marca.textContent = esOpcional
+      ? t("cm_opcional") + " · " + t("cm_ventaja_" + id)
+      : t("cm_nucleo");
+    caja.appendChild(marca);
+
     d.appendChild(n); d.appendChild(caja);
     cuerpo.appendChild(d);
+
+    // El punto de decision vive DONDE se decide: al acabar el nucleo, no en un
+    // menu aparte que nadie abre.
+    if (id === "M2" && DATOS.camino.punto_decision) {
+      var dec = document.createElement("div");
+      dec.className = "nota";
+      dec.style.cssText = "margin:10px 0 6px;padding:10px 12px;"
+        + "border-left:3px solid var(--vena);color:var(--texto)";
+      dec.textContent = t("cm_decision");
+      cuerpo.appendChild(dec);
+    }
   });
 
   var refrescar = document.createElement("p");
