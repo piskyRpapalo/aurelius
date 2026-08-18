@@ -603,6 +603,54 @@ def registrar_salida(c, canal, texto_redactado, hallazgos, hash_original):
 
 
 
+def cruzar_frontera(c, canal, texto_original, preparar_fn):
+    """Puerta única de salida. Falla cerrado si cualquier paso falla.
+
+    Orquesta el flujo completo: preparar -> registrar.
+    Las dos preparaciones existentes (preparar_salida_andamio y preparar_envio)
+    desembocan aquí. Nadie sale por otro sitio.
+
+    Args:
+        c: conexión a la base de datos
+        canal: canal de salida (e.g., "andamio", "ia_externa")
+        texto_original: el texto a enviar (antes de redactar)
+        preparar_fn: función de preparación (preparar_salida_andamio o preparar_envio)
+
+    Returns:
+        dict con {"estado": "ok", "texto": redactado, "hallazgos": [...], "id_salida": int}
+
+    Raises:
+        SinInspeccion: si el prompt no fue inspeccionado (andamio)
+        EnvioBloqueado: si el filtro falla (guardrails)
+    """
+    import hashlib
+
+    # Paso 1: preparación (valida inspección o redacta)
+    resultado = preparar_fn(texto_original)
+
+    # Paso 2: extraer texto redactado y hallazgos
+    if isinstance(resultado, dict):
+        # preparar_envio() devuelve dict
+        texto_redactado = resultado["texto"]
+        hallazgos = resultado.get("hallazgos", [])
+    else:
+        # preparar_salida_andamio() devuelve string
+        texto_redactado = resultado
+        hallazgos = []
+
+    # Paso 3: registrar la salida
+    hash_original = hashlib.sha256(texto_original.encode('utf-8')).hexdigest()
+    id_salida = registrar_salida(c, canal, texto_redactado, hallazgos, hash_original)
+
+    return {
+        "estado": "ok",
+        "texto": texto_redactado,
+        "hallazgos": hallazgos,
+        "id_salida": id_salida
+    }
+
+
+
 
 # --- componente 5 · la frontera -------------------------------------------
 

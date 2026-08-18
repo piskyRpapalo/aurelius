@@ -14,7 +14,7 @@ SUITES_UNITTEST = [
     "test_descarga.py", "test_estado.py", "test_fuga.py",
     "test_guardrails.py", "test_interprete.py", "test_leitmotivs.py",
     "test_recuperacion.py", "test_silencio.py", "test_voz_cyber.py",
-    "test_frontera.py", "test_andamio.py", "test_fusible.py",
+    "test_frontera.py", "test_puerta.py", "test_andamio.py", "test_fusible.py",
     "test_identidad.py", "test_costura.py", "test_traza.py",
     "test_hilos.py",
 ]
