@@ -13,6 +13,10 @@ __pycache__/
 # recuerdos dentro. Versionarlo sería publicar la memoria de alguien. Lo que
 # se versiona es cara.py, que la produce.
 cara.html
+# Y con cualquier nombre: `--out` acepta el que se le dé, y el fichero lleva
+# los recuerdos de quien lo generó. Un patrón que solo cubre el nombre por
+# defecto protege el caso que nadie iba a fallar.
+*cara*.html
 aurelius-formulario.json
 aurelius-recuerdos.txt
 
