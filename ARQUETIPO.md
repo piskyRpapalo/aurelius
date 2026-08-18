@@ -1,6 +1,6 @@
 # ARQUETIPO · el carácter de Aurelius
 
-> **Estado: PROPUESTA · pendiente de firma sobre el TEXTO.**
+FIRMADO el 2026-08-18. Este papel es canon.
 > La decisión (carácter por prompt, genérico y público) está firmada. Esto es
 > la redacción, que se firma aparte.
 

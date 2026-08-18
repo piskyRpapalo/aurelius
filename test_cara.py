@@ -410,6 +410,135 @@ def t21():
         "la burbuja pasa por la limpieza de voz: el texto mostrado debe ser el original"
 
 
+# --- calidad de la cara en un telefono · R1-R6 -----------------------------
+# Android primero: la cara se abre con doble clic, pero se LEE en la mano. Lo
+# que sigue es lo que tiene que ser verdad del HTML generado antes de que nadie
+# la juzgue en una pantalla de 360 px.
+
+ANCHO_MINIMO = 360          # el estrecho que hay que aguantar sin scroll lateral
+TACTIL_MINIMO = 44          # px de lado; por debajo, el dedo falla y la culpa es nuestra
+
+
+def _estilo(html):
+    """El bloque <style> entero, que es donde vive la culpa de la maquetacion."""
+    m = re.search(r"<style>(.*?)</style>", html, re.S | re.I)
+    assert m, "la cara no lleva hoja de estilo"
+    return m.group(1)
+
+
+def _reglas(css):
+    """[(selector, cuerpo)] de la hoja, sin entrar en las media queries."""
+    return re.findall(r"([^{}@]+)\{([^{}]*)\}", css)
+
+
+@caso("22 · R1 · la cara declara el viewport, o el telefono la dibuja a 980 px")
+def t22():
+    html, _ = generar(base_con_recuerdos())
+    m = re.search(r'<meta\s+name="viewport"\s+content="([^"]*)"', html, re.I)
+    assert m, "sin <meta viewport> el movil finge ser un escritorio y encoge todo"
+    contenido = m.group(1).replace(" ", "")
+    assert "width=device-width" in contenido, f"viewport sin device-width: {m.group(1)}"
+    assert "initial-scale=1" in contenido, f"viewport sin initial-scale=1: {m.group(1)}"
+
+
+@caso("23 · R2 · el cabeceo no lleva anchos fijos, y nada obliga a pasar de 360 px")
+def t23():
+    html, _ = generar(base_con_recuerdos())
+    css = _estilo(html)
+
+    # El marco del busto es lo unico del cabeceo con medida propia. Si la lleva
+    # en px, el cabeceo deja de caber antes que el resto y arrastra la pagina.
+    for selector, cuerpo in _reglas(css):
+        if ".marco" not in selector:
+            continue
+        fijos = re.findall(r"\b(width|height)\s*:\s*(\d+)px", cuerpo)
+        assert not fijos, \
+            f"el cabeceo lleva medida fija ({selector.strip()}): {fijos}"
+
+    # El cabeceo tiene que ENVOLVER. Esta es la guarda que faltaba: la primera
+    # version de este rojo miraba solo `.marco` y los min-width, paso en verde,
+    # y el navegador midio 248px de scroll lateral a 360px porque la fila de
+    # botones no envolvia. Un test que puede estar verde con la pagina rota no
+    # es un test: es un adorno.
+    cabeceo = [c for sel, c in _reglas(css) if sel.strip() == "header"]
+    assert cabeceo, "no hay regla para <header>"
+    assert re.search(r"flex-wrap\s*:\s*wrap", cabeceo[0]), \
+        "el cabeceo no envuelve: en un telefono estrecho arrastra la pagina a lo ancho"
+
+    # Y ninguna regla puede EXIGIR mas ancho del que hay.
+    for prop, valor in re.findall(r"\bmin-width\s*:\s*(\d+)px", css) and \
+            [("min-width", v) for v in re.findall(r"\bmin-width\s*:\s*(\d+)px", css)] or []:
+        assert int(valor) <= ANCHO_MINIMO, \
+            f"{prop}:{valor}px obliga a scroll lateral en un telefono de {ANCHO_MINIMO}px"
+
+
+@caso("24 · R3 · lo que la cara recoge se lo lleva un fichero, no un comando")
+def t24():
+    html, _ = generar(base_con_recuerdos())
+
+    # El JSON se descarga desde la propia pagina, sin red y sin ayuda.
+    assert re.search(r'download="[^"]*\.json"', html, re.I), \
+        "no hay enlace de descarga con nombre .json"
+    assert "createObjectURL" in html, \
+        "el fichero no se fabrica en la pagina: sin createObjectURL no hay descarga local"
+
+    # Y no se le manda a nadie a abrir una terminal. Quien llega a la cara desde
+    # un telefono no tiene una, y decirselo convierte el producto en un requisito.
+    assert "terminal" not in html.lower(), \
+        "la cara manda abrir una terminal: en un telefono eso es un callejon sin salida"
+
+
+@caso("25 · R4 · ni un src ni un href que salga de este fichero")
+def t25():
+    html, _ = generar(base_con_recuerdos())
+    for etiqueta, atributo in (("script", "src"), ("link", "href"),
+                               ("img", "src"), ("a", "href"),
+                               ("source", "src"), ("iframe", "src")):
+        for valor in re.findall(rf'<{etiqueta}[^>]*\s{atributo}="([^"]*)"', html, re.I):
+            assert not re.match(r"(?i)\s*(https?:)?//", valor), \
+                f"<{etiqueta} {atributo}> apunta fuera: {valor[:60]}"
+
+
+@caso("26 · R5 · idioma declarado, el boton dice su nombre, y el dedo acierta")
+def t26():
+    html, _ = generar(base_con_recuerdos("es"))
+
+    # El idioma del documento es el de la sesion, no el que se quedo escrito.
+    # Un lector de pantalla lee en el idioma que diga aqui, no en el que vea.
+    m = re.search(r'<html\s+lang="([^"]*)"', html, re.I)
+    assert m, "el <html> no declara lang"
+    assert m.group(1).lower().startswith("es"), \
+        f'sesion en espanol y el documento declara lang="{m.group(1)}"'
+
+    # Hablar tiene rotulo accesible propio: su texto cambia (Hablar/Callar) y
+    # aria-pressed dice el estado, pero sin nombre no se puede pedir por voz.
+    boton = re.search(r'<button[^>]*id="b-voz"[^>]*>', html, re.I)
+    assert boton, "no existe el boton de voz"
+    assert "aria-label" in boton.group(0), \
+        f"el boton Hablar no tiene aria-label: {boton.group(0)}"
+
+    # Nada que se toque con el dedo por debajo del minimo.
+    css = _estilo(html)
+    for selector, cuerpo in _reglas(css):
+        if not re.search(r"\.boton|\.enviar|select", selector):
+            continue
+        for alto in re.findall(r"\bmin-height\s*:\s*(\d+)px", cuerpo):
+            assert int(alto) >= TACTIL_MINIMO, \
+                f"{selector.strip()} mide {alto}px de alto; el minimo tactil es {TACTIL_MINIMO}"
+
+
+@caso("27 · R6 · la cara declara cuanta voz lleva dentro, y el numero cuadra")
+def t27():
+    html, _ = generar(base_con_recuerdos())
+    m = re.search(r'<meta\s+name="aurelius:audio"\s+content="(\d+)"', html, re.I)
+    assert m, ("la cara no declara cuantos clips lleva; sin numero declarado, "
+               "una voz que falta no se distingue de una voz que no se grabo")
+    declarados = int(m.group(1))
+    reales = len(re.findall(r"data:audio/wav;base64,", html))
+    assert declarados == reales, \
+        f"declara {declarados} clips de voz y lleva {reales}"
+
+
 def main():
     fallos = 0
     print("── M2 · LA CARA " + "─" * 50)

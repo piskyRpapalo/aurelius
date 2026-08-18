@@ -68,7 +68,7 @@ CARA_TEXTOS = {
         "pz_sin_guardar": "captured here, not written yet",
         "pz_bajar_json": "Save the form",
         "pz_bajar_txt": "Save a readable copy",
-        "pz_aplicar": "To write it into your memory, run this in your terminal:",
+        "pz_aplicar": "To write it into your memory, apply the file you just saved:",
         "pz_col": ("id", "what", "why", "where", "learned"),
         "cm_titulo": "The Path",
         "cm_intro": "Eight steps. This is where you actually are — measured, not guessed.",
@@ -107,7 +107,7 @@ CARA_TEXTOS = {
         "pz_sin_guardar": "recogido aquí, todavía sin escribir",
         "pz_bajar_json": "Guardar el formulario",
         "pz_bajar_txt": "Guardar una copia legible",
-        "pz_aplicar": "Para escribirlo en tu memoria, ejecuta esto en tu terminal:",
+        "pz_aplicar": "Para escribirlo en tu memoria, aplica el fichero que acabas de guardar:",
         "pz_col": ("id", "qué", "por qué", "dónde", "aprendido"),
         "cm_titulo": "El Camino",
         "cm_intro": "Ocho peldaños. Esto es dónde estás de verdad — medido, no supuesto.",
@@ -300,7 +300,15 @@ def generar(c, ruta_db, idioma=None, piper=None, modelo_voz=None, turnos=None):
                               piper, modelo_voz)
             if uri:
                 audio[clave] = uri
+    # Los clips que de verdad viajan dentro: los del catalogo mas los de los
+    # turnos reales. Se cuenta aqui, donde se sabe, y se declara en el <meta>:
+    # una voz que falta y una voz que nunca se grabo se parecen demasiado.
+    n_audio = len(audio) + sum(1 for t in (turnos or []) if t.get("audio"))
+    aria_voz = textos_cara(inicial).get("voz_hablar", "Speak")
     return (PLANTILLA
+            .replace("__LANG__", inicial)
+            .replace("__N_AUDIO__", str(n_audio))
+            .replace("__ARIA_VOZ__", aria_voz)
             .replace("__TALKS__", dato_uri("aurelius-talks.png"))
             .replace("__UP__", dato_uri("aurelius-up.png"))
             .replace("__IDIOMA__", inicial)
@@ -330,10 +338,11 @@ def aplicar(ruta_db, ruta_formulario):
 
 
 PLANTILLA = r"""<!DOCTYPE html>
-<html lang="en">
+<html lang="__LANG__">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content" />
+<meta name="aurelius:audio" content="__N_AUDIO__" />
 <title>Aurelius</title>
 <style>
   /* Losa y vena: gris pizarra de fondo, violeta para lo que responde al dedo.
@@ -352,12 +361,16 @@ PLANTILLA = r"""<!DOCTYPE html>
     display:flex; flex-direction:column; height:100vh; height:100dvh; overflow:hidden;
   }
   header {
-    display:flex; align-items:center; gap:14px; padding:12px 18px; flex:0 0 auto;
+    /* Envuelve. Medido el 2026-08-18 a 360px: sin `wrap`, los tres botones se
+       salian hasta 607px y arrastraban la pagina 248px a lo ancho. Una fila que
+       no envuelve no es una fila estrecha: es una pagina rota. */
+    display:flex; flex-wrap:wrap; align-items:center; gap:14px; padding:12px 18px; flex:0 0 auto;
     border-bottom:1px solid var(--losa-600); background:var(--losa-900);
     background-image:linear-gradient(90deg, rgba(167,139,250,0.10), transparent);
   }
   .marco {
-    width:84px; height:112px; flex:0 0 auto; border:1px solid var(--vena-tenue);
+    width:clamp(52px, 13vw, 84px); aspect-ratio:3/4;
+    flex:0 0 auto; border:1px solid var(--vena-tenue);
     border-radius:10px; overflow:hidden; background:#0a0d16;
     box-shadow:0 0 16px rgba(167,139,250,0.25), inset 0 0 22px rgba(0,0,0,0.6);
   }
@@ -368,13 +381,13 @@ PLANTILLA = r"""<!DOCTYPE html>
     background-repeat:no-repeat; background-size:400% 100%; background-position:0% 50%;
     image-rendering:pixelated;
   }
-  .titulo { display:flex; flex-direction:column; min-width:0; }
+  .titulo { display:flex; flex-direction:column; min-width:0; flex:1 1 120px; }
   .titulo h1 { margin:0; font-size:21px; letter-spacing:.03em; }
   .titulo .sub { color:var(--tenue); font-size:12px; font-family:ui-monospace, monospace; }
   .huecos { flex:1 1 auto; }
   .boton, select {
     color:var(--vena); background:none; border:1px solid var(--vena-tenue);
-    border-radius:9px; padding:0 13px; min-height:40px; cursor:pointer;
+    border-radius:9px; padding:0 13px; min-height:44px; cursor:pointer;
     font:600 13px/1 ui-monospace, monospace; white-space:nowrap;
   }
   .boton:hover, select:hover { background:var(--vena); color:var(--losa-900); }
@@ -424,7 +437,7 @@ PLANTILLA = r"""<!DOCTYPE html>
   .nota { color:var(--tenue); font-size:13px; margin-top:16px; }
   [hidden] { display:none !important; }
   @media (prefers-reduced-motion: reduce) { .sprite { transition:none; } }
-  @media (max-width:600px) { .marco { width:60px; height:80px; } .titulo h1 { font-size:18px; } }
+  @media (max-width:600px) { .titulo h1 { font-size:18px; } }
 </style>
 </head>
 <body>
@@ -433,7 +446,8 @@ PLANTILLA = r"""<!DOCTYPE html>
   <div class="titulo"><h1 id="t-titulo">Aurelius</h1><span class="sub" id="t-sub"></span></div>
   <div class="huecos"></div>
   <select id="lang" aria-label="Language"><option value="en">EN</option><option value="es">ES</option></select>
-  <button type="button" class="boton" id="b-voz" aria-pressed="false"></button>
+  <button type="button" class="boton" id="b-voz" aria-pressed="false"
+          aria-label="__ARIA_VOZ__"></button>
   <button type="button" class="boton" id="b-pizarra"></button>
   <button type="button" class="boton" id="b-camino"></button>
 </header>
@@ -858,6 +872,9 @@ function rotularVoz() {
   }
   b.disabled = false;
   b.textContent = hablaViva ? t("voz_callar") : t("voz_hablar");
+  // El rotulo accesible sigue al texto: quien navega por voz pide el boton
+  // por su nombre, y el nombre cambia con el idioma y con el estado.
+  b.setAttribute("aria-label", hablaViva ? t("voz_callar") : t("voz_hablar"));
   b.setAttribute("aria-pressed", hablaViva ? "true" : "false");
   b.title = t("voz_nota");
 }
