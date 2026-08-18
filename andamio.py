@@ -68,7 +68,16 @@ def marcar_inspeccionado():
     _inspeccionado = True
 
 def preparar_salida_andamio(prompt: str) -> str:
-    """Valida que el prompt haya sido inspeccionado antes de dejarlo salir."""
+    """Valida que el prompt haya sido inspeccionado antes de dejarlo salir.
+
+    BIBLIOTECA, NO FLUJO. A dia de hoy nadie la llama en produccion: el
+    producto no ensambla prompts todavia. Cumple el contrato de preparacion de
+    `memory.cruzar_frontera` (texto -> texto, o excepcion), asi que el dia que
+    haya un flujo de andamio entra por la puerta unica sin tocar nada aqui.
+
+    Se declara en vez de enchufarla a un flujo inventado: una funcion sin
+    llamante que finge tenerlo es peor que una funcion sin llamante que lo dice.
+    """
     if not _inspeccionado:
         raise SinInspeccion("El prompt no ha sido inspeccionado. No puede salir.")
     return prompt

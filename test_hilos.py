@@ -130,6 +130,50 @@ class TestHilosEstado(unittest.TestCase):
                          "Pero el secreto no sale crudo")
         self.assertTrue(hallazgos, "Y se declara clase y cantidad")
 
+    def test_u10_dos_caminos_un_solo_esquema(self):
+        """crear() y asegurar_tablas() tienen que dejar el MISMO esquema.
+
+        Son dos caminos a las mismas tablas: uno al nacer la memoria, otro al
+        abrir una que ya existia. El dia que divergan, la memoria de quien lleva
+        mas tiempo usando esto se queda con una forma que ningun test mira --
+        que es exactamente lo que paso con `salidas` y `hilos` hasta R3.
+        """
+        import sqlite3
+
+        def columnas(ruta):
+            con = sqlite3.connect(ruta)
+            try:
+                return {t: [f[1] for f in con.execute(f"pragma table_info({t})")]
+                        for t in ("salidas", "hilos", "hilos_eventos")}
+            finally:
+                con.close()
+
+        # Camino A: memoria nacida entera hoy.
+        nacida = os.path.join(self.tmpdir.name, "nacida.db")
+        memory.crear(nacida)
+
+        # Camino B: memoria vieja. Tiene `salidas` con la forma de R2 -- sin
+        # estado ni motivo -- y no tiene los hilos de D14 en absoluto.
+        vieja = os.path.join(self.tmpdir.name, "vieja.db")
+        con = sqlite3.connect(vieja)
+        con.executescript("""
+            create table salidas (
+                id            integer primary key autoincrement,
+                cuando        text not null default (datetime('now')),
+                canal         text not null default 'NO_DATA',
+                texto         text not null,
+                hallazgos     text not null default '[]',
+                hash_original text not null
+            );
+        """)
+        con.commit()
+        con.close()
+        with memory.abrir(vieja) as c:
+            memory.asegurar_tablas(c)
+
+        self.assertEqual(columnas(nacida), columnas(vieja),
+                         "Los dos caminos al esquema han divergido")
+
     def test_u8_detector_no_actua(self):
         """Tras consultarlo, la memoria es idéntica salvo el registro de consulta."""
         with memory.abrir(self.db_path) as c:
