@@ -79,6 +79,24 @@ create table if not exists profile (
 
 # La tabla de salidas registra cada texto que cruza la frontera hacia fuera.
 # Append-only: nunca se borra una fila. Lo que salio, salio, y queda constancia.
+
+# D14: Esquema de Hilos y Eventos (Event Sourcing)
+ESQUEMA_HILOS = """
+CREATE TABLE IF NOT EXISTS hilos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    titulo TEXT NOT NULL,
+    origen_dispositivo TEXT NOT NULL DEFAULT 'NO_DATA',
+    creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS hilos_eventos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hilo_id INTEGER NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('abierto', 'tocado', 'cerrado', 'reabierto')),
+    momento TEXT NOT NULL,
+    FOREIGN KEY (hilo_id) REFERENCES hilos(id)
+);
+"""
+
 ESQUEMA_SALIDAS = """
 create table if not exists salidas (
     id            integer primary key autoincrement,
@@ -148,7 +166,7 @@ def crear(ruta):
     carpeta = os.path.dirname(os.path.abspath(ruta))
     os.makedirs(carpeta, exist_ok=True)
     with abrir(ruta) as c:
-        c.executescript(ESQUEMA + ESQUEMA_PERFIL + ESQUEMA_SALIDAS)
+        c.executescript(ESQUEMA + ESQUEMA_PERFIL + ESQUEMA_SALIDAS + ESQUEMA_HILOS)
         # D12: Migracion aditiva. Si la DB es vieja, le anyade la columna.
         try:
             c.execute("ALTER TABLE engrams ADD COLUMN origen_dispositivo TEXT NOT NULL DEFAULT 'NO_DATA'")

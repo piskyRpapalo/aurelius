@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """corredor.py · corredor canónico de Aurelius.
 
-Ejecuta las 20 suites (15 unittest + 5 propias), cuenta los tests,
-y falla cerrado si falta una suite o si alguna no pasa.
+Ejecuta las suites, cuenta los tests, y falla cerrado si falta una suite
+o si hay una suite en disco que no está declarada (Rojo B-Inverso).
 No es interactivo. Determinista. Sin buffering.
 """
 import os
@@ -13,7 +13,10 @@ import sys
 SUITES_UNITTEST = [
     "test_descarga.py", "test_estado.py", "test_fuga.py",
     "test_guardrails.py", "test_interprete.py", "test_leitmotivs.py",
-    "test_recuperacion.py", "test_silencio.py", "test_voz_cyber.py", "test_frontera.py", "test_andamio.py", "test_fusible.py", "test_identidad.py", "test_costura.py", "test_traza.py",
+    "test_recuperacion.py", "test_silencio.py", "test_voz_cyber.py",
+    "test_frontera.py", "test_andamio.py", "test_fusible.py",
+    "test_identidad.py", "test_costura.py", "test_traza.py",
+    "test_hilos.py",
 ]
 SUITES_PROPIAS = [
     "test_cara.py", "test_idioma.py", "test_manifest.py",
@@ -38,18 +41,19 @@ def correr_propia(suite):
     )
     salida = r.stdout + r.stderr
     n = len(re.findall(r"^\s*ok", salida, re.M))
-    # si la propia suite imprime un resumen de fallo, lo detectamos
     ok = r.returncode == 0 and "FALLO" not in salida and "FAIL" not in salida
     return n, ok, salida
 
 def main():
     todas = SUITES_UNITTEST + SUITES_PROPIAS
+    
+    # Rojo B: detectar suites declaradas que no existen en disco
     faltantes = [s for s in todas if not os.path.exists(s)]
     if faltantes:
         print("ROJO · faltan suites: " + ", ".join(faltantes))
         return 1
-
-    # Rojo B-Inverso: buscar suites en disco que no esten declaradas
+    
+    # Rojo B-Inverso: detectar suites en disco que no están declaradas
     suites_en_disco = [f for f in os.listdir('.') if f.startswith('test_') and f.endswith('.py')]
     no_declaradas = [s for s in suites_en_disco if s not in todas]
     if no_declaradas:
