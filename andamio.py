@@ -19,7 +19,7 @@ INTENCIONES = {
     },
     "depurar_error": {
         "plantilla": "Tengo este error: {error}. ¿Cómo lo soluciono?",
-        "requere": ["error"]
+        "requiere": ["error"]
     }
 }
 

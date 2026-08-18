@@ -57,15 +57,21 @@ CEREBRO = _descarga.Pieza(
 )
 
 VOZ = _descarga.Pieza(
-    nombre="Piper es_ES-sharvard speaker_0",
-    url="https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx",
-    # fichero: es_ES-sharvard-medium.onnx (76 733 615 bytes)
-    # url    : https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx
-    # huella medida el 2026-08-17T01:05:55Z y firmada por el Soberano
-    sha256="40febfb1679c69a4505ff311dc136e121e3419a13a290ef264fdf43ddedd0fb1",
-    bytes=76733615,
+    nombre="Piper es_ES-davefx medium",
+    url="https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_ES/davefx/medium/es_ES-davefx-medium.onnx",
+    # fichero: es_ES-davefx-medium.onnx (63 201 294 bytes)
+    # url    : https://huggingface.co/rhasspy/piper-voices/resolve/main/es/es_ES/davefx/medium/es_ES-davefx-medium.onnx
+    # huella medida el 2026-08-18 sobre el fichero que YA SUENA en esta maquina,
+    # y el origen anuncia esos mismos 63 201 294 bytes (comprobado por cabecera,
+    # sin descargar).
+    #
+    # Hasta hoy esta pieza declaraba `sharvard` mientras `voz.py` cargaba
+    # `davefx` (MODELO_DEFECTO): dos verdades sobre la misma pieza, y el dia que
+    # difirieran no habria forma de saber cual manda. Manda la que suena.
+    sha256="6658b03b1a6c316ee4c265a9896abc1393353c2d9e1bca7d66c2c442e222a917",
+    bytes=63201294,
     licencia="MIT",
-    destino="voz/es_ES-sharvard-medium.onnx",
+    destino="voz/es_ES-davefx-medium.onnx",
 )
 
 
