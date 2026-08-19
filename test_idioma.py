@@ -363,6 +363,35 @@ def t13():
             assert clave in TX.TEXTOS[lengua], f"falta {clave} en {lengua}"
 
 
+
+@caso("14 · el idioma no se pregunta dos veces en un primer arranque")
+def t14():
+    """Medido en un clon fresco el 2026-08-20: el desconocido elegía idioma,
+    el ritual lo guardaba, y treinta segundos después se lo volvían a preguntar.
+
+    La causa: `paso_idioma` consultaba `estado()`, que dice SIN_ESQUEMA mientras
+    falten los engramas — y el ritual escribe el perfil ANTES de que existan.
+    Una memoria a medio nacer ya sabe en qué idioma le hablan.
+    """
+    import sqlite3
+    import aurelius as A
+    import memory as M
+
+    ruta = os.path.join(tempfile.mkdtemp(), "memory.db")
+
+    # Una memoria como la deja el ritual: perfil con idioma, sin engramas.
+    con = sqlite3.connect(ruta)
+    con.executescript(M.ESQUEMA_PERFIL)
+    con.execute("insert into profile (key, value) values ('language', 'es')")
+    con.commit()
+    con.close()
+
+    assert M.estado(ruta)[0] == "SIN_ESQUEMA", \
+        "el escenario que se quiere probar es justo ese: sin engramas"
+    assert A._idioma_firmado(ruta) == "es", \
+        "el idioma estaba guardado y no se ve: se volverá a preguntar"
+
+
 def main():
     fallos = 0
     print("── M2 · IDIOMA DE LA SESION " + "─" * 38)

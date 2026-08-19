@@ -188,12 +188,14 @@ def paso_idioma(ruta):
     Un idioma ya contestado no se vuelve a preguntar — misma regla que el
     resto del perfil.
     """
-    est, _ = M.estado(ruta)
-    if est != "SIN_ESQUEMA":
-        with M.abrir(ruta) as c:
-            guardado = M.leer_perfil(c, "language")
-        if guardado != M.AUSENTE:
-            return guardado
+    # Se mira el PERFIL, no el estado de la memoria. El ritual guarda el idioma
+    # antes de que existan los engramas, y `estado()` dice SIN_ESQUEMA mientras
+    # falte esa tabla -- asi que preguntar por el estado hacia repetir una
+    # pregunta ya contestada hacia treinta segundos. Medido en un clon fresco
+    # el 2026-08-20: el desconocido elegia idioma dos veces seguidas.
+    guardado = _idioma_firmado(ruta)
+    if guardado:
+        return guardado
     return elegir(TX.PREGUNTA_IDIOMA, TX.IDIOMAS, ayuda=TX.AYUDA_IDIOMA,
                   rechazo=TX.RECHAZO_IDIOMA)
 
@@ -520,9 +522,11 @@ def _idioma_firmado(ruta):
     una consulta que revienta porque el fichero no esta seria peor que la
     pregunta que evita.
     """
+    # No se comprueba `estado()`: una memoria a medio nacer -- con perfil y sin
+    # engramas -- ya puede tener idioma elegido, y ese es justo el momento del
+    # primer arranque. Si la tabla no esta, la consulta falla y se devuelve
+    # None, que es la respuesta correcta.
     try:
-        if M.estado(ruta)[0] == "SIN_ESQUEMA":
-            return None
         with M.abrir(ruta) as c:
             elegido = M.leer_perfil(c).get("language", M.AUSENTE)
     except Exception:
