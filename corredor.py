@@ -16,7 +16,7 @@ SUITES_UNITTEST = [
     "test_recuperacion.py", "test_silencio.py", "test_voz_cyber.py",
     "test_frontera.py", "test_puerta.py", "test_andamio.py", "test_fusible.py",
     "test_identidad.py", "test_costura.py", "test_traza.py",
-    "test_hilos.py", "test_borradores.py",
+    "test_hilos.py", "test_borradores.py", "test_narrador.py",
 ]
 SUITES_PROPIAS = [
     "test_cara.py", "test_idioma.py", "test_manifest.py",
