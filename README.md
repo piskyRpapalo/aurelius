@@ -104,6 +104,28 @@ so.
 Voice is optional and separate. Without it, everything works and the Speak
 button says plainly that this copy has no voice.
 
+### On a phone (Android · Termux)
+
+Install [Termux](https://termux.dev) — from F-Droid, not the Play Store — and
+paste one line:
+
+```
+pkg install -y git && git clone --depth 1 https://github.com/piskyRpapalo/aurelius.git ~/aurelius && bash ~/aurelius/bin/instalar-android
+```
+
+It installs what it needs, gets the engine from Termux's own repository, and
+then Aurelius offers you the brain and the voice with their licence and their
+checksum in front of you. You accept those; the script does not decide for you.
+
+**What a phone is good at, measured and not guessed** (Doogee S110, 2026-08-19,
+`llama-bench` on the 4B model): generation **2.93 ± 0.38 tokens per second**,
+against 14.5 on a small desktop. A short answer takes about half a minute. The
+Vulkan backend package installs and loads, but this device reports
+`no devices found`, so there is no graphics acceleration to gain here.
+
+Writing, recalling, sealing and exporting are as fast as anywhere. Conversation
+is the slow part, and now you know how slow before you install it.
+
 ## Requirements
 
 | Requirement | How to check it | If it is missing |

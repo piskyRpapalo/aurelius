@@ -46,10 +46,20 @@ def main(argv=None):
         print("uso: eco-remoto [--puerto N] ORDEN...", file=sys.stderr)
         return 2
 
-    r = subprocess.run(argv, capture_output=True, text=True)
+    # Una orden que no existe es un dato, no una excepción. La primera versión
+    # de esto reventaba con una traza de Python en la pantalla del teléfono
+    # cuando el binario no estaba — que es justo el caso que uno mide.
+    try:
+        r = subprocess.run(argv, capture_output=True, text=True)
+        salida, codigo = r.stdout + r.stderr, r.returncode
+    except FileNotFoundError:
+        salida, codigo = f"[eco-remoto] no existe: {argv[0]}\n", 127
+    except OSError as e:
+        salida, codigo = f"[eco-remoto] {type(e).__name__}: {e}\n", 126
+
     cuerpo = (f"$ {' '.join(argv)}\n"
-              f"{r.stdout}{r.stderr}\n"
-              f"[salida: {r.returncode}]\n")
+              f"{salida}\n"
+              f"[salida: {codigo}]\n")
 
     try:
         peticion = urllib.request.Request(
@@ -66,8 +76,8 @@ def main(argv=None):
         print(cuerpo)
         return 1
 
-    print(f"[eco-remoto] enviado · {len(cuerpo)} caracteres · salida {r.returncode}")
-    return r.returncode
+    print(f"[eco-remoto] enviado · {len(cuerpo)} caracteres · salida {codigo}")
+    return codigo
 
 
 if __name__ == "__main__":
