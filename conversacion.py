@@ -12,7 +12,8 @@ le pregunta al modelo. Nada más, y en ese orden.
 EL MOTOR SE INYECTA, NO SE IMPORTA
 ----------------------------------
 `turno()` recibe `motor`: una función `texto -> texto`. El adaptador real
-(`motor_llama`) lanza `llama-cli` como proceso hijo; una prueba puede pasar un
+(`motor_llama`) lanza el binario de completacion como proceso hijo; una
+prueba puede pasar un
 motor sintético de tres líneas. Es el mismo criterio que el `redactor` de la
 frontera, y resuelve algo que llevaba tiempo declarado como pendiente: probar
 el núcleo de la conversación **sin modelo**. Un gerente sintético que cumple el
@@ -124,6 +125,33 @@ def motor_llama(modelo, hilos=8, tiempo=180):
         return limpiar(r.stdout, prompt)
 
     return hablar
+
+
+# Las tres ausencias posibles. Se separan porque "no hay motor" a secas manda a
+# la persona a buscar lo que ya tiene: quien descargo el cerebro y no instalo el
+# binario, y quien instalo el binario y no bajo el cerebro, necesitan
+# instrucciones distintas. Un mensaje que sirve para los dos casos no sirve para
+# ninguno.
+SIN_NADA = "sin_nada"
+SIN_BINARIO = "sin_binario"
+SIN_MODELO = "sin_modelo"
+LISTO = "listo"
+
+
+def diagnostico(modelo):
+    """(motor, motivo). El motivo dice QUE falta, no que algo falta.
+
+    `modelo` es la ruta donde el producto espera el cerebro. Se comprueba en el
+    DISCO: una bandera en un fichero de estado dice lo que era verdad cuando se
+    escribio.
+    """
+    binario = motor_disponible()
+    hay_modelo = bool(modelo) and os.path.isfile(modelo)
+    if binario and hay_modelo:
+        return motor_llama(modelo), LISTO
+    if not binario and not hay_modelo:
+        return None, SIN_NADA
+    return (None, SIN_MODELO) if binario else (None, SIN_BINARIO)
 
 
 def limpiar(crudo, prompt=""):

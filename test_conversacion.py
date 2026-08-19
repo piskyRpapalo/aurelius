@@ -279,6 +279,9 @@ class TestSesionCharla(unittest.TestCase):
         texto = "\n".join(dicho)
         self.assertIn(NN.narrar("M0", "es"), texto,
                       "no dice en que peldano esta, o lo dice en jerga")
+        # Y NO afirma lo que no esta hecho: en limpio, M0 no esta puesto.
+        self.assertNotIn(NN.decir("M0", "es"), texto,
+                         "dice que has hecho algo que no has hecho")
         for interno in ("M0", "progreso_camino", "cruzar_frontera"):
             self.assertNotIn(interno, texto,
                              f"la sesion ensena el nombre interno {interno!r}")
@@ -366,6 +369,111 @@ class TestLimpieza(unittest.TestCase):
     def test_rojo_ck_nada_es_cadena_vacia(self):
         self.assertEqual(C.limpiar(None), "")
         self.assertEqual(C.limpiar(""), "")
+
+class TestAusenciasYTeclado(unittest.TestCase):
+    """C-l y C-m · por que no hay charla, y una entrada que aguanta un dedo."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.db = os.path.join(self.tmpdir.name, "memory.db")
+        M.crear(self.db)
+        with M.abrir(self.db) as c:
+            M.escribir_perfil(c, "language", "es")
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    # ------------------------------------------------------------------
+    # Rojo C-l: tres ausencias, tres razones
+    # ------------------------------------------------------------------
+    def test_rojo_cl_el_diagnostico_distingue_que_falta(self):
+        """Quien tiene el binario y no el modelo no necesita el mismo consejo
+        que quien tiene el modelo y no el binario."""
+        falso = os.path.join(self.tmpdir.name, "no-existe.gguf")
+        real = os.path.join(self.tmpdir.name, "cerebro.gguf")
+        open(real, "w").close()
+
+        anterior = C.motor_disponible
+        try:
+            C.motor_disponible = lambda: "/usr/bin/algo"
+            self.assertEqual(C.diagnostico(falso)[1], C.SIN_MODELO)
+            C.motor_disponible = lambda: None
+            self.assertEqual(C.diagnostico(real)[1], C.SIN_BINARIO)
+            self.assertEqual(C.diagnostico(falso)[1], C.SIN_NADA)
+        finally:
+            C.motor_disponible = anterior
+
+    def test_rojo_cl_la_sesion_dice_cual_es_la_ausencia(self):
+        """Y el mensaje nombra lo que falta: el binario, o la ruta del cerebro."""
+        import aurelius
+        ruta = "/una/ruta/cerebro.gguf"
+
+        dicho = []
+        aurelius.charla(self.db, motor=None, motivo=C.SIN_MODELO, modelo=ruta,
+                        entrada=lambda: "", salida=dicho.append)
+        self.assertIn(ruta, "\n".join(dicho),
+                      "no dice DONDE tendria que estar el cerebro")
+
+        dicho = []
+        aurelius.charla(self.db, motor=None, motivo=C.SIN_BINARIO,
+                        entrada=lambda: "", salida=dicho.append)
+        texto = "\n".join(dicho)
+        self.assertIn(C.MOTOR, texto, "no dice QUE hay que instalar")
+        self.assertNotIn("/una/ruta", texto,
+                         "y no manda a buscar un cerebro que si esta")
+
+    # ------------------------------------------------------------------
+    # Rojo C-m: la entrada aguanta un telefono
+    # ------------------------------------------------------------------
+    def test_rojo_cm_sale_por_palabra_ademas_de_por_vacio(self):
+        """En un telefono, confiar solo en un Enter en blanco es confiar en que
+        nadie lo pulse sin querer."""
+        import aurelius
+        for palabra in aurelius.SALIDAS_EXPLICITAS:
+            cola = [palabra, "esto no deberia llegar"]
+            aurelius.charla(self.db, motor=motor_sintetico(),
+                            entrada=lambda: cola.pop(0), salida=lambda t: None)
+        with M.abrir(self.db) as c:
+            self.assertEqual(
+                c.execute("select count(*) from salidas").fetchone()[0], 0,
+                "la palabra de salida tiene que cortar antes del turno")
+
+    def test_rojo_cm_cerrar_la_entrada_no_es_un_error(self):
+        """EOF y Ctrl-C salen limpios: en un telefono son la tecla comoda.
+
+        Se prueba `_teclado` de verdad, sustituyendo `input`. La primera version
+        de este caso rodeaba la funcion y comprobaba su propio andamio, que es
+        una forma elegante de no probar nada.
+        """
+        import builtins
+        import aurelius
+        original = builtins.input
+        try:
+            for romper in (EOFError, KeyboardInterrupt):
+                def falla():
+                    raise romper
+                builtins.input = falla
+                self.assertEqual(aurelius._teclado(lambda t: None), "",
+                                 f"{romper.__name__} tiene que salir limpio")
+        finally:
+            builtins.input = original
+
+    def test_rojo_cm_el_prompt_se_vacia_antes_de_bloquear(self):
+        """Si la salida esta redirigida, un prompt en el buffer es una pantalla
+        en blanco esperando a que pregunten algo que ya se pregunto."""
+        import builtins
+        import aurelius
+        visto = []
+        original = builtins.input
+        try:
+            builtins.input = lambda: "hola"
+            aurelius._teclado(visto.append)
+        finally:
+            builtins.input = original
+        self.assertEqual(visto, ["> "], "el prompt tiene que salir antes de leer")
+
+
+
 
 def fusible_bloqueado():
     import fusible

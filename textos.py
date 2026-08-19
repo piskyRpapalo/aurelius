@@ -77,6 +77,15 @@ TEXTOS = {
         "charla_sin_motor": (
             "There is no conversation engine in this copy, so I cannot talk\n"
             "yet. Everything else works: your memory is whole without me.\n"),
+        "charla_sin_binario": (
+            "The brain is on this machine, but there is nothing here to run it\n"
+            "with. Install {motor} and I can talk. Everything else already\n"
+            "works without it.\n"),
+        "charla_sin_modelo": (
+            "I can run a brain, but I cannot find one. It should be at\n"
+            "  {ruta}\n"
+            "If you downloaded it somewhere else, move it there — I do not go\n"
+            "looking around your disk.\n"),
         "charla_donde": "You are at {peldano}. {prueba}",
         "charla_decision": (
             "The core is done. From here you choose: go straight to your own\n"
@@ -224,6 +233,15 @@ TEXTOS = {
         "charla_sin_motor": (
             "Esta copia no tiene motor de conversación, así que todavía no\n"
             "puedo charlar. Lo demás funciona: tu memoria está entera sin mí.\n"),
+        "charla_sin_binario": (
+            "El cerebro está en esta máquina, pero no hay con qué encenderlo.\n"
+            "Instala {motor} y podré hablar. Lo demás ya funciona sin él.\n"),
+        "charla_sin_modelo": (
+            "Puedo encender un cerebro, pero no encuentro ninguno. Tendría que\n"
+            "estar en\n"
+            "  {ruta}\n"
+            "Si lo bajaste a otro sitio, muévelo ahí — yo no voy a rebuscar por\n"
+            "tu disco.\n"),
         "charla_donde": "Estás en {peldano}. {prueba}",
         "charla_decision": (
             "El núcleo está hecho. A partir de aquí eliges: ir directo a tu\n"

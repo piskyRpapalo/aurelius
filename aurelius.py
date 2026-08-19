@@ -470,7 +470,34 @@ def respaldo(ruta, destino=None):
 
 
 
-def charla(ruta, motor=None, entrada=None, salida=print, vueltas=None):
+SALIDAS_EXPLICITAS = ("/salir", "/exit", "/quit")
+
+
+def _teclado(salida):
+    """Una linea de la persona. Vacia si cierra la entrada o corta.
+
+    Se vacia el buffer ANTES de bloquear: si la salida esta redirigida -- una
+    tanda, un adb, un scrcpy -- el prompt se queda en el buffer y la persona
+    mira una pantalla en blanco esperando a que le pregunten algo que ya se
+    pregunto.
+
+    Y Ctrl-C no es un error: en un telefono es la unica tecla comoda para
+    salir. Se trata como una salida limpia, no como una excepcion.
+    """
+    import sys as _sys
+    salida("> ")
+    try:
+        _sys.stdout.flush()
+    except Exception:
+        pass
+    try:
+        return input()
+    except (EOFError, KeyboardInterrupt):
+        return ""
+
+
+def charla(ruta, motor=None, entrada=None, salida=print, vueltas=None,
+           motivo=None, modelo=None):
     """La sesion de charla. Un turno cada vez, y cada turno deja su huella.
 
     `motor`, `entrada` y `salida` se inyectan por el mismo motivo que el
@@ -482,7 +509,7 @@ def charla(ruta, motor=None, entrada=None, salida=print, vueltas=None):
     esta la persona, y se vuelve — la memoria funciona entera sin cerebro, y
     prometer una charla que no va a llegar es peor que no ofrecerla.
     """
-    entrada = entrada or (lambda: preguntar("> "))
+    entrada = entrada or (lambda: _teclado(lambda t: print(t, end="")))
     idioma = TX.normalizar(paso_idioma(ruta))
     salida(tx(idioma, "charla_cabecera") + "-" * 40)
 
@@ -493,21 +520,37 @@ def charla(ruta, motor=None, entrada=None, salida=print, vueltas=None):
         # Donde esta, dicho con el nombre del juego y con lo que lo mide: un
         # peldano sin su prueba al lado es decoracion.
         peldano = _peldano_actual(camino)
+        # La frase del Narrador es lo que se dice CUANDO la mecanica se
+        # dispara, no una descripcion del estado. Decir "le has puesto tu
+        # nombre" a quien no se lo ha puesto es exactamente la respuesta
+        # plausible que este arbol existe para no dar. Solo se dice si esta
+        # hecho; si no, se nombra el peldano y se calla lo demas.
+        hecho = camino["estado"].get(peldano) == "hecho"
         salida(tx(idioma, "charla_donde",
                   peldano=_narrador.narrar(peldano, idioma),
-                  prueba=_narrador.decir(peldano, idioma)))
+                  prueba=_narrador.decir(peldano, idioma) if hecho else "").rstrip())
         if donde == "decision":
             salida(tx(idioma, "charla_decision"))
 
         if motor is None:
-            salida(tx(idioma, "charla_sin_motor"))
+            # Tres ausencias distintas, tres mensajes. "No hay motor" a secas
+            # manda a buscar lo que ya se tiene.
+            if motivo == _charla.SIN_BINARIO:
+                salida(tx(idioma, "charla_sin_binario", motor=_charla.MOTOR))
+            elif motivo == _charla.SIN_MODELO:
+                salida(tx(idioma, "charla_sin_modelo",
+                          ruta=modelo or M.AUSENTE))
+            else:
+                salida(tx(idioma, "charla_sin_motor"))
             return 0
 
         salida(tx(idioma, "charla_como_salir"))
         dadas = 0
         while vueltas is None or dadas < vueltas:
             dicho = entrada()
-            if not dicho:
+            # Vacio o palabra de salida. En un telefono, confiar solo en un
+            # Enter en blanco es confiar en que nadie lo pulse sin querer.
+            if not dicho or dicho.strip().lower() in SALIDAS_EXPLICITAS:
                 break
             dadas += 1
             try:
@@ -671,9 +714,9 @@ def main():
         if est == "SIN_ESQUEMA":
             print(M.mensaje_estado(est, rec))
             return 1
-        modelo = os.path.join(_casa.raiz(), CEREBRO.destino) \
-            if _descarga.presente(CEREBRO) else None
-        return charla(a.db, motor=_charla.motor_llama(modelo) if modelo else None)
+        modelo = os.path.join(str(_casa.raiz()), CEREBRO.destino)
+        motor, motivo = _charla.diagnostico(modelo)
+        return charla(a.db, motor=motor, motivo=motivo, modelo=modelo)
     if a.registro:
         if est == "SIN_ESQUEMA":
             print(M.mensaje_estado(est, rec))
