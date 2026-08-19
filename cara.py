@@ -483,6 +483,7 @@ PLANTILLA = r"""<!DOCTYPE html>
     --losa-900:#0b0f1a; --losa-800:#131926; --losa-700:#1c2433; --losa-600:#2b3547;
     --vena:#a78bfa; --vena-tenue:#6d5bd0;
     --texto:#e8eaf2; --tenue:#98a2b8; --tuyo:#212a3b;
+    --cobre:#A9762B;   /* las paradas opcionales: se tocan o se ignoran */
   }
   * { box-sizing: border-box; }
   html, body { margin:0; height:100%; }
@@ -561,7 +562,17 @@ PLANTILLA = r"""<!DOCTYPE html>
   .orden { background:var(--losa-800); border:1px solid var(--losa-600); border-radius:9px;
            padding:11px 13px; font:13px/1.5 ui-monospace, monospace; color:var(--texto);
            overflow-x:auto; white-space:pre; }
-  .peldano { display:flex; gap:12px; padding:11px 0; border-bottom:1px solid var(--losa-700); }
+  /* El tronco y las paradas. El diseno lineal se rompe a proposito: quien mira
+     el Camino tiene que VER que las cinco de abajo no son obligatorias, sin
+     leer una palabra. */
+  .peldano { display:flex; gap:12px; padding:11px 0 11px 12px;
+             border-bottom:1px solid var(--losa-700); }
+  .peldano[data-rama="nucleo"]   { border-left:3px solid var(--vena); }
+  .peldano[data-rama="opcional"] { border-left:3px dashed var(--cobre); }
+  .peldano[data-rama="opcional"] .n { color:var(--cobre); }
+  .bifurcacion { margin:10px 0 6px; padding:10px 12px; color:var(--texto);
+                 border-left:3px solid var(--vena);
+                 border-bottom:1px dashed var(--cobre); }
   .peldano .n { color:var(--vena); font:600 13px/1.6 ui-monospace, monospace; width:38px; flex:0 0 auto; }
   .peldano[data-aqui="si"] .n { color:var(--losa-900); background:var(--vena); border-radius:6px; text-align:center; }
   .peldano[data-estado="hecho"] .n { color:var(--losa-900); background:#7dd3a0; border-radius:6px; text-align:center; }
@@ -926,6 +937,10 @@ function pintarCamino() {
     var id = par[0], como = estado[id] || "sin_empezar";
     var d = document.createElement("div");
     d.className = "peldano";
+    // Tronco o parada, dicho en el propio nodo: el CSS solo pinta lo que el
+    // codigo ya sabe. Si manana cambia el reparto, el dibujo cambia solo.
+    d.dataset.rama = (DATOS.camino.opcionales || []).indexOf(id) >= 0
+      ? "opcional" : "nucleo";
     d.setAttribute("data-estado", como);
     if (como === "empezado") { d.setAttribute("data-aqui", "si"); }
 
@@ -977,9 +992,7 @@ function pintarCamino() {
     // menu aparte que nadie abre.
     if (id === "M2" && DATOS.camino.punto_decision) {
       var dec = document.createElement("div");
-      dec.className = "nota";
-      dec.style.cssText = "margin:10px 0 6px;padding:10px 12px;"
-        + "border-left:3px solid var(--vena);color:var(--texto)";
+      dec.className = "nota bifurcacion";
       dec.textContent = t("cm_decision");
       cuerpo.appendChild(dec);
     }

@@ -658,6 +658,21 @@ def t30():
         assert f"cm_prueba_{p}" in html, f"{p} no dice que lo da por hecho"
 
 
+@caso("31 · el Camino se ve bifurcado: tronco y paradas, sin leer una palabra")
+def t31():
+    """La modularidad tiene que entrar por los ojos, no por el pie de texto."""
+    html, _ = generar(base_con_recuerdos())
+    css = _estilo(html)
+    assert "--cobre:" in css, "el cobre de las paradas no está en la paleta"
+    import re as _re
+    sueltos = _re.findall(r"#A9762B", css)
+    assert len(sueltos) == 1, \
+        f"el cobre se escribe una vez, en la paleta; hay {len(sueltos)}"
+    for regla in ('[data-rama="nucleo"]', '[data-rama="opcional"]', ".bifurcacion"):
+        assert regla in css, f"falta la regla {regla}"
+    assert 'd.dataset.rama' in html, \
+        "el nodo no declara si es tronco o parada: el CSS estaría adivinando"
+
 def main():
     fallos = 0
     print("── M2 · LA CARA " + "─" * 50)
