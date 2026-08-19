@@ -42,18 +42,29 @@ def texto(v=None):
     return " / ".join(PROBADAS)
 
 
-def aviso(v=None):
+def _linea(idioma, puesta):
+    if idioma == "es":
+        return (f"NOTA · Python {puesta}. La tanda de pruebas se ha corrido en "
+                f"{texto()}, no en esta.")
+    return (f"NOTE · Python {puesta}. The test run has been done on "
+            f"{texto()}, not on this one.")
+
+
+def aviso(v=None, idioma=None):
     """La declaración, o `None` si no hay nada que declarar.
 
-    Sale en los dos idiomas por el mismo motivo que la primera pregunta de la
-    sesión: esto ocurre ANTES de que nadie haya elegido idioma, así que elegir
-    uno por la persona sería suponer.
+    Sin `idioma`, sale en los dos: esto ocurre ANTES de que nadie haya elegido,
+    y elegir uno por la persona sería suponer — el mismo motivo por el que la
+    primera pregunta de la sesión se hace en los dos a la vez.
+
+    Con `idioma`, sale solo en ese. Quien ya firmó su idioma en el perfil no
+    tiene por qué leer dos veces la misma frase, y en la pantalla de un teléfono
+    esa cortesía se nota: son dos líneas de las primeras cuatro que ve.
     """
     if dentro_del_rango(v):
         return None
     v = tuple(v) if v is not None else actual()
     puesta = ".".join(str(n) for n in v)
-    return (f"NOTA · Python {puesta}. La tanda de pruebas se ha corrido en "
-            f"{texto()}, no en esta.\n"
-            f"NOTE · Python {puesta}. The test run has been done on "
-            f"{texto()}, not on this one.")
+    if idioma in ("es", "en"):
+        return _linea(idioma, puesta)
+    return _linea("es", puesta) + "\n" + _linea("en", puesta)

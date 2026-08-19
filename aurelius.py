@@ -496,6 +496,23 @@ def _teclado(salida):
         return ""
 
 
+def _idioma_firmado(ruta):
+    """El idioma del perfil, o None. No crea nada y no falla nunca.
+
+    Se consulta antes de abrir la sesion, cuando la memoria puede no existir:
+    una consulta que revienta porque el fichero no esta seria peor que la
+    pregunta que evita.
+    """
+    try:
+        if M.estado(ruta)[0] == "SIN_ESQUEMA":
+            return None
+        with M.abrir(ruta) as c:
+            elegido = M.leer_perfil(c).get("language", M.AUSENTE)
+    except Exception:
+        return None
+    return elegido if elegido in ("es", "en") else None
+
+
 def _sin_memoria(salida=print):
     """Una bandera sobre una maquina sin memoria. Dice QUE hacer, no que falta.
 
@@ -712,7 +729,10 @@ def main():
     # resultado. Declarar, no bloquear -- fuera del rango no significa roto,
     # significa sin dato, y negarse a arrancar convertiria esa ausencia de
     # medida en un veredicto. Ver `interprete.py`.
-    nota = _interprete.aviso()
+    # Si la persona ya firmo su idioma, la nota sale solo en ese. Si no hay
+    # memoria todavia, o no lo eligio, salen los dos: suponer el idioma de
+    # alguien es exactamente lo que la primera pregunta de la sesion evita.
+    nota = _interprete.aviso(idioma=_idioma_firmado(a.db))
     if nota:
         print(nota, file=sys.stderr)
 

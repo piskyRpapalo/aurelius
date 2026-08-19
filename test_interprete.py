@@ -118,5 +118,42 @@ class TestRango(unittest.TestCase):
         self.assertEqual(r.returncode, 0, f"--view no cerro limpio:\n{salida}")
 
 
+class TestAvisoSigueAlIdioma(unittest.TestCase):
+    """La nota del intérprete respeta lo que la persona ya firmó.
+
+    Medido en un teléfono: en una pantalla estrecha, la nota bilingüe se come
+    dos de las primeras cuatro líneas que alguien ve. Quien ya eligió idioma no
+    tiene por qué leer dos veces la misma frase — y quien no lo ha elegido sí,
+    porque suponérselo sería exactamente lo que la primera pregunta evita.
+    """
+
+    FUERA = (3, 99, 0)      # una versión que nadie ha probado, seguro
+
+    def test_sin_idioma_firmado_salen_los_dos(self):
+        salida = I.aviso(self.FUERA)
+        self.assertIn("NOTA ·", salida, "falta el castellano")
+        self.assertIn("NOTE ·", salida, "falta el inglés")
+
+    def test_con_idioma_firmado_sale_solo_ese(self):
+        es = I.aviso(self.FUERA, idioma="es")
+        self.assertIn("NOTA ·", es)
+        self.assertNotIn("NOTE ·", es, "el español no tiene que leer inglés")
+
+        en = I.aviso(self.FUERA, idioma="en")
+        self.assertIn("NOTE ·", en)
+        self.assertNotIn("NOTA ·", en, "el inglés no tiene que leer español")
+
+    def test_un_idioma_que_no_hablamos_no_elige_por_nadie(self):
+        """`fr` no es una firma válida: se cae a los dos, no a uno inventado."""
+        salida = I.aviso(self.FUERA, idioma="fr")
+        self.assertIn("NOTA ·", salida)
+        self.assertIn("NOTE ·", salida)
+
+    def test_dentro_del_rango_no_dice_nada_en_ningun_idioma(self):
+        for idioma in (None, "es", "en"):
+            self.assertIsNone(I.aviso((3, 10, 12), idioma=idioma))
+
+
+
 if __name__ == "__main__":
     unittest.main()
