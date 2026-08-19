@@ -193,7 +193,17 @@ TOTAL_SALAS = 6
 
 
 def progreso_camino(c, ruta_db):
-    """El estado real de los ocho peldanos. En instalacion limpia, todo a cero."""
+    """El estado real de los ocho peldanos. En instalacion limpia, todo a cero.
+
+    M7 se medira cuando el aprendiz promueva una propuesta propia Y archive su
+    andamiaje. Continente, no contenido. Hoy es NO_DATA y se dice: pospuesto a
+    v2 por decision del Soberano (2026-08-19).
+
+    Las dos mitades de esa frase ya tienen media casa construida -- promover una
+    propuesta es `memory.promover_a_engrama`, que existe desde D69 -- y la otra
+    media no: archivar el andamiaje no es codigo todavia. Un peldano que depende
+    de una pieza inexistente se declara; no se pinta a la espera.
+    """
     perfil = M.leer_perfil(c)
     contestadas = sum(1 for k in ("device", "name")
                       if perfil.get(k, M.AUSENTE) != M.AUSENTE)
