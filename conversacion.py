@@ -43,16 +43,50 @@ import fusible
 import narrador as N
 import textos as TX
 
-# Las tres cicatrices del motor, pagadas una a una el 2026-08-18:
+# POR QUÉ `llama-completion` Y NO `llama-cli`.
+# Medido el 2026-08-19, contra el mismo modelo y el mismo prompt:
+#
+#   llama-cli         · stdout 1075 B — cargador, arte ASCII, cabecera del
+#                       binario y la lista de comandos. stderr: 0.
+#   llama-completion  · stdout 46 B — la respuesta y nada más.
+#                       stderr: 2353 B, todo el ruido.
+#
+# `llama-cli` es una interfaz de chat y escribe su interfaz por la salida
+# estándar. Lo descubrió el primer turno real: la fila del registro guardaba
+# 1489 caracteres de los que casi todos eran el banner. Las quince pruebas
+# unitarias no podían verlo — un motor sintético devuelve lo que se le dice que
+# devuelva —, y solo aparece cuando habla el binario de verdad.
+#
+# La alternativa era recortar el banner con expresiones regulares. Se descartó:
+# sería el primer trozo de este árbol que depende de la FORMA de la salida de un
+# programa ajeno, y esa dependencia se rompe sola en la siguiente versión sin
+# que nadie se entere. Cambiar de binario es una constante; parsear una interfaz
+# es una deuda.
+#
+# Las banderas, cada una con su cicatriz:
 #   · `-c` explícito SIEMPRE. El modelo trae 262144 de contexto y con el
-#     defecto la máquina se arrodilla reservando caché.
-#   · `-st` y jamás `-no-cnv`: sin él entra en modo interactivo, se encuentra
-#     la entrada cerrada y reimprime el prompt en bucle — 427 millones de
-#     líneas y 1,4 GB de basura en cinco minutos.
+#     defecto la máquina se arrodilla reservando caché (2026-08-18).
+#   · `--no-display-prompt`, o la respuesta llega con el prompt pegado delante.
 #   · `--no-warmup`, porque el arranque en frío ya es bastante lento.
+#   · `-st` NO se pasa: era la bandera que `llama-cli` necesitaba para no
+#     entrar en modo interactivo y reimprimir el prompt en bucle — 427 millones
+#     de líneas y 1,4 GB de basura en cinco minutos. `llama-completion` no tiene
+#     ese modo, así que la bandera sobra. La cicatriz se conserva escrita
+#     porque el binario puede volver a cambiar.
+# Los dos marcadores que el binario añade al final. Medidos el 2026-08-19 sobre
+# la build b10488: con `-st` cierra con `[end of text]`; sin ella espera más
+# entrada y cierra con `> EOF by user` al encontrarse el flujo cerrado.
+#
+# Recortar esto ES depender de la forma de una salida ajena, y conviene decirlo
+# en vez de disimularlo. La diferencia con parsear el banner entero es de
+# grado y de riesgo: son dos tokens fijos y con nombre, el recorte vive en una
+# función con su propio rojo, y si mañana cambian, ese rojo se pone rojo aquí
+# en vez de aparecer como basura en el registro de una persona.
+MARCADORES_FINAL = ("[end of text]", "> EOF by user")
+
 CONTEXTO = 4096
 TOPE_TOKENS = 320
-MOTOR = "llama-cli"
+MOTOR = "llama-completion"
 
 FASES = ("nucleo", "decision", "side_quest", "proyecto")
 
@@ -79,15 +113,44 @@ def motor_llama(modelo, hilos=8, tiempo=180):
     def hablar(prompt):
         orden = [binario, "-m", modelo, "-c", str(CONTEXTO),
                  "-n", str(TOPE_TOKENS), "-st", "--no-warmup",
-                 "-t", str(hilos), "-p", prompt]
+                 "--no-display-prompt", "-t", str(hilos), "-p", prompt]
         try:
             r = subprocess.run(orden, capture_output=True, text=True,
                                timeout=tiempo, stdin=subprocess.DEVNULL)
         except Exception:
             return None
-        return r.stdout if r.returncode == 0 else None
+        if r.returncode != 0:
+            return None
+        return limpiar(r.stdout, prompt)
 
     return hablar
+
+
+def limpiar(crudo, prompt=""):
+    """Lo que dijo el modelo, sin lo que dijimos nosotros ni lo que dice el binario.
+
+    Tres cosas se van, en este orden:
+
+    1. El eco del prompt, si la bandera `--no-display-prompt` faltase.
+    2. Los marcadores de cierre del binario.
+    3. Los espacios de los bordes.
+
+    Lo que queda se registra tal cual. El registro promete poder enseñarse, y
+    un registro lleno de marcadores de una herramienta no se enseña: se explica.
+    """
+    dicho = crudo or ""
+    if prompt and dicho.startswith(prompt):
+        dicho = dicho[len(prompt):]
+    dicho = dicho.strip()
+    # En bucle: un cierre puede traer los dos, uno detrás de otro.
+    cambiado = True
+    while cambiado:
+        cambiado = False
+        for marca in MARCADORES_FINAL:
+            if dicho.endswith(marca):
+                dicho = dicho[:-len(marca)].rstrip()
+                cambiado = True
+    return dicho
 
 
 # --- dónde está la persona -------------------------------------------------

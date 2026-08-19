@@ -109,12 +109,12 @@ button says plainly that this copy has no voice.
 | Requirement | How to check it | If it is missing |
 |---|---|---|
 | Python 3.10+ | `python3 -V` | it does not start — the only mandatory one |
-| `llama-cli` | `command -v llama-cli` | no conversation with the model; everything else works |
+| `llama-completion` | `command -v llama-completion` | no conversation with the model; everything else works |
 | `piper` | `command -v piper` | the Speak button says that this copy has no voice |
 
 Only the first row is required. The other two remove one capability each and
 leave the rest of the program intact: that is the design, not an accident of
-it. A copy of Aurelius with neither `llama-cli` nor `piper` still asks, still
+it. A copy of Aurelius with neither `llama-completion` nor `piper` still asks, still
 writes, still shows and still exports — and it tells you which of the two it is
 running without, instead of failing somewhere later and letting you guess.
 

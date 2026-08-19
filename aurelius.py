@@ -86,20 +86,23 @@ VOZ = _descarga.Pieza(
 # exactamente el momento en que un desconocido cree que se ha equivocado él.
 #
 # El nombre del binario vive AQUI y en el README, no en lo que lee la persona:
-# a quien acaba de llegar, "llama-cli" no le dice qué le falta ni qué hacer.
-MOTOR = "llama-cli"
+# a quien acaba de llegar, el nombre del binario no le dice qué le falta.
+#
+# El nombre NO se escribe aquí: lo declara `conversacion.py`, que es quien lo
+# ejecuta. Tenerlo en dos sitios ya nos costó una tarde con la voz — el
+# catálogo decía una cosa y el módulo cargaba otra — y la lección fue que dos
+# verdades sobre la misma pieza no discrepan el día que se escriben, sino seis
+# meses después.
+MOTOR = _charla.MOTOR
 
 
 def motor_conversacion():
-    """La ruta del motor, o None si no está. Mismo orden que `voz.piper_binario`.
+    """La ruta del motor, o None si no está. Una sola implementación.
 
-    `shutil.which` y no el PATH implícito de un servicio: un unit de systemd no
-    carga el perfil del usuario y no ve ~/.local/bin — cicatriz conocida.
+    Delega en `conversacion.motor_disponible`: quien ejecuta el binario es
+    quien decide cómo se busca. Aquí solo se pregunta.
     """
-    declarado = os.environ.get("AURELIUS_MOTOR", "").strip()
-    if declarado:
-        return declarado if os.path.isfile(declarado) else None
-    return shutil.which(MOTOR)
+    return _charla.motor_disponible()
 
 
 # --- guardrails: se inyecta, no se copia ----------------------------------

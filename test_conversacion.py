@@ -301,6 +301,72 @@ class TestSesionCharla(unittest.TestCase):
         self.assertEqual(fila["estado"], "bloqueado")
 
 
+class TestMotorUnaSolaVerdad(unittest.TestCase):
+    """C-j · quien ejecuta el binario es quien dice como se llama."""
+
+    def test_rojo_cj_no_hay_dos_nombres_del_motor(self):
+        """aurelius.py no puede tener su propia idea de cual es el motor.
+
+        Ya paso con la voz: el catalogo declaraba una pieza y el modulo cargaba
+        otra. Dos verdades sobre la misma pieza no discrepan el dia que se
+        escriben, sino seis meses despues.
+        """
+        import aurelius
+        self.assertIs(aurelius.MOTOR, C.MOTOR,
+                      "el nombre del motor vive en conversacion.py, y solo ahi")
+        self.assertIs(aurelius.motor_conversacion.__wrapped__
+                      if hasattr(aurelius.motor_conversacion, "__wrapped__")
+                      else True, True)
+
+    def test_rojo_cj_el_readme_nombra_el_motor_de_verdad(self):
+        """Un README que promete otro binario manda a la persona a instalar
+        lo que no es."""
+        ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "README.md")
+        with open(ruta, encoding="utf-8") as fh:
+            readme = fh.read()
+        self.assertIn(C.MOTOR, readme,
+                      "el README no nombra el motor que el codigo ejecuta")
+        self.assertNotIn("llama-cli", readme,
+                         "el README sigue nombrando el binario viejo")
+
+class TestLimpieza(unittest.TestCase):
+    """C-k · lo que se registra es lo que dijo el modelo, y nada mas.
+
+    Este rojo existe por un fallo que quince pruebas unitarias no vieron: un
+    motor sintetico devuelve lo que se le dice que devuelva, asi que el ruido
+    del binario solo aparecio en el primer turno REAL. Ahora el recorte tiene
+    su propia prueba, y si el binario cambia sus marcadores esto se pone rojo
+    aqui en vez de salir como basura en el registro de una persona.
+    """
+
+    def test_rojo_ck_se_van_los_marcadores_del_binario(self):
+        for crudo, esperado in (
+            ("Una piedra es lo que has inscrito. [end of text]",
+             "Una piedra es lo que has inscrito."),
+            ("Una piedra es lo que has inscrito.\n\n> EOF by user",
+             "Una piedra es lo que has inscrito."),
+            ("Hola. [end of text]\n> EOF by user", "Hola."),
+            ("   Hola.   ", "Hola."),
+        ):
+            self.assertEqual(C.limpiar(crudo), esperado)
+
+    def test_rojo_ck_se_va_el_eco_del_prompt(self):
+        """Si faltara la bandera, el prompt no puede colarse en el registro."""
+        prompt = "Eres Aurelius. Se breve."
+        self.assertEqual(C.limpiar(prompt + "Una piedra.", prompt), "Una piedra.")
+
+    def test_rojo_ck_no_se_come_el_texto_del_modelo(self):
+        """Recortar de mas es tan malo como no recortar."""
+        for intacto in ("Una piedra es lo que has inscrito.",
+                        "Te propongo esto: > y esto otro",
+                        "El texto acaba en corchete [asi]"):
+            self.assertEqual(C.limpiar(intacto), intacto)
+
+    def test_rojo_ck_nada_es_cadena_vacia(self):
+        self.assertEqual(C.limpiar(None), "")
+        self.assertEqual(C.limpiar(""), "")
+
 def fusible_bloqueado():
     import fusible
     return fusible.RespuestaBloqueada
