@@ -126,6 +126,14 @@ Vulkan backend package installs and loads, but this device reports
 Writing, recalling, sealing and exporting are as fast as anywhere. Conversation
 is the slow part, and now you know how slow before you install it.
 
+The maintainer put it in his own words, and they stay in his:
+
+> En el teléfono, conversar con Aurelius no es una charla: es una carta. La
+> generación va a ~3 tokens por segundo; un turno con el tope por defecto
+> (80 tokens) tarda uno o dos minutos. No hay presión de respuesta inmediata
+> porque no hay servidor que te espere. Solo tu hardware, tu memoria, y el
+> tiempo que tú le das.
+
 ## Requirements
 
 | Requirement | How to check it | If it is missing |
