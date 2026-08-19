@@ -15,7 +15,12 @@ de saber en que idioma hablar, asi que se dice en los dos a la vez. Preguntar
 """
 from __future__ import annotations
 
-DEFECTO = "en"
+# El juego se narra en espanol: la base de nombres del lore se firmo en
+# espanol el 2026-08-19, y un producto cuyo idioma por defecto no tiene ni un
+# nombre de juego arranca mudo. El ingles sigue entero para la sesion -- las
+# dos columnas de TEXTOS estan completas -- y los nombres clave del lore se
+# mantienen bilingues como marca. Lo que cambia es por donde se empieza.
+DEFECTO = "es"
 
 # (clave, como se llama ese idioma en ese idioma). El nombre va en su propia
 # lengua a proposito: quien busca "Español" no esta leyendo la palabra

@@ -166,10 +166,15 @@ _ES = {
 }
 
 # El inglés NO está firmado. La base del 2026-08-19 se escribió entera en
-# español, y el producto habla dos idiomas con `DEFECTO = "en"` en `textos.py`.
-# Inventar aquí los nombres ingleses sería acuñar vocabulario sin firma, que es
-# justo lo que la regla de arriba prohíbe. Se declara vacío y `narrar()`
-# devuelve NO_DATA: la ausencia se ve, y se puede arreglar firmando.
+# español, y por eso el juego se narra en español: `textos.py` puso
+# `DEFECTO = "es"` el mismo día, para que el idioma por defecto no arrancara
+# mudo. La sesión sigue siendo bilingüe — las dos columnas de `TEXTOS` están
+# completas — y los nombres clave del lore se mantienen bilingües como marca;
+# lo que falta es el resto del vocabulario en inglés.
+#
+# Inventarlo aquí sería acuñar sin firma, que es justo lo que la regla de
+# arriba prohíbe. Se declara vacío y `narrar()` devuelve NO_DATA: la ausencia
+# se ve, y se arregla firmando, no programando.
 _EN: dict[str, tuple[str, str]] = {}
 
 ALIAS = {"es": _ES, "en": _EN}
