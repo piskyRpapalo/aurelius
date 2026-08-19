@@ -29,6 +29,13 @@ solo. Por eso la tabla se copia aquí, declarando su origen. Si la base cambia,
 esto se actualiza a mano y a propósito — un alias que aparece sin haber sido
 firmado es exactamente lo que este módulo existe para impedir.
 
+EN QUÉ IDIOMA HABLA
+-------------------
+En español, y solo en español. La interfaz es bilingüe y lo seguirá siendo; la
+voz del juego no. Los nombres del lore nacieron en español en la base firmada,
+y traducir un nombre propio es cambiarlo. Fuera del español, `narrar()`
+devuelve `NO_DATA` — no como hueco, sino como declaración.
+
 LA REGLA QUE NO SE NEGOCIA
 --------------------------
 Un nombre que no está en la base firmada **no se inventa**: sale `NO_DATA`.
@@ -165,16 +172,18 @@ _ES = {
     "M7": ("la Tierra",            "A partir de aquí explico menos, porque te hace menos falta."),
 }
 
-# El inglés NO está firmado. La base del 2026-08-19 se escribió entera en
-# español, y por eso el juego se narra en español: `textos.py` puso
-# `DEFECTO = "es"` el mismo día, para que el idioma por defecto no arrancara
-# mudo. La sesión sigue siendo bilingüe — las dos columnas de `TEXTOS` están
-# completas — y los nombres clave del lore se mantienen bilingües como marca;
-# lo que falta es el resto del vocabulario en inglés.
+# EL JUEGO SE NARRA EN ESPAÑOL. Decisión del Soberano, 2026-08-19, y no un
+# hueco pendiente de rellenar: el Narrador habla español y solo español.
 #
-# Inventarlo aquí sería acuñar sin firma, que es justo lo que la regla de
-# arriba prohíbe. Se declara vacío y `narrar()` devuelve NO_DATA: la ausencia
-# se ve, y se arregla firmando, no programando.
+# La interfaz sigue bilingüe entera —las dos columnas de `TEXTOS` están
+# completas, y `test_idioma` lo vigila—, así que quien elige inglés recorre el
+# producto en inglés. Lo que no cambia de idioma es la voz del juego: sus
+# nombres nacieron en español en la base firmada, y traducir un nombre propio
+# es cambiarlo.
+#
+# Por eso esta tabla no tiene columna inglesa y `narrar()` devuelve NO_DATA
+# fuera del español. No es una ausencia por hacer: es la forma que tiene el
+# código de decir que aquí no va nada más.
 _EN: dict[str, tuple[str, str]] = {}
 
 ALIAS = {"es": _ES, "en": _EN}

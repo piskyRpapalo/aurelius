@@ -34,8 +34,12 @@ except ImportError:
     fuga = None
     FUGA_DISPONIBLE = False
 import descarga as _descarga
+import fusible as _fusible
 import estado as _estado
 import hilos as _hilos
+import cara as _cara
+import conversacion as _charla
+import narrador as _narrador
 
 RUTA_DEFECTO = os.path.expanduser("~/.aurelius/memory.db")
 
@@ -463,6 +467,76 @@ def respaldo(ruta, destino=None):
 
 
 
+def charla(ruta, motor=None, entrada=None, salida=print, vueltas=None):
+    """La sesion de charla. Un turno cada vez, y cada turno deja su huella.
+
+    `motor`, `entrada` y `salida` se inyectan por el mismo motivo que el
+    redactor de la frontera: para que esto se pueda probar sin arrancar un
+    modelo de 2,3 GiB ni sentarse a teclear. En uso real los tres vienen del
+    sistema; en una prueba, de un guion.
+
+    Sin motor NO se fabrica una respuesta. Se dice que no hay, se enseña donde
+    esta la persona, y se vuelve — la memoria funciona entera sin cerebro, y
+    prometer una charla que no va a llegar es peor que no ofrecerla.
+    """
+    entrada = entrada or (lambda: preguntar("> "))
+    idioma = TX.normalizar(paso_idioma(ruta))
+    salida(tx(idioma, "charla_cabecera") + "-" * 40)
+
+    with M.abrir(ruta) as c:
+        camino = _cara.progreso_camino(c, ruta)
+        donde = _charla.fase(camino, M.leer_perfil(c))
+
+        # Donde esta, dicho con el nombre del juego y con lo que lo mide: un
+        # peldano sin su prueba al lado es decoracion.
+        peldano = _peldano_actual(camino)
+        salida(tx(idioma, "charla_donde",
+                  peldano=_narrador.narrar(peldano, idioma),
+                  prueba=_narrador.decir(peldano, idioma)))
+        if donde == "decision":
+            salida(tx(idioma, "charla_decision"))
+
+        if motor is None:
+            salida(tx(idioma, "charla_sin_motor"))
+            return 0
+
+        salida(tx(idioma, "charla_como_salir"))
+        dadas = 0
+        while vueltas is None or dadas < vueltas:
+            dicho = entrada()
+            if not dicho:
+                break
+            dadas += 1
+            try:
+                turno = _charla.turno(c, dicho, camino, motor=motor,
+                                      idioma=idioma)
+            except _fusible.RespuestaBloqueada:
+                # La cicatriz ya quedo escrita dentro de la puerta.
+                salida(tx(idioma, "charla_bloqueado"))
+                continue
+            except _charla.SinCerebro:
+                salida(tx(idioma, "charla_callado"))
+                continue
+            salida(turno["texto"])
+            camino = _cara.progreso_camino(c, ruta)
+    return 0
+
+
+def _peldano_actual(camino):
+    """El ultimo peldano del nucleo que no esta hecho, o el primero sin hacer.
+
+    No inventa: si todo lo medible esta hecho, devuelve el primero de las
+    paradas, que es donde la persona puede elegir ir.
+    """
+    for p in camino["nucleo"]:
+        if camino["estado"].get(p) not in ("hecho",):
+            return p
+    for p in camino["opcionales"]:
+        if camino["estado"].get(p) != "hecho":
+            return p
+    return camino["opcionales"][-1]
+
+
 def arranque(ruta):
     """Flujo de arranque del Preceptor §6. Se ejecuta ANTES de sesion()."""
     # Si estamos en modo test, saltar el arranque completo
@@ -567,6 +641,8 @@ def main():
     ap.add_argument("--db", default=RUTA_DEFECTO)
     ap.add_argument("--view", action="store_true")
     ap.add_argument("--export", action="store_true")
+    ap.add_argument("--charla", action="store_true",
+                    help="hablar con el cerebro local, si lo hay")
     ap.add_argument("--registro", action="store_true",
                     help="qué cruzó la frontera y qué se frenó")
     ap.add_argument("--backup", nargs="?", const="", metavar="FILE",
@@ -588,6 +664,13 @@ def main():
             print(M.mensaje_estado(est, rec))
             return 1
         return respaldo(a.db, a.backup or None)
+    if a.charla:
+        if est == "SIN_ESQUEMA":
+            print(M.mensaje_estado(est, rec))
+            return 1
+        modelo = os.path.join(_casa.raiz(), CEREBRO.destino) \
+            if _descarga.presente(CEREBRO) else None
+        return charla(a.db, motor=_charla.motor_llama(modelo) if modelo else None)
     if a.registro:
         if est == "SIN_ESQUEMA":
             print(M.mensaje_estado(est, rec))

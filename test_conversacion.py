@@ -202,6 +202,105 @@ class TestBucle(unittest.TestCase):
         self.assertEqual(len(pendientes), 1)
 
 
+# --- la sesion enchufada · aurelius.py --charla ---------------------------
+
+class TestSesionCharla(unittest.TestCase):
+    """C-g…C-i · el bucle deja de ser una funcion sin llamante."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.db = os.path.join(self.tmpdir.name, "memory.db")
+        M.crear(self.db)
+        with M.abrir(self.db) as c:
+            M.escribir_perfil(c, "language", "es")
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def _guion(self, *lineas):
+        """Una entrada de teclado escrita de antemano."""
+        cola = list(lineas)
+        return lambda: cola.pop(0) if cola else ""
+
+    # ------------------------------------------------------------------
+    # Rojo C-g: un turno de la SESION deja una fila, con su canal
+    # ------------------------------------------------------------------
+    def test_rojo_cg_un_turno_de_sesion_una_fila(self):
+        """La sesion existe, corre, y su turno queda registrado."""
+        import aurelius
+        dicho = []
+        aurelius.charla(self.db, motor=motor_sintetico("Queda como lo escribiste."),
+                        entrada=self._guion("hola"), salida=dicho.append)
+
+        with M.abrir(self.db) as c:
+            filas = c.execute("select * from salidas").fetchall()
+        self.assertEqual(len(filas), 1, "un turno, una huella")
+        self.assertEqual(filas[0]["canal"], "modelo_local")
+        self.assertEqual(filas[0]["estado"], "ok")
+        self.assertIn("Queda como lo escribiste.", "\n".join(dicho),
+                      "lo que contesto el motor tiene que llegar a la persona")
+
+    def test_rojo_cg_dos_turnos_dos_filas(self):
+        """Y no cuenta de mas: dos vueltas, dos huellas."""
+        import aurelius
+        aurelius.charla(self.db, motor=motor_sintetico(),
+                        entrada=self._guion("una", "dos"), salida=lambda t: None)
+        with M.abrir(self.db) as c:
+            self.assertEqual(
+                c.execute("select count(*) from salidas").fetchone()[0], 2)
+
+    # ------------------------------------------------------------------
+    # Rojo C-h: sin motor, la sesion lo dice y no escribe nada
+    # ------------------------------------------------------------------
+    def test_rojo_ch_sin_motor_la_sesion_declara(self):
+        """Se ofrece lo que hay, no lo que gustaria tener."""
+        import aurelius
+        dicho = []
+        aurelius.charla(self.db, motor=None, entrada=self._guion("hola"),
+                        salida=dicho.append)
+        texto = "\n".join(dicho)
+        self.assertIn("no tiene motor", texto,
+                      "la ausencia de cerebro se declara")
+        with M.abrir(self.db) as c:
+            self.assertEqual(
+                c.execute("select count(*) from salidas").fetchone()[0], 0,
+                "sin charla no hay huella")
+
+    # ------------------------------------------------------------------
+    # Rojo C-i: la sesion habla con el nombre del juego, no con el interno
+    # ------------------------------------------------------------------
+    def test_rojo_ci_la_sesion_dice_donde_esta_con_su_nombre(self):
+        """El peldano se anuncia por su nombre de juego y con lo que lo mide."""
+        import aurelius
+        import narrador as NN
+        dicho = []
+        aurelius.charla(self.db, motor=None, entrada=self._guion(),
+                        salida=dicho.append)
+        texto = "\n".join(dicho)
+        self.assertIn(NN.narrar("M0", "es"), texto,
+                      "no dice en que peldano esta, o lo dice en jerga")
+        for interno in ("M0", "progreso_camino", "cruzar_frontera"):
+            self.assertNotIn(interno, texto,
+                             f"la sesion ensena el nombre interno {interno!r}")
+
+    # ------------------------------------------------------------------
+    # Rojo C-i (b): un bloqueo se cuenta sin repetir lo bloqueado
+    # ------------------------------------------------------------------
+    def test_rojo_ci_un_bloqueo_no_repite_la_herida(self):
+        """Si el fusible salta, la persona se entera y el texto no se reimprime."""
+        import aurelius
+        dicho = []
+        aurelius.charla(self.db, motor=motor_sintetico("hazlo con rm -rf /"),
+                        entrada=self._guion("borra"), salida=dicho.append)
+        texto = "\n".join(dicho)
+        self.assertIn("parado", texto, "el bloqueo se cuenta")
+        self.assertNotIn("rm -rf", texto,
+                         "y no se repite lo que se acaba de parar")
+        with M.abrir(self.db) as c:
+            fila = c.execute("select * from salidas").fetchone()
+        self.assertEqual(fila["estado"], "bloqueado")
+
+
 def fusible_bloqueado():
     import fusible
     return fusible.RespuestaBloqueada

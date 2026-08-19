@@ -71,6 +71,21 @@ TEXTOS = {
             "        I broke the database and got it back from a copy\n"
             "        someone explained DNS to me and this time I got it\n"),
         "recuerdo_que": "So — what happened?  ",
+
+        # --- la charla · el turno con el cerebro
+        "charla_cabecera": "\n--- talking ",
+        "charla_sin_motor": (
+            "There is no conversation engine in this copy, so I cannot talk\n"
+            "yet. Everything else works: your memory is whole without me.\n"),
+        "charla_donde": "You are at {peldano}. {prueba}",
+        "charla_decision": (
+            "The core is done. From here you choose: go straight to your own\n"
+            "project, or take an optional stop. Both are the path.\n"),
+        "charla_como_salir": "(empty line to leave; nothing is lost)",
+        "charla_bloqueado": (
+            "I stopped that: it had the shape of something that burns. The\n"
+            "mark is in the record; what it said is not."),
+        "charla_callado": "The engine gave nothing back. That is a fact, not an answer.",
         "recuerdo_sin_que": ("Without a 'what' there is no memory. Nothing written,\n"
                              "and nothing wrong: come back when there is something."),
         "sin_motor": ("\nThis copy has no conversation engine installed. I can keep\n"
@@ -203,6 +218,21 @@ TEXTOS = {
             "         rompí la base de datos y la recuperé de una copia\n"
             "         alguien me explicó el DNS y esta vez lo entendí\n"),
         "recuerdo_que": "Entonces — ¿qué pasó?  ",
+
+        # --- la charla · el turno con el cerebro
+        "charla_cabecera": "\n--- hablando ",
+        "charla_sin_motor": (
+            "Esta copia no tiene motor de conversación, así que todavía no\n"
+            "puedo charlar. Lo demás funciona: tu memoria está entera sin mí.\n"),
+        "charla_donde": "Estás en {peldano}. {prueba}",
+        "charla_decision": (
+            "El núcleo está hecho. A partir de aquí eliges: ir directo a tu\n"
+            "proyecto, o hacer una parada opcional. Las dos son el camino.\n"),
+        "charla_como_salir": "(línea vacía para salir; no se pierde nada)",
+        "charla_bloqueado": (
+            "Eso lo he parado: tenía forma de algo que quema. La marca queda\n"
+            "en el registro; lo que decía, no."),
+        "charla_callado": "El motor no devolvió nada. Eso es un hecho, no una respuesta.",
         "recuerdo_sin_que": ("Sin un 'qué' no hay recuerdo. No he escrito nada,\n"
                              "y no pasa nada: vuelve cuando lo haya."),
         "sin_motor": ("\nEsta copia no tiene motor de conversación instalado. Puedo\n"
