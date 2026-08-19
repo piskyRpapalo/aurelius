@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""eco-remoto · devuelve la salida de una orden como TEXTO, no como píxeles.
+
+sistema: instrumento de medición. **No es parte del producto.**
+
+POR QUÉ EXISTE
+--------------
+Medir en un teléfono se hace por pantalla: capturas, recortes, y leer letras
+en una imagen. Eso funciona para mirar una pantalla y es pésimo para leer una
+tanda de pruebas o un error largo — se pierde el scrollback, no se puede buscar,
+y una línea cortada se interpreta mal.
+
+Esto corre la orden en el teléfono, y manda su salida entera a un oyente en la
+máquina de desarrollo a través del túnel que ya existe (`adb reverse`). El
+resultado es texto: se busca, se cita y no se malinterpreta.
+
+LO QUE NO HACE
+--------------
+* **No sale de la máquina.** Habla con `127.0.0.1` y nada más. Del otro lado del
+  túnel hay un proceso local; si el túnel no está, falla y lo dice.
+* **No entra al producto.** Vive en `bin/`, se invoca a mano, y nada de
+  `aurelius-mvp` lo importa. Un clon que lo tenga no lo ejecuta nunca.
+* **No decide nada.** Ejecuta lo que se le da y repite lo que salió, incluido el
+  código de salida.
+
+Uso:  bin/eco-remoto python3 corredor.py
+      bin/eco-remoto --puerto 8900 python3 aurelius.py --charla
+"""
+from __future__ import annotations
+
+import subprocess
+import sys
+import urllib.error
+import urllib.request
+
+PUERTO = 8900
+
+
+def main(argv=None):
+    argv = list(argv if argv is not None else sys.argv[1:])
+    puerto = PUERTO
+    if argv[:1] == ["--puerto"]:
+        puerto = int(argv[1])
+        argv = argv[2:]
+    if not argv:
+        print("uso: eco-remoto [--puerto N] ORDEN...", file=sys.stderr)
+        return 2
+
+    r = subprocess.run(argv, capture_output=True, text=True)
+    cuerpo = (f"$ {' '.join(argv)}\n"
+              f"{r.stdout}{r.stderr}\n"
+              f"[salida: {r.returncode}]\n")
+
+    try:
+        peticion = urllib.request.Request(
+            f"http://127.0.0.1:{puerto}/",
+            data=cuerpo.encode("utf-8"),
+            headers={"Content-Type": "text/plain; charset=utf-8"},
+            method="POST")
+        with urllib.request.urlopen(peticion, timeout=20):
+            pass
+    except (urllib.error.URLError, OSError) as e:
+        # Se dice y no se calla: una medición que no llegó no es una medición.
+        print(f"[eco-remoto] no llegó al oyente ({type(e).__name__}). "
+              f"¿Está el túnel puesto?", file=sys.stderr)
+        print(cuerpo)
+        return 1
+
+    print(f"[eco-remoto] enviado · {len(cuerpo)} caracteres · salida {r.returncode}")
+    return r.returncode
+
+
+if __name__ == "__main__":
+    sys.exit(main())
