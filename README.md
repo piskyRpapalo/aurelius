@@ -67,7 +67,15 @@ the obvious case does not reach you disguised as a suggestion — not so that yo
 can stop reading. The last check is yours, and there is no version of this
 program in which it stops being yours.
 
-> **Aviso de Seguridad:** El fusible de alucinación inspecciona la salida del modelo en busca de comandos destructivos, pero *no es completo*. Frena, no sustituye a la persona. La última comprobación la haces tú.
+> **Aviso de Seguridad:** El fusible inspecciona la salida del modelo buscando
+> comandos destructivos **por su forma**. No es completo, y conviene saber por
+> dónde no llega: **no resuelve variables** (`$BORRAR /` pasa si la variable
+> vale `rm -rf`), **no decodifica** base64 ni hex, y **no sigue indirecciones**
+> como un alias. Tampoco conoce un comando peligroso que nadie haya listado
+> todavía.
+>
+> Es la primera línea de defensa, no un filtro de alucinaciones. Frena; no
+> sustituye a la persona. La última comprobación la haces tú.
 
 ## Use
 

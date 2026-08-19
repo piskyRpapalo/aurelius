@@ -1,8 +1,29 @@
 #!/usr/bin/env python3
-"""fusible.py · El Fusible de Alucinación (Joya 3.3 · V-3).
+"""fusible.py · El Fusible (Joya 3.3 · V-3).
 
-Normaliza el texto del LLM y lo inspecciona por forma estructural.
-Determinista, cero LLM. No es completo: frena, no sustituye a la persona.
+Fusible de comandos destructivos. Detecta patrones conocidos por forma
+(shape-matching). **No resuelve variables, ni codificaciones, ni
+indirecciones.** Primera línea de defensa, no filtro completo de
+alucinaciones.
+
+Qué frena, con ejemplo: `rm -rf /`, un `dd if=`, una tubería a shell. Lo
+reconoce aunque venga partido en varias líneas o con la continuación de
+barra, porque normaliza antes de mirar.
+
+Qué NO frena, y conviene saberlo antes que descubrirlo:
+
+* `$BORRAR /` cuando la variable vale `rm -rf` — no se resuelven variables.
+* Lo mismo en base64, hex o con `$'\x72\x6d'` — no se decodifica nada.
+* `alias limpiar='rm -rf'` seguido de `limpiar /` — no se sigue una indirección.
+* Un comando destructivo que nadie ha listado todavía. La lista es finita y
+  el ingenio no.
+
+El nombre se queda: es parte del vocabulario del producto. Lo que cambia aquí
+es lo que promete. Un fusible que se presenta como filtro completo de
+alucinaciones invita a confiar en él para lo que no puede hacer, y eso es peor
+que no tenerlo — la persona baja la guardia exactamente donde debería subirla.
+
+Determinista, cero LLM. Frena; no sustituye a la persona.
 """
 from __future__ import annotations
 import re
