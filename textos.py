@@ -185,6 +185,13 @@ TEXTOS = {
         # --- estados de la memoria (los dice memory.py, se guardan aqui)
         "estado_sin_esquema": ("I have no memory yet. Nothing has been created on "
                                "this machine. I can create it now, if you say so."),
+        # La misma ausencia, dicha desde una bandera que NO va a preguntar. La
+        # frase de arriba promete crearla, y la sesion cumple esa promesa; una
+        # bandera que la repite y se va deja a la persona esperando una
+        # pregunta que no llega.
+        "sin_memoria_aun": ("There is no memory on this machine yet, so there is\n"
+                            "nothing to do here. Run this and we make it together:\n"
+                            "  python3 aurelius.py\n"),
         "estado_vacia": ("My memory exists and it is empty. 0 memories. "
                          "Nothing is missing: nothing has been written yet."),
         "estado_con_datos": "{n} memories, {l} links",
@@ -342,6 +349,9 @@ TEXTOS = {
         # --- estados de la memoria
         "estado_sin_esquema": ("Todavía no tengo memoria. No se ha creado nada en "
                                "esta máquina. Puedo crearla ahora, si tú lo dices."),
+        "sin_memoria_aun": ("Todavía no hay memoria en esta máquina, así que aquí\n"
+                            "no hay nada que hacer. Ejecuta esto y la creamos juntos:\n"
+                            "  python3 aurelius.py\n"),
         "estado_vacia": ("Mi memoria existe y está vacía. 0 recuerdos. "
                          "No falta nada: no se ha escrito nada todavía."),
         "estado_con_datos": "{n} recuerdos, {l} enlaces",

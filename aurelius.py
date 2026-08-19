@@ -496,6 +496,18 @@ def _teclado(salida):
         return ""
 
 
+def _sin_memoria(salida=print):
+    """Una bandera sobre una maquina sin memoria. Dice QUE hacer, no que falta.
+
+    `mensaje_estado` ofrece crearla, y la sesion normal cumple esa oferta. Una
+    bandera que repite la oferta y se va deja a la persona esperando una
+    pregunta que no llega -- medido en un telefono recien clonado, donde
+    `--charla` es lo primero que se escribe.
+    """
+    salida(tx(TX.DEFECTO, "sin_memoria_aun"))
+    return 1
+
+
 def charla(ruta, motor=None, entrada=None, salida=print, vueltas=None,
            motivo=None, modelo=None):
     """La sesion de charla. Un turno cada vez, y cada turno deja su huella.
@@ -707,20 +719,17 @@ def main():
     est, rec = M.estado(a.db)
     if a.backup is not None:
         if est == "SIN_ESQUEMA":
-            print(M.mensaje_estado(est, rec))
-            return 1
+            return _sin_memoria()
         return respaldo(a.db, a.backup or None)
     if a.charla:
         if est == "SIN_ESQUEMA":
-            print(M.mensaje_estado(est, rec))
-            return 1
+            return _sin_memoria()
         modelo = os.path.join(str(_casa.raiz()), CEREBRO.destino)
         motor, motivo = _charla.diagnostico(modelo)
         return charla(a.db, motor=motor, motivo=motivo, modelo=modelo)
     if a.registro:
         if est == "SIN_ESQUEMA":
-            print(M.mensaje_estado(est, rec))
-            return 1
+            return _sin_memoria()
         with M.abrir(a.db) as c:
             filas = M.resumen_salidas(c)
         if not filas:
@@ -737,8 +746,7 @@ def main():
         return 0
     if a.view or a.export:
         if est == "SIN_ESQUEMA":
-            print(M.mensaje_estado(est, rec))
-            return 1
+            return _sin_memoria()
         with M.abrir(a.db) as c:
             if a.view:
                 # Mirar no es una sesion, asi que aqui no se pregunta nada: se

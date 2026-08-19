@@ -475,6 +475,27 @@ class TestAusenciasYTeclado(unittest.TestCase):
 
 
 
+class TestPrimerArranque(unittest.TestCase):
+    """C-n · lo primero que hace alguien con un clon recien hecho.
+
+    Medido en un telefono, no deducido: `--charla` sobre una maquina sin memoria
+    decia "puedo crearla ahora, si tu lo dices" y volvia al prompt sin dejar
+    decirlo. La frase es de la sesion, que SI pregunta; una bandera que la toma
+    prestada promete algo que no va a hacer.
+    """
+
+    def test_rojo_cn_una_bandera_sin_memoria_dice_que_hacer(self):
+        import aurelius
+        dicho = []
+        codigo = aurelius._sin_memoria(dicho.append)
+        texto = "\n".join(dicho)
+        self.assertEqual(codigo, 1, "sin memoria, la bandera no puede decir que fue bien")
+        self.assertIn("python3 aurelius.py", texto,
+                      "no dice el comando concreto que crea la memoria")
+        for promesa in ("si tú lo dices", "if you say so"):
+            self.assertNotIn(promesa, texto,
+                             "promete una pregunta que esta bandera no hace")
+
 def fusible_bloqueado():
     import fusible
     return fusible.RespuestaBloqueada
