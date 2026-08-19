@@ -8,11 +8,12 @@
 # ---------------------------------------
 # 1. Las herramientas mínimas (git, python, y el compilador solo si hace falta).
 # 2. El producto.
-# 3. El motor. **Se compila en el teléfono**, y eso es una decisión, no una
-#    pereza: hoy no hay un binario aarch64 con su sha256 firmado en el catálogo,
-#    y bajar un ejecutable sin huella firmada es exactamente lo que este árbol
-#    no hace con el cerebro ni con la voz. Cuando exista esa firma, este guion
-#    se lo bajará en segundos y compilar quedará como camino soberano.
+# 3. El motor, por dos puertas y en este orden:
+#      · El paquete `llama-cpp` de Termux — binario aarch64 empaquetado y
+#        firmado por sus mantenedores. Rápido para quien llega nuevo, y no
+#        obliga a este proyecto a firmar código ejecutable: hoy el catálogo
+#        firma datos (pesos y voz), nunca ejecutables, y eso es una decisión.
+#      · Si el repositorio no lo trae, se compila aquí. Lento y honesto.
 # 4. El cerebro y la voz, por el ritual del propio producto, que verifica su
 #    sha256 contra el catálogo y borra lo que no cuadre.
 #
@@ -31,6 +32,20 @@ paso()  { printf "${AZUL}··${FIN} %s\n" "$1"; }
 nota()  { printf "${TENUE}   %s${FIN}\n" "$1"; }
 muere() { printf "\n✗ %s\n" "$1" >&2; exit 1; }
 
+# No se adivina la causa: se enseña la que dio la herramienta. La primera
+# version de este guion decia "¿Hay red?" ante CUALQUIER fallo de `pkg`, y la
+# primera vez que fallo de verdad fue por el candado de dpkg que tenia otro apt
+# -- mando a mirar el router a quien tenia que esperar treinta segundos. Es el
+# mismo pecado que las tres ausencias del motor, cometido en el instalador.
+muere_con() {
+    printf "\n✗ %s\n" "$1" >&2
+    if [ -s "$2" ]; then
+        printf "\n   lo que dijo la herramienta:\n" >&2
+        tail -4 "$2" | sed 's/^/   /' >&2
+    fi
+    exit 1
+}
+
 REPO="${AURELIUS_REPO:-https://github.com/piskyRpapalo/aurelius}"
 DESTINO="${AURELIUS_DESTINO:-$HOME/aurelius}"
 LLAMA="$HOME/.llama.cpp"
@@ -40,9 +55,10 @@ printf "\n${AZUL}AURELIUS${FIN} · instalación en Android\n\n"
 
 # --- 1 · herramientas ------------------------------------------------------
 paso "Herramientas"
-pkg install -y git python cmake clang >/dev/null 2>&1 \
-    || muere "no pude instalar las herramientas. ¿Hay red?"
-nota "git, python, cmake y clang"
+BITACORA="$(mktemp)"
+pkg install -y git python >"$BITACORA" 2>&1 \
+    || muere_con "no pude instalar las herramientas." "$BITACORA"
+nota "git y python"
 
 # --- 2 · el producto -------------------------------------------------------
 paso "El producto"
@@ -56,13 +72,25 @@ else
 fi
 
 # --- 3 · el motor ----------------------------------------------------------
-# Se compila aquí porque no hay binario firmado que bajar. Ver la cabecera.
+# Dos puertas, en orden: el repositorio de Termux, y compilar. Ver la cabecera.
 if command -v "$MOTOR" >/dev/null 2>&1; then
     paso "El motor"
     nota "ya estaba: $(command -v $MOTOR)"
 else
-    paso "El motor · se compila aquí (tarda; es una vez)"
-    nota "no hay binario firmado para aarch64, y sin huella firmada no se baja"
+    # PUERTA 3 · el paquete de Termux. Binario aarch64 empaquetado y firmado
+    # por los mantenedores de Termux: rapido para quien llega nuevo, y sin que
+    # este proyecto tenga que firmar codigo ejecutable -- que hoy no hace, y es
+    # una decision, no un descuido. Medido el 2026-08-19: llama-cpp existe en
+    # el repo estable.
+    paso "El motor · desde el repositorio de Termux"
+    if pkg install -y llama-cpp >"$BITACORA" 2>&1 \
+       && command -v "$MOTOR" >/dev/null 2>&1; then
+        nota "$MOTOR instalado desde el repositorio"
+    else
+    # PUERTA 2 · compilar aqui. Lento y honesto: cero confianza delegada.
+    nota "el repositorio no lo trajo; se compila aqui (tarda; es una vez)"
+    pkg install -y cmake clang >"$BITACORA" 2>&1 \
+        || muere_con "no pude instalar el compilador." "$BITACORA"
     if [ ! -d "$LLAMA/.git" ]; then
         git clone --depth 1 https://github.com/ggml-org/llama.cpp "$LLAMA" \
             >/dev/null 2>&1 || muere "no pude clonar llama.cpp"
@@ -76,7 +104,8 @@ else
     [ -n "$BINARIO" ] || muere "compiló y no encuentro el binario"
     mkdir -p "$PREFIX/bin"
     ln -sf "$BINARIO" "$PREFIX/bin/$MOTOR"
-    nota "$MOTOR listo"
+    nota "$MOTOR compilado"
+    fi
 fi
 
 # --- 4 · el cerebro y la voz, por el ritual del producto -------------------
