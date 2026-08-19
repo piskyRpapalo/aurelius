@@ -1,0 +1,117 @@
+#!/usr/bin/env python3
+"""aurelius-puente · el camino de vuelta cuando no hay terminal.
+
+sistema: MVP · solo biblioteca estándar. Sin dependencias.
+
+POR QUÉ EXISTE, Y POR QUÉ NO VIENE ENCENDIDO
+--------------------------------------------
+La cara se abre con doble clic y no habla con nadie. Esa es su gracia y no se
+toca. Pero tiene una asimetría honesta y molesta: LEE la memoria al generarse,
+y para ESCRIBIR devuelve un fichero que alguien tiene que aplicar. En un
+ordenador eso es un comando; en un teléfono es un callejón sin salida.
+
+Una página abierta desde el disco no puede escribir en tu base de datos. No es
+una limitación de este producto: ningún navegador lo permite, y el día que lo
+permitiera sería una noticia mala. Así que el único camino de vuelta sin
+terminal es que algo escuche en la propia máquina. Eso es esto.
+
+**No forma parte del producto descargable.** Vive en `bin/`, se arranca a mano,
+y la cara solo le habla si se generó a propósito para ello
+(`cara.py --puente ORIGEN`). Una cara generada sin esa bandera — la que recibe
+cualquiera que clone el repositorio — sigue sin una sola línea de red, y su
+rojo lo comprueba.
+
+LO QUE NO HACE
+--------------
+* **No escucha fuera de esta máquina.** Se ata a loopback salvo que se le diga
+  otra cosa por variable de entorno, nunca por un valor escrito en el repo
+  (D68: un puerto es un puerto, y por eso se dice en voz alta al arrancar).
+* **No decide nada.** Aplica exactamente lo que aplicaría el comando, llamando
+  a la misma función. Si algún día divergen, el rojo lo dice.
+* **No borra.** `aplicar_formulario` solo añade: es su contrato, no el nuestro.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+AQUI = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, AQUI)
+
+import memory as M                                          # noqa: E402
+
+# La dirección NO vive en el repo. Sin variable, loopback: lo más estrecho que
+# se puede escuchar, y lo único que no obliga a confiar en la red de nadie.
+BIND = os.environ.get("AURELIUS_PUENTE_BIND", "127.0.0.1")
+PUERTO = int(os.environ.get("AURELIUS_PUENTE_PUERTO", "8734"))
+LIMITE = 2 * 1024 * 1024      # un formulario que pesa más que esto no es un formulario
+
+
+class Puente(BaseHTTPRequestHandler):
+
+    def _responder(self, codigo, cuerpo):
+        crudo = json.dumps(cuerpo, ensure_ascii=False).encode("utf-8")
+        self.send_response(codigo)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(crudo)))
+        # La cara servida por el puente viene del mismo origen; nadie más
+        # necesita hablar con esto, así que no se abre a nadie más.
+        self.send_header("Access-Control-Allow-Origin", "null")
+        self.end_headers()
+        self.wfile.write(crudo)
+
+    def do_POST(self):
+        if self.path != "/aplicar":
+            return self._responder(404, {"estado": "NO_DATA",
+                                         "motivo": "solo se atiende /aplicar"})
+        try:
+            largo = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            largo = 0
+        if largo <= 0 or largo > LIMITE:
+            return self._responder(413, {"estado": "bloqueado",
+                                         "motivo": "tamaño fuera de rango"})
+        try:
+            datos = json.loads(self.rfile.read(largo).decode("utf-8"))
+        except Exception as e:
+            return self._responder(400, {"estado": "bloqueado",
+                                         "motivo": type(e).__name__})
+        try:
+            with M.abrir(self.server.ruta_db) as c:
+                resumen = M.aplicar_formulario(c, datos)
+        except Exception as e:
+            # El motivo va por tipo, no por mensaje: un mensaje de excepción
+            # ajena puede arrastrar el texto que lo provocó.
+            return self._responder(500, {"estado": "bloqueado",
+                                         "motivo": type(e).__name__})
+        self._responder(200, {"estado": "ok", "resumen": resumen})
+
+    def log_message(self, formato, *args):
+        # Una línea por petición, a stderr, sin la ruta completa de nadie.
+        sys.stderr.write("[puente] %s\n" % (formato % args))
+
+
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(description="Aurelius · el camino de vuelta")
+    ap.add_argument("--db", default=os.path.expanduser("~/.aurelius/memory.db"))
+    a = ap.parse_args(argv)
+
+    servidor = ThreadingHTTPServer((BIND, PUERTO), Puente)
+    servidor.ruta_db = a.db
+    print(f"[puente] escuchando en {BIND}:{PUERTO} · memoria: {a.db}")
+    if BIND not in ("127.0.0.1", "::1", "localhost"):
+        print("[puente] AVISO: no estás en loopback. Esto escucha fuera de "
+              "esta máquina, y eso es una decisión, no un descuido.")
+    print("[puente] Ctrl-C para cerrar. Nada queda escuchando después.")
+    try:
+        servidor.serve_forever()
+    except KeyboardInterrupt:
+        print("\n[puente] cerrado")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

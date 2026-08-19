@@ -70,6 +70,9 @@ CARA_TEXTOS = {
         "pz_bajar_json": "Save the form",
         "pz_bajar_txt": "Save a readable copy",
         "pz_aplicar": "To write it into your memory, apply the file you just saved:",
+        "pz_auto": "Apply it now",
+        "pz_auto_ok": "Written into your memory: {engrams} memories, {profile} answers. Nothing was replaced.",
+        "pz_auto_mal": "Not applied: {motivo}. Nothing was written.",
         "pz_col": ("id", "what", "why", "where", "learned"),
         "cm_titulo": "The Path",
         "cm_intro": "Eight steps. This is where you actually are — measured, not guessed.",
@@ -125,6 +128,9 @@ CARA_TEXTOS = {
         "pz_bajar_json": "Guardar el formulario",
         "pz_bajar_txt": "Guardar una copia legible",
         "pz_aplicar": "Para escribirlo en tu memoria, aplica el fichero que acabas de guardar:",
+        "pz_auto": "Aplicarlo ahora",
+        "pz_auto_ok": "Escrito en tu memoria: {engrams} recuerdos, {profile} respuestas. No se reemplazó nada.",
+        "pz_auto_mal": "No se aplicó: {motivo}. No se ha escrito nada.",
         "pz_col": ("id", "qué", "por qué", "dónde", "aprendido"),
         "cm_titulo": "El Camino",
         "cm_intro": "Ocho peldaños. Esto es dónde estás de verdad — medido, no supuesto.",
@@ -350,7 +356,8 @@ def limpia(texto):
                   flags=re.I | re.S).strip()
 
 
-def generar(c, ruta_db, idioma=None, piper=None, modelo_voz=None, turnos=None):
+def generar(c, ruta_db, idioma=None, piper=None, modelo_voz=None, turnos=None,
+            puente=None):
     """El HTML entero, como cadena. No escribe nada: quien llama decide donde."""
     estado = M.formulario(c)
     guardado = estado["profile"].get("language", M.AUSENTE)
@@ -384,7 +391,20 @@ def generar(c, ruta_db, idioma=None, piper=None, modelo_voz=None, turnos=None):
     # una voz que falta y una voz que nunca se grabo se parecen demasiado.
     n_audio = len(audio) + sum(1 for t in (turnos or []) if t.get("audio"))
     aria_voz = textos_cara(inicial).get("voz_hablar", "Speak")
+    # El bloque del puente NO vive en la plantilla apagado: si el `fetch`
+    # estuviera ahi aunque no se use, cualquier cara llevaria una llamada de red
+    # en su texto y el rojo que lo prohibe caeria para todas. Se inyecta, o no
+    # existe.
+    if puente:
+        boton_puente = ('      <button type="button" class="boton" '
+                        'id="pz-auto"></button>')
+        js_puente = _JS_PUENTE.replace("__ORIGEN__", puente)
+    else:
+        boton_puente, js_puente = "", ""
+
     return (PLANTILLA
+            .replace("__BOTON_PUENTE__", boton_puente)
+            .replace("__JS_PUENTE__", js_puente)
             .replace("__LANG__", inicial)
             .replace("__N_AUDIO__", str(n_audio))
             .replace("__ARIA_VOZ__", aria_voz)
@@ -415,6 +435,39 @@ def aplicar(ruta_db, ruta_formulario):
     print("  nothing was replaced and nothing was removed")
     return 0
 
+
+# El camino de vuelta sin terminal. Solo se inyecta con `--puente`, y solo
+# habla con el origen que se le dio al generar: nada de descubrir servidores.
+_JS_PUENTE = r"""
+(function () {
+  var b = el("pz-auto");
+  if (!b) { return; }
+  b.textContent = t("pz_auto");
+  b.addEventListener("click", function () {
+    b.disabled = true;
+    FORMULARIO.language = idioma;
+    fetch("__ORIGEN__/aplicar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(FORMULARIO)
+    }).then(function (r) { return r.json(); }).then(function (d) {
+      var n = el("pz-aplicar");
+      if (d.estado === "ok") {
+        n.textContent = t("pz_auto_ok")
+          .replace("{engrams}", d.resumen.engrams)
+          .replace("{profile}", d.resumen.profile);
+      } else {
+        n.textContent = t("pz_auto_mal").replace("{motivo}", d.motivo || "NO_DATA");
+        b.disabled = false;
+      }
+    }).catch(function (e) {
+      el("pz-aplicar").textContent = t("pz_auto_mal")
+        .replace("{motivo}", String((e && e.name) || "NO_DATA"));
+      b.disabled = false;
+    });
+  });
+})();
+"""
 
 PLANTILLA = r"""<!DOCTYPE html>
 <html lang="__LANG__">
@@ -550,6 +603,7 @@ PLANTILLA = r"""<!DOCTYPE html>
   <div style="padding:0 18px 20px">
     <p style="display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px">
       <a class="boton" id="pz-json" download="aurelius-formulario.json" href="#"></a>
+__BOTON_PUENTE__
       <a class="boton" id="pz-txt" download="aurelius-recuerdos.txt" href="#"></a>
     </p>
     <p class="nota" id="pz-aplicar" style="margin:0 0 8px"></p>
@@ -1055,6 +1109,7 @@ window.setTimeout(function () {
     dice(t(clave), siguiente, clave);
   });
 }, 500);
+__JS_PUENTE__
 </script>
 </body>
 </html>
@@ -1074,6 +1129,9 @@ def main(argv=None):
                     help="path to the piper binary (child process, no socket)")
     ap.add_argument("--voz", default=os.environ.get("AURELIUS_VOZ"),
                     help="path to the signed voice model (.onnx)")
+    ap.add_argument("--puente", metavar="ORIGEN",
+                    help="origen del puente local (p.ej. http://127.0.0.1:8734). "
+                         "Sin esta bandera la cara no habla con nadie")
     ap.add_argument("--sin-voz", action="store_true",
                     help="generate without recording any audio")
     ap.add_argument("--turnos", metavar="FILE",
@@ -1095,7 +1153,7 @@ def main(argv=None):
             turnos = json.load(fh)
     with M.abrir(a.db) as c:
         html = generar(c, a.db, a.idioma, piper=piper, modelo_voz=voz,
-                       turnos=turnos)
+                       turnos=turnos, puente=a.puente)
     with open(a.out, "w", encoding="utf-8") as fh:
         fh.write(html)
     print(f"Face: {a.out}")
