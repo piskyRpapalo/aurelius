@@ -532,6 +532,18 @@ class TestElTiempo(unittest.TestCase):
         self.assertIn("AURELIUS_ESPERA", dicho,
                       "no dice como darle mas tiempo")
 
+    def test_rojo_co_el_tope_cabe_en_el_caracter(self):
+        """80 tokens, no 320. El arquetipo pide dos o tres frases.
+
+        Un tope alto no hace al modelo mas util: le invita a rellenar. Que
+        ademas convierta un turno de tres minutos en uno de medio en un
+        telefono es la consecuencia, no el motivo.
+        """
+        self.assertLessEqual(C.TOPE_TOKENS, 120,
+                             "un tope que invita a rellenar contradice al caracter")
+        self.assertGreaterEqual(C.TOPE_TOKENS, 40,
+                                "y uno que corta a mitad de frase tampoco sirve")
+
     def test_rojo_co_la_espera_se_gobierna_desde_fuera(self):
         """Una maquina lenta no obliga a tocar el codigo."""
         self.assertGreaterEqual(C.ESPERA, 420,

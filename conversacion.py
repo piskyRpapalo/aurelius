@@ -86,19 +86,30 @@ import textos as TX
 MARCADORES_FINAL = ("[end of text]", "> EOF by user")
 
 CONTEXTO = 4096
-TOPE_TOKENS = int(os.environ.get("AURELIUS_TOPE_TOKENS", "320"))
+# 80 y no 320, y no es una concesión al hardware lento: es lo que el carácter
+# pide. «Dos o tres frases, salvo que te pidan más» cabe de sobra en 80 tokens,
+# y un tope de 320 invita al modelo a rellenar. Que además convierta un turno
+# de tres minutos en uno de medio en un teléfono es la consecuencia, no el
+# motivo.
+TOPE_TOKENS = int(os.environ.get("AURELIUS_TOPE_TOKENS", "80"))
 MOTOR = "llama-completion"
 
 # Cuánto se espera a que el modelo conteste. Medido el 2026-08-19 en dos
 # máquinas, con el mismo modelo de 4B:
 #
 #   Beelink (Ryzen 7, x86_64) · 14,5 tok/s de generación
-#   Doogee S110 (aarch64)     ·  1,81 tok/s de generación · 3,38 de prompt
+#   Doogee S110 (aarch64)     ·  2,93 ± 0,38 tok/s · prompt 5,25 ± 0,43
+#                               (llama-bench, tg16/pp32, ngl 99)
 #
-# Ocho veces más lento. Con TOPE_TOKENS=320 eso es un turno de más de seis
-# minutos en el teléfono, y el defecto de 180 s cortaba SIEMPRE — el producto
-# decía "el motor no devolvió nada", que era cierto y no era la verdad: el
-# motor estaba trabajando.
+# Cinco veces más lento. Y **sin palanca de GPU**: el paquete
+# `llama-cpp-backend-vulkan` instala y carga, pero en este teléfono dice
+# `ggml_vulkan: No devices found` y todo sigue corriendo en CPU. La etiqueta
+# "Vulkan" de la tabla del bench es del backend cargado, no de un dispositivo
+# encontrado — conviene saberlo antes de creerse una cifra.
+#
+# Con el tope viejo de 320 eso era un turno de más de tres minutos, y el
+# defecto de 180 s cortaba SIEMPRE — el producto decía "el motor no devolvió
+# nada", que era cierto y no era la verdad: el motor estaba trabajando.
 #
 # Se sube el defecto y se deja gobernar por el entorno. Lo que NO se hace es
 # esconder el corte: un turno que se pasó del tiempo se dice distinto de un
