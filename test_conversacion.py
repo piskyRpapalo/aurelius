@@ -496,6 +496,47 @@ class TestPrimerArranque(unittest.TestCase):
             self.assertNotIn(promesa, texto,
                              "promete una pregunta que esta bandera no hace")
 
+class TestElTiempo(unittest.TestCase):
+    """C-o · un turno que se pasa de tiempo NO es un motor que falla.
+
+    Medido el 2026-08-19 en un Doogee S110: 1,81 tok/s de generacion contra los
+    14,5 del Beelink. Ocho veces mas lento. Con el tope de 320 tokens eso es un
+    turno de mas de seis minutos, y la espera por defecto lo cortaba SIEMPRE --
+    el producto decia "el motor no devolvio nada", que era cierto y no era la
+    verdad: el motor estaba trabajando.
+    """
+
+    def test_rojo_co_el_corte_por_tiempo_se_declara(self):
+        import subprocess as sp
+        original = sp.run
+
+        def tarda(*a, **k):
+            raise sp.TimeoutExpired(cmd="llama", timeout=k.get("timeout", 1))
+
+        aqui = os.path.dirname(os.path.abspath(__file__))
+        modelo = os.path.join(aqui, "corredor.py")   # un fichero que existe
+        anterior = C.motor_disponible
+        try:
+            C.motor_disponible = lambda: modelo
+            sp.run = tarda
+            motor = C.motor_llama(modelo, tiempo=1)
+            with self.assertRaises(C.SeAgotoElTiempo) as caja:
+                motor("hola")
+        finally:
+            sp.run = original
+            C.motor_disponible = anterior
+
+        dicho = str(caja.exception)
+        self.assertIn("AURELIUS_TOPE_TOKENS", dicho,
+                      "no dice como pedirle menos")
+        self.assertIn("AURELIUS_ESPERA", dicho,
+                      "no dice como darle mas tiempo")
+
+    def test_rojo_co_la_espera_se_gobierna_desde_fuera(self):
+        """Una maquina lenta no obliga a tocar el codigo."""
+        self.assertGreaterEqual(C.ESPERA, 420,
+                                "la espera por defecto no cubre un telefono")
+
 def fusible_bloqueado():
     import fusible
     return fusible.RespuestaBloqueada

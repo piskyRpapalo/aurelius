@@ -606,6 +606,9 @@ def charla(ruta, motor=None, entrada=None, salida=print, vueltas=None,
                 # La cicatriz ya quedo escrita dentro de la puerta.
                 salida(tx(idioma, "charla_bloqueado"))
                 continue
+            except _charla.SeAgotoElTiempo as e:
+                salida(tx(idioma, "charla_tarde", motivo=str(e)))
+                continue
             except _charla.SinCerebro:
                 salida(tx(idioma, "charla_callado"))
                 continue

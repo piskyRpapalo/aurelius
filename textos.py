@@ -95,6 +95,7 @@ TEXTOS = {
             "I stopped that: it had the shape of something that burns. The\n"
             "mark is in the record; what it said is not."),
         "charla_callado": "The engine gave nothing back. That is a fact, not an answer.",
+        "charla_tarde": "It did not finish in time. {motivo}",
         "recuerdo_sin_que": ("Without a 'what' there is no memory. Nothing written,\n"
                              "and nothing wrong: come back when there is something."),
         "sin_motor": ("\nThis copy has no conversation engine installed. I can keep\n"
@@ -264,6 +265,7 @@ TEXTOS = {
             "Eso lo he parado: tenía forma de algo que quema. La marca queda\n"
             "en el registro; lo que decía, no."),
         "charla_callado": "El motor no devolvió nada. Eso es un hecho, no una respuesta.",
+        "charla_tarde": "No le dio tiempo a terminar. {motivo}",
         "recuerdo_sin_que": ("Sin un 'qué' no hay recuerdo. No he escrito nada,\n"
                              "y no pasa nada: vuelve cuando lo haya."),
         "sin_motor": ("\nEsta copia no tiene motor de conversación instalado. Puedo\n"

@@ -86,8 +86,24 @@ import textos as TX
 MARCADORES_FINAL = ("[end of text]", "> EOF by user")
 
 CONTEXTO = 4096
-TOPE_TOKENS = 320
+TOPE_TOKENS = int(os.environ.get("AURELIUS_TOPE_TOKENS", "320"))
 MOTOR = "llama-completion"
+
+# Cuánto se espera a que el modelo conteste. Medido el 2026-08-19 en dos
+# máquinas, con el mismo modelo de 4B:
+#
+#   Beelink (Ryzen 7, x86_64) · 14,5 tok/s de generación
+#   Doogee S110 (aarch64)     ·  1,81 tok/s de generación · 3,38 de prompt
+#
+# Ocho veces más lento. Con TOPE_TOKENS=320 eso es un turno de más de seis
+# minutos en el teléfono, y el defecto de 180 s cortaba SIEMPRE — el producto
+# decía "el motor no devolvió nada", que era cierto y no era la verdad: el
+# motor estaba trabajando.
+#
+# Se sube el defecto y se deja gobernar por el entorno. Lo que NO se hace es
+# esconder el corte: un turno que se pasó del tiempo se dice distinto de un
+# motor que falló, porque son cosas distintas y se arreglan distinto.
+ESPERA = int(os.environ.get("AURELIUS_ESPERA", "420"))
 
 FASES = ("nucleo", "decision", "side_quest", "proyecto")
 
@@ -100,7 +116,7 @@ def motor_disponible():
     return shutil.which(MOTOR)
 
 
-def motor_llama(modelo, hilos=8, tiempo=180):
+def motor_llama(modelo, hilos=8, tiempo=None):
     """Devuelve un motor real: una función `prompt -> texto`.
 
     Proceso hijo por entrada y salida estándar. Ni un socket: un puerto local
@@ -110,6 +126,7 @@ def motor_llama(modelo, hilos=8, tiempo=180):
     binario = motor_disponible()
     if not (binario and modelo and os.path.isfile(modelo)):
         return None
+    tiempo = ESPERA if tiempo is None else tiempo
 
     def hablar(prompt):
         orden = [binario, "-m", modelo, "-c", str(CONTEXTO),
@@ -118,6 +135,12 @@ def motor_llama(modelo, hilos=8, tiempo=180):
         try:
             r = subprocess.run(orden, capture_output=True, text=True,
                                timeout=tiempo, stdin=subprocess.DEVNULL)
+        except subprocess.TimeoutExpired:
+            # No es lo mismo que fallar: estaba trabajando y no le dio tiempo.
+            raise SeAgotoElTiempo(
+                f"el modelo tardó más de {tiempo} segundos. En esta máquina "
+                f"puede ser lo normal: prueba con menos tokens "
+                f"(AURELIUS_TOPE_TOKENS) o más espera (AURELIUS_ESPERA).")
         except Exception:
             return None
         if r.returncode != 0:
@@ -278,6 +301,10 @@ def prompt_sistema(fase_actual, idioma=None):
 
 class SinCerebro(Exception):
     """No hay motor. No es un fallo: es una ausencia, y se declara."""
+
+
+class SeAgotoElTiempo(Exception):
+    """El modelo no llegó a tiempo. Estaba trabajando; no es lo mismo que fallar."""
 
 
 def turno(c, texto_persona, camino, motor=None, idioma=None, canal="modelo_local"):
