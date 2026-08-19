@@ -192,6 +192,12 @@ TEXTOS = {
         "sin_memoria_aun": ("There is no memory on this machine yet, so there is\n"
                             "nothing to do here. Run this and we make it together:\n"
                             "  python3 aurelius.py\n"),
+
+        # --- el ritual · primer contacto. Todo lo que se ve, aquí.
+        "ritual_saludo": "\nFirst, three things about you. None is required.",
+        "ritual_nombre": "How should I call you?  (Enter for {ausente})  ",
+        "ritual_ritmo": "Pace of the answers (0-9, Enter for {ausente})  ",
+        "ritual_hecho": "Done. What you told me is in your memory, not in a file of mine.",
         "estado_vacia": ("My memory exists and it is empty. 0 memories. "
                          "Nothing is missing: nothing has been written yet."),
         "estado_con_datos": "{n} memories, {l} links",
@@ -352,6 +358,12 @@ TEXTOS = {
         "sin_memoria_aun": ("Todavía no hay memoria en esta máquina, así que aquí\n"
                             "no hay nada que hacer. Ejecuta esto y la creamos juntos:\n"
                             "  python3 aurelius.py\n"),
+
+        # --- el ritual · primer contacto. Todo lo que se ve, aquí.
+        "ritual_saludo": "\nPrimero, tres cosas sobre ti. Ninguna es obligatoria.",
+        "ritual_nombre": "¿Cómo te llamo?  (Enter para {ausente})  ",
+        "ritual_ritmo": "Ritmo de las respuestas (0-9, Enter para {ausente})  ",
+        "ritual_hecho": "Hecho. Lo que me has dicho está en tu memoria, no en un fichero mío.",
         "estado_vacia": ("Mi memoria existe y está vacía. 0 recuerdos. "
                          "No falta nada: no se ha escrito nada todavía."),
         "estado_con_datos": "{n} recuerdos, {l} enlaces",

@@ -212,20 +212,37 @@ def recordar_idioma(c, idioma):
 # --- los siete pasos -------------------------------------------------------
 
 
-def ritual(c, idioma=TX.DEFECTO):
-    """Primer contacto. Escribe en profile (memoria SQLite), no en estado.json."""
-    print(tx(idioma, "final"))
-    nombre = preguntar("¿Cómo te llamas? (Enter para NO_DATA) ")
-    if nombre:
-        M.escribir_perfil(c, "name", nombre)
-    lengua = elegir("Idioma / Language", [("es", "español"), ("en", "english")],
-                    idioma, ayuda="Escribe 1 o 2")
+def ritual(c, idioma=None):
+    """Primer contacto. Escribe en profile (memoria SQLite), no en estado.json.
+
+    EL IDIOMA VA PRIMERO, y no por orden estetico: preguntar cualquier otra cosa
+    antes es hacerlo en un idioma que nadie eligio, que es exactamente lo que
+    D74 existe para impedir. La pregunta del idioma es la unica bilingue del
+    producto, por el mismo motivo.
+
+    Medido en un telefono el 2026-08-19: esta funcion abria con
+    `tx(idioma, "final")` -- el texto de CIERRE de la sesion -- asi que lo
+    primero que veia una persona en su primer arranque era "Mision M2
+    completa:". Y pedia el nombre en castellano fijo, en un producto que habla
+    dos idiomas. Cuatro cadenas visibles no pasaban por textos.py.
+    """
+    # 1. El idioma, en los dos, antes que nada.
+    lengua = elegir(TX.PREGUNTA_IDIOMA, TX.IDIOMAS, ayuda=TX.AYUDA_IDIOMA,
+                    rechazo=TX.RECHAZO_IDIOMA)
     if lengua:
         M.escribir_perfil(c, "language", lengua)
-    ritmo = preguntar("Ritmo de respuesta (0-9, Enter para NO_DATA) ")
+    lengua = TX.normalizar(lengua or idioma)
+
+    # 2. Y a partir de aqui, todo en el suyo.
+    print(tx(lengua, "ritual_saludo"))
+    nombre = preguntar(tx(lengua, "ritual_nombre", ausente=M.AUSENTE))
+    if nombre:
+        M.escribir_perfil(c, "name", nombre)
+    ritmo = preguntar(tx(lengua, "ritual_ritmo", ausente=M.AUSENTE))
     if ritmo and ritmo.isdigit():
         M.escribir_perfil(c, "ritmo", ritmo)
-    print("Ritual completado. Tu perfil está en la memoria.")
+    print(tx(lengua, "ritual_hecho"))
+    return lengua
 
 
 def paso1_declaracion(ruta, idioma=TX.DEFECTO):

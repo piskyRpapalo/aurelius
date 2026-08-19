@@ -323,6 +323,46 @@ def main_sabotaje():
     return 1 if no_detectados else 0
 
 
+
+@caso("13 · el ritual pregunta el idioma ANTES que nada, y no lleva español fijo")
+def t13():
+    """El primer contacto del producto, medido en un teléfono el 2026-08-19.
+
+    Abría con `tx(idioma, "final")` — el texto de CIERRE de la sesión — así que
+    lo primero que leía alguien en su primer arranque era «Misión M2 completa:».
+    Y pedía el nombre en castellano fijo, en un producto que habla dos idiomas.
+    """
+    import inspect
+    import aurelius as A
+    import textos as TX
+
+    # Se mira el CODIGO, no la documentación: el docstring cita el fallo que
+    # esta prueba vigila, y un test que lee comentarios se caza a sí mismo.
+    fuente = inspect.getsource(A.ritual)
+    fuente = fuente.split('"""')[0] + '"""'.join(fuente.split('"""')[2:])
+
+    # Nada visible se escribe a mano: todo pasa por textos.py.
+    for suelta in ("¿Cómo te llamas", "Ritmo de respuesta", "Ritual completado",
+                   "Idioma / Language", "Escribe 1 o 2"):
+        assert suelta not in fuente, \
+            f"el ritual lleva una cadena visible sin pasar por textos.py: {suelta!r}"
+
+    # Y el texto de cierre no puede usarse como saludo.
+    assert '"final"' not in fuente, \
+        "el ritual abre con el texto de CIERRE de la sesión"
+
+    # El idioma va primero: antes que el nombre y antes que el ritmo.
+    pos_idioma = fuente.index("PREGUNTA_IDIOMA")
+    for despues in ("ritual_nombre", "ritual_ritmo", "ritual_hecho"):
+        assert pos_idioma < fuente.index(despues), \
+            f"{despues} se pregunta antes que el idioma: eso ya es elegirlo"
+
+    # Las cuatro claves existen en los dos idiomas, o el ritual habla a medias.
+    for clave in ("ritual_saludo", "ritual_nombre", "ritual_ritmo", "ritual_hecho"):
+        for lengua in ("es", "en"):
+            assert clave in TX.TEXTOS[lengua], f"falta {clave} en {lengua}"
+
+
 def main():
     fallos = 0
     print("── M2 · IDIOMA DE LA SESION " + "─" * 38)
