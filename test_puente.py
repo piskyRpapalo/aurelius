@@ -85,6 +85,8 @@ class TestPuente(unittest.TestCase):
 
         servidor = ThreadingHTTPServer(("127.0.0.1", 0), Mudo)
         servidor.ruta_db = db
+        servidor.ruta_cara = getattr(self, "ruta_cara", os.path.join(
+            self.tmpdir.name, "cara.html"))
         hilo = threading.Thread(target=servidor.serve_forever, daemon=True)
         hilo.start()
         self.addCleanup(servidor.shutdown)
@@ -214,6 +216,28 @@ class TestPuente(unittest.TestCase):
         self.assertEqual(engramas_2[:len(engramas_1)], engramas_1,
                          "y lo primero que se escribió sigue igual")
 
+
+    # ------------------------------------------------------------------
+    # Rojo Pu-f: sirve la cara, y NADA mas
+    # ------------------------------------------------------------------
+    def test_rojo_puf_sirve_la_cara_y_solo_la_cara(self):
+        """Un servidor que sirve un directorio sirve la memoria de alguien."""
+        self.ruta_cara = os.path.join(self.tmpdir.name, "cara.html")
+        with open(self.ruta_cara, "w", encoding="utf-8") as fh:
+            fh.write("<html>la cara</html>")
+        origen = self._servir(self.db)
+
+        with urllib.request.urlopen(origen + "/", timeout=10) as r:
+            self.assertEqual(r.status, 200)
+            self.assertIn("la cara", r.read().decode("utf-8"))
+
+        for ruta in ("/memory.db", "/../memory.db", "/policies.json", "/bin/"):
+            try:
+                with urllib.request.urlopen(origen + ruta, timeout=10) as r:
+                    self.fail(f"el puente sirvio {ruta}")
+            except urllib.error.HTTPError as e:
+                with e:
+                    self.assertEqual(e.code, 404, f"{ruta} no dio 404")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

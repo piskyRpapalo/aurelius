@@ -62,6 +62,27 @@ class Puente(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(crudo)
 
+    def do_GET(self):
+        """Sirve la cara, y solo la cara.
+
+        Un servidor que sirve un directorio sirve todo lo que haya dentro, y
+        dentro esta la memoria de una persona. Aqui hay un fichero y una ruta.
+        """
+        if self.path not in ("/", "/cara.html"):
+            return self._responder(404, {"estado": "NO_DATA",
+                                         "motivo": "aqui solo vive la cara"})
+        try:
+            with open(self.server.ruta_cara, "rb") as fh:
+                crudo = fh.read()
+        except OSError as e:
+            return self._responder(500, {"estado": "bloqueado",
+                                         "motivo": type(e).__name__})
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(crudo)))
+        self.end_headers()
+        self.wfile.write(crudo)
+
     def do_POST(self):
         if self.path != "/aplicar":
             return self._responder(404, {"estado": "NO_DATA",
@@ -97,10 +118,13 @@ def main(argv=None):
     import argparse
     ap = argparse.ArgumentParser(description="Aurelius · el camino de vuelta")
     ap.add_argument("--db", default=os.path.expanduser("~/.aurelius/memory.db"))
+    ap.add_argument("--cara", default="cara.html",
+                    help="el HTML que se sirve; se genera con cara.py --puente")
     a = ap.parse_args(argv)
 
     servidor = ThreadingHTTPServer((BIND, PUERTO), Puente)
     servidor.ruta_db = a.db
+    servidor.ruta_cara = a.cara
     print(f"[puente] escuchando en {BIND}:{PUERTO} · memoria: {a.db}")
     if BIND not in ("127.0.0.1", "::1", "localhost"):
         print("[puente] AVISO: no estás en loopback. Esto escucha fuera de "
