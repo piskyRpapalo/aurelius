@@ -73,6 +73,7 @@ TEXTOS = {
         "recuerdo_que": "So — what happened?  ",
 
         # --- la charla · el turno con el cerebro
+        "cerebro_afinado": "Brain: fine-tuned copy · {motivo}",
         "charla_cabecera": "\n--- talking ",
         "charla_sin_motor": (
             "There is no conversation engine in this copy, so I cannot talk\n"
@@ -243,6 +244,7 @@ TEXTOS = {
         "recuerdo_que": "Entonces — ¿qué pasó?  ",
 
         # --- la charla · el turno con el cerebro
+        "cerebro_afinado": "Cerebro: copia afinada · {motivo}",
         "charla_cabecera": "\n--- hablando ",
         "charla_sin_motor": (
             "Esta copia no tiene motor de conversación, así que todavía no\n"

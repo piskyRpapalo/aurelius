@@ -40,6 +40,7 @@ import hilos as _hilos
 import cara as _cara
 import conversacion as _charla
 import narrador as _narrador
+import afinado as _afinado
 
 RUTA_DEFECTO = os.path.expanduser("~/.aurelius/memory.db")
 
@@ -768,8 +769,16 @@ def main():
     if a.charla:
         if est == "SIN_ESQUEMA":
             return _sin_memoria()
-        modelo = os.path.join(str(_casa.raiz()), CEREBRO.destino)
+        base = os.path.join(str(_casa.raiz()), CEREBRO.destino)
+        # El afinado no sustituye al cerebro: se pone al lado, con su huella
+        # propia. Sobrescribir el fichero de CEREBRO romperia `presente()`,
+        # que compara su sha256 contra el catalogo firmado.
+        eleccion = _afinado.elegir(_casa.raiz(), base)
+        modelo = eleccion.ruta
         motor, motivo = _charla.diagnostico(modelo)
+        if eleccion.cual == "afinado":
+            print(tx(_idioma_firmado(a.db) or TX.DEFECTO, "cerebro_afinado",
+                     motivo=eleccion.motivo))
         return charla(a.db, motor=motor, motivo=motivo, modelo=modelo)
     if a.registro:
         if est == "SIN_ESQUEMA":
