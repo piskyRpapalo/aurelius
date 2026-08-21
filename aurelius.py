@@ -41,6 +41,7 @@ import cara as _cara
 import conversacion as _charla
 import narrador as _narrador
 import afinado as _afinado
+import captura as _captura
 
 RUTA_DEFECTO = os.path.expanduser("~/.aurelius/memory.db")
 
@@ -618,6 +619,13 @@ def charla(ruta, motor=None, entrada=None, salida=print, vueltas=None,
                 salida(tx(idioma, "charla_callado"))
                 continue
             salida(turno["texto"])
+            # El par entero, despues de que la persona ya tenga su respuesta.
+            # Aqui abajo un fallo no puede tumbar el turno: `registrar` no
+            # levanta nunca y devuelve None si no pudo. Y si la persona no
+            # quiere cuaderno, no hay cuaderno.
+            if _captura.activa(M.leer_perfil(c)):
+                _captura.registrar(c, dicho, turno["texto"],
+                                   modelo=modelo or "NO_DATA", idioma=idioma)
             camino = _cara.progreso_camino(c, ruta)
     return 0
 
