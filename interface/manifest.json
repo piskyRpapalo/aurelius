@@ -8,9 +8,16 @@
   "description": "Tu memoria, en un fichero que puedes llevarte.",
   "icons": [
     {
-      "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23121419'/%3E%3Ccircle cx='32' cy='28' r='13' fill='%23e9ecf1'/%3E%3Ccircle cx='38' cy='26' r='3' fill='%23e0b872'/%3E%3Crect x='20' y='42' width='24' height='10' rx='2' fill='%23e9ecf1'/%3E%3C/svg%3E",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "/assets/icono-cyborg.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/icono-cyborg.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="126" height="20" role="img" aria-label="prose: CC BY-SA 4.0">
+  <title>prose: CC BY-SA 4.0</title>
+  <linearGradient id="s" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r"><rect width="126" height="20" rx="3" fill="#fff"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="42" height="20" fill="#57534e"/>
+    <rect x="42" width="84" height="20" fill="#57534e"/>
+    <rect width="126" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">
+    <text x="21" y="14">prose</text>
+    <text x="84" y="14">CC BY-SA 4.0</text>
+  </g>
+</svg>

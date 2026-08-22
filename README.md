@@ -9,6 +9,7 @@
 
 **Tu memoria, en un fichero que puedes llevarte. Empieza vacía, y lo dice.**
 
+<a href="https://github.com/piskyRpapalo/aurelius/actions/workflows/pruebas.yml"><img src="https://github.com/piskyRpapalo/aurelius/actions/workflows/pruebas.yml/badge.svg" alt="Tests"></a>
 <img src="https://img.shields.io/badge/Python-3.10%2B-2F6B4F?style=flat" alt="Python 3.10 or newer">
 <img src="https://img.shields.io/badge/dependencies-standard%20library%20only-A9762B?style=flat" alt="Dependencies: standard library only">
 <img src="https://img.shields.io/badge/storage-one%20local%20file-2F6B4F?style=flat" alt="Storage: one local file">

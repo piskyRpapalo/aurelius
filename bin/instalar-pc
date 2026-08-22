@@ -64,7 +64,12 @@ nota "arranca  $RUTA_LANZA"
 # --- 2 · el icono ---------------------------------------------------------
 az "2 · El icono"
 mkdir -p "$ICONOS" "$APPS"
-if [ -f "$AQUI/empaquetado/aurelius.png" ]; then
+# El busto cyborg del propio producto, no un dibujo aparte: el icono del
+# escritorio y la cara de la aplicacion son la misma imagen, y eso se nota.
+if [ -f "$AQUI/assets/icono-cyborg.png" ]; then
+  cp "$AQUI/assets/icono-cyborg.png" "$ICONOS/aurelius.png"
+  nota "el busto cyborg, del sprite del producto"
+elif [ -f "$AQUI/empaquetado/aurelius.png" ]; then
   cp "$AQUI/empaquetado/aurelius.png" "$ICONOS/aurelius.png"
   nota "copiado de empaquetado/"
 else

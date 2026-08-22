@@ -34,6 +34,7 @@ const T = {
     tu_memoria: "Tu memoria", la_frontera: "La frontera", los_ajustes: "Ajustes",
     camino: "El Camino", el_camino: "El Camino",
     camino_intro: "Ocho peldaños. Esto es dónde estás de verdad — medido, no supuesto.",
+    encendiendo: "Encendiendo el cerebro… esto tarda la primera vez",
     hecho: "hecho", empezado: "empezado", sin_empezar: "sin empezar",
     no_medible: "no medible desde aquí",
   },
@@ -57,6 +58,7 @@ const T = {
     tu_memoria: "Your memory", la_frontera: "The border", los_ajustes: "Settings",
     camino: "The Path", el_camino: "The Path",
     camino_intro: "Eight rungs. This is where you actually are — measured, not assumed.",
+    encendiendo: "Warming up the brain… this takes a moment the first time",
     hecho: "done", empezado: "started", sin_empezar: "not started",
     no_medible: "not measurable from here",
   },
@@ -165,18 +167,33 @@ async function turno(texto) {
   $("hablar").disabled = true;
   $("mandar").disabled = true;
   $("busto").classList.add("piensa");
-  const esperando = linea(t("pensando"), "espera");
+  // DOS Avisos, y el orden importa. El primero sale YA: el modelo tarda porque
+  // hay que subir 2,3 GiB de disco a memoria, y eso es fisica, no un fallo.
+  // Decirlo Antes de que la persona se impaciente es la diferencia entre
+  // "esta cargando" y "se ha colgado". El segundo lo sustituye cuando ya solo
+  // queda generar.
+  const encendiendo = linea(t("encendiendo"), "espera");
+  let esperando = null;
+  const relevo = setTimeout(() => {
+    encendiendo.remove();
+    esperando = linea(t("pensando"), "espera");
+  }, 4000);
+  const limpiar = () => {
+    clearTimeout(relevo);
+    encendiendo.remove();
+    if (esperando) esperando.remove();
+  };
   try {
     const r = await fetch("/api/charla", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ texto }),
     });
     const d = await r.json();
-    esperando.remove();
+    limpiar();
     if (r.ok) linea(d.texto);
     else linea(d.estado === "tarde" ? t("tarde") : t("fallo"), "malo");
   } catch {
-    esperando.remove();
+    limpiar();
     linea(t("sin_red"), "malo");
   }
   $("busto").classList.remove("piensa");

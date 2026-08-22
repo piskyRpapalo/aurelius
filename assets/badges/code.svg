@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="72" height="20" role="img" aria-label="code: MIT">
+  <title>code: MIT</title>
+  <linearGradient id="s" x2="0" y2="100%">
+    <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+    <stop offset="1" stop-opacity=".1"/>
+  </linearGradient>
+  <clipPath id="r"><rect width="72" height="20" rx="3" fill="#fff"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="38" height="20" fill="#57534e"/>
+    <rect x="38" width="34" height="20" fill="#57534e"/>
+    <rect width="72" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">
+    <text x="19" y="14">code</text>
+    <text x="55" y="14">MIT</text>
+  </g>
+</svg>

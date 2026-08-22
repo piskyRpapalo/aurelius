@@ -48,36 +48,43 @@ body {
 
 /* --- el busto --- */
 .retrato { padding: 1.4rem 1rem .4rem; text-align: center; }
-/* Cuatro fotogramas en una tira: marmol entero, grietas, maquinaria, y
-   fragmentos sueltos. La tira mide 1024x341, o sea cuatro de 256 -- por eso
-   400% de ancho y pasos de 4. No hace falta canvas: `steps(4)` salta de
-   fotograma a fotograma sin interpolar, que es justo lo que pide un sprite.
-   Interpolando se veria un desliz continuo, que es el error clasico. */
+/* Cuatro fotogramas en una tira de 1024x341: marmol entero, grietas, cyborg
+   con el ojo ambar, y fragmentos sueltos. Cuatro de 256 -- por eso 400% de
+   ancho.
+
+   EL Reposo ES EL Tercero, no el primero. El marmol intacto es de donde viene;
+   el cyborg con el ojo encendido es lo que es. Con 4 fotogramas y el fondo al
+   400%, cada uno cae en un tercio: 0%, 33.33%, 66.67%, 100%.
+
+   Y los fotogramas NO dicen lo mismo que el resplandor. Los fotogramas dicen
+   quien es; el resplandor dice que esta pensando. Antes el busto recorria la
+   tira entera mientras pensaba y las dos cosas se confundian: parecia que
+   pensar le rompiera la cara. */
 .busto {
   width: 116px; height: 116px; margin: 0 auto; border-radius: 50%;
-  background: var(--paper) url("/assets/aurelius-up.png") 0 50% / 400% auto no-repeat;
+  background: var(--paper) url("/assets/aurelius-up.png") 66.667% 50% / 400% auto no-repeat;
   border: 2px solid var(--violeta); box-shadow: 0 8px 28px rgba(109,90,224,.22);
   image-rendering: pixelated;
+  /* La entrada: marmol, grietas, cyborg. `jump-none` reparte los tres
+     fotogramas en tres tramos iguales y llega al ultimo -- con el `steps()`
+     de siempre, el tercero solo se veria un instante al final. */
+  animation: despertar 1.05s steps(3, jump-none) 1 both;
 }
-/* En reposo se queda en el primer fotograma: el marmol entero. El busto se
-   abre solo cuando esta pensando -- la animacion dice que algo esta pasando
-   ahi dentro, y cuando no pasa nada, no dice nada. Una cara que se agita sin
-   motivo es un adorno; esta es un indicador. */
-.busto.piensa {
-  animation: abrirse 1.6s steps(4) infinite,
-             latir   2.4s ease-in-out infinite;
+@keyframes despertar {
+  from { background-position:      0% 50%; }
+  to   { background-position: 66.667% 50%; }
 }
-@keyframes abrirse {
-  from { background-position:    0% 50%; }
-  to   { background-position: -400% 50%; }
-}
+
+/* Pensar es el resplandor, y solo el resplandor. */
+.busto.piensa { animation: latir 2.4s ease-in-out infinite; }
 @keyframes latir {
   0%,100% { box-shadow: 0 8px 28px rgba(109,90,224,.22); }
   50%     { box-shadow: 0 8px 34px rgba(224,184,114,.45); }
 }
-/* Quien pidio menos movimiento no recibe un busto agitandose. Se queda el
-   latido del borde, que informa igual y no se mueve. */
+/* Quien pidio menos movimiento no ve romperse una cara: aparece ya despierto,
+   y el borde late, que informa igual sin moverse. */
 @media (prefers-reduced-motion: reduce) {
+  .busto        { animation: none; background-position: 66.667% 50%; }
   .busto.piensa { animation: latir 2.4s ease-in-out infinite; }
 }
 
