@@ -216,6 +216,30 @@ The findings report **class and count only** — `API_KEY x1` — never the matc
 value. A report that echoed the secret would put it back in the place the
 redaction just removed it from.
 
+## Running the face on a phone, and what survives a reboot
+
+The web face is not part of the downloadable product. Like the bridge, it lives
+in `bin/`, you start it by hand, and no module imports it. A clone that has it
+never runs it.
+
+```
+bin/aurelius-servicio arranca     # starts it, and verifies it answers
+bin/aurelius-servicio estado      # is it alive, and does it respond?
+bin/aurelius-servicio para        # stops it
+```
+
+`arranca` refuses to start a second one. A stale process still holding the port
+makes the new one die at birth — and because the old one *does* answer,
+everything looks fine while you measure the wrong version. That has happened
+three times here, on three different ports, and the symptom lied every time.
+
+**It does not survive a reboot, and does not pretend to.** Android will not
+start Termux on its own. Reboot survival needs the **Termux:Boot** app,
+installed from F-Droid, plus exempting Termux from battery optimisation. Both
+are done by hand, on the screen — no script can grant itself either. Until then
+the honest instruction is the one above: after a reboot, open Termux and run
+`arranca`.
+
 ## Status (real, not aspirational)
 
 - [x] Three states, distinguished and tested
