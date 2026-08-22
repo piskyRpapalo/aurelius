@@ -1,0 +1,14 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Detecta si Termux:Boot está configurado
+
+if [ ! -d "$HOME/.termux/boot" ]; then
+  echo "NO_CONFIGURADO"
+  exit 0
+fi
+
+if [ ! -f "$HOME/.termux/boot/aurelius.sh" ]; then
+  echo "SIN_SCRIPT"
+  exit 0
+fi
+
+echo "OK"

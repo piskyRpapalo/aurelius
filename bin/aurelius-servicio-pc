@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Crea un servicio systemd user para que aurelius arranque al login
+
+set -euo pipefail
+
+SERVICE_DIR="$HOME/.config/systemd/user"
+SERVICE_FILE="$SERVICE_DIR/aurelius.service"
+
+mkdir -p "$SERVICE_DIR"
+
+cat > "$SERVICE_FILE" <<EOF
+[Unit]
+Description=Aurelius Brain Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=$PWD
+ExecStart=$PWD/bin/aurelius-servicio
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl --user daemon-reload
+systemctl --user enable aurelius.service
+systemctl --user start aurelius.service
+
+echo "✓ Servicio systemd creado y arrancado"
+echo "  Verifica: systemctl --user status aurelius.service"
+echo "  Logs: journalctl --user -u aurelius.service -f"
