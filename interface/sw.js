@@ -10,7 +10,7 @@
 // Medido en un telefono el 2026-08-22 -- se veia la interfaz anterior y el
 // servidor decia la verdad. **Al tocar cualquier fichero de esta lista, se
 // sube el numero.** Es lo unico que hace que una actualizacion llegue.
-const Cache = "aurelius-armazon-v6";
+const Cache = "aurelius-armazon-v8";
 const Armazon = ["/", "/dashboard.html", "/dashboard.css", "/dashboard.js",
                  "/app.html", "/app.css", "/app.js", "/manifest.json"];
 

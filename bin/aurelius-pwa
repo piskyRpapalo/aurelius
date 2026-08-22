@@ -44,7 +44,8 @@ import guardrails as G                                      # noqa: E402
 import captura as C                                         # noqa: E402
 import conversacion as _charla                              # noqa: E402
 import cara as _cara                                        # noqa: E402
-import casa as _casa                                        # noqa: E402
+import casa as _casa
+import voz as _voz                                        # noqa: E402
 
 BIND = os.environ.get("AURELIUS_PWA_BIND", "127.0.0.1")
 PUERTO = int(os.environ.get("AURELIUS_PWA_PUERTO", "8740"))
@@ -96,6 +97,8 @@ class PWA(BaseHTTPRequestHandler):
             return self._estado()
         if ruta == "/api/camino":
             return self._camino()
+        if ruta.startswith("/api/voz"):
+            return self._voz()
         if ruta.startswith("/assets/"):
             return self._asset(ruta[len("/assets/"):])
         pieza = ESTATICOS.get(ruta)
@@ -199,6 +202,36 @@ class PWA(BaseHTTPRequestHandler):
         return self._json(200, {"estado": "ok", "idioma": idioma,
                                 "peldanos": peldanos,
                                 "cifras": camino.get("cifras", {})})
+
+    def _voz(self):
+        """¿Puede hablar esta copia? Se contesta con el disco, no con un deseo.
+
+        La voz son dos piezas: el binario de piper y el modelo firmado. En el
+        Doogee esta el modelo (61 MB) y NO esta el binario, asi que la
+        respuesta honesta es "tengo media pieza" -- y se dice cual falta, no un
+        "no disponible" que manda a mirar donde no es.
+        """
+        # Se pregunta al producto, no se reimplementa la pregunta.
+        # `piper_disponible()` ya mira el binario, el modelo Y si la maquina
+        # declara el hardware apagado -- esa ultima no la habria puesto yo.
+        #
+        # Y `piper_binario()` devuelve la CADENA "NO_DATA" cuando no lo
+        # encuentra, no None. La primera version de esto hacia `bool(binario)`
+        # y una cadena no vacia es verdadera: el endpoint decia que el Doogee
+        # podia hablar cuando no tiene piper instalado. Un sensor que miente
+        # sobre una ausencia es peor que no tenerlo.
+        binario = _voz.piper_binario() != _voz.NO_DATA
+        modelo = os.path.isfile(_voz.MODELO_DEFECTO)
+        return self._json(200, {
+            "estado": "ok",
+            "puede": _voz.piper_disponible(),
+            "binario": binario,
+            "modelo": modelo,
+            "falta": ("nada" if (binario and modelo)
+                      else "el binario de piper" if modelo
+                      else "el modelo de voz" if binario
+                      else "el binario y el modelo"),
+        })
 
     def _frontera(self, datos):
         """El filtro, y su payload entero. Fail-closed de verdad."""

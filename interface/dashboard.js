@@ -34,7 +34,12 @@ const T = {
     tu_memoria: "Tu memoria", la_frontera: "La frontera", los_ajustes: "Ajustes",
     camino: "El Camino", el_camino: "El Camino",
     camino_intro: "Ocho peldaños. Esto es dónde estás de verdad — medido, no supuesto.",
-    encendiendo: "Encendiendo el cerebro… esto tarda la primera vez",
+    encendiendo: "Encendiendo el cerebro… vuelve en unos minutos",
+    tardando: "Esto tarda más de lo normal. Aurelius está fusionándose con tu teléfono.",
+    fundiendo: "Aurelius se está fusionando con tu teléfono. Esto solo pasa una vez",
+    front_que: "Antes de que un texto salga, se tachan claves, rutas y direcciones.",
+    front_como: "Se cuenta la clase y la cantidad, nunca el texto encontrado. Y si el filtro no puede terminar, no se envía nada.",
+    voz_no: "Esta copia no lleva voz: falta {falta}.",
     hecho: "hecho", empezado: "empezado", sin_empezar: "sin empezar",
     no_medible: "no medible desde aquí",
   },
@@ -58,7 +63,12 @@ const T = {
     tu_memoria: "Your memory", la_frontera: "The border", los_ajustes: "Settings",
     camino: "The Path", el_camino: "The Path",
     camino_intro: "Eight rungs. This is where you actually are — measured, not assumed.",
-    encendiendo: "Warming up the brain… this takes a moment the first time",
+    encendiendo: "Warming up the brain… come back in a few minutes",
+    tardando: "This is taking longer than usual. Aurelius is bonding with your phone.",
+    fundiendo: "Aurelius is bonding with your phone. This only happens once",
+    front_que: "Before any text leaves, keys, paths and addresses are blanked out.",
+    front_como: "What gets counted is the class and the quantity, never the text found. And if the filter cannot finish, nothing is sent.",
+    voz_no: "This copy has no voice: {falta} is missing.",
     hecho: "done", empezado: "started", sin_empezar: "not started",
     no_medible: "not measurable from here",
   },
@@ -114,6 +124,8 @@ async function pulso() {
     // no cambiaban. Un tablero que declara hablar dos idiomas y solo traduce
     // los mensajes esta a medio traducir, que se nota mas que no traducir.
     $("mandar").setAttribute("aria-label", t("dilo"));
+    $("frontera-que").textContent = t("front_que");
+    $("frontera-como").textContent = t("front_como");
     const rotulos = { memoria: "memoria", frontera: "frontera",
                       camino: "camino", ajustes: "ajustes" };
     document.querySelectorAll("[data-cajon]").forEach((b) => {
@@ -123,7 +135,12 @@ async function pulso() {
                       camino: "el_camino", ajustes: "los_ajustes" };
     for (const [cual, clave] of Object.entries(titulos)) {
       const h = document.querySelector("#cajon-" + cual + " h2");
-      if (h) h.textContent = t(clave);
+      if (!h) continue;
+      // Se escribe en el <span> del rotulo, NO en el <h2>: el h2 lleva ahora
+      // un icono dentro, y `h2.textContent = ...` lo borraba entero. Un
+      // titulo que se traduce no deberia poder tirar su propio icono.
+      const rot = h.querySelector("span") || h;
+      rot.textContent = t(clave);
     }
     $("hablar").disabled = !d.motor;
     $("mandar").disabled = !d.motor;
@@ -155,6 +172,30 @@ function rotulo() {
 function linea(texto, clase) {
   const p = document.createElement("p");
   if (clase) p.className = clase;
+  if (clase === "espera") {
+    // Un reloj de arena junto al texto. La espera aqui son Minutos, y un
+    // texto quieto sin nada que se mueva se lee como una pantalla colgada.
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+    svg.setAttribute("class", "reloj");
+    svg.setAttribute("aria-hidden", "true");
+    for (const d of ["M 6 2 h12", "M 6 22 h12",
+                     "M 6 2 c 0 5 12 5 12 0", "M 6 22 c 0 -5 12 -5 12 0"]) {
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      svg.appendChild(path);
+    }
+    p.appendChild(svg);
+    const t_ = document.createElement("span");
+    t_.textContent = texto;
+    p.appendChild(t_);
+    $("dice").appendChild(p);
+    p.scrollIntoView({ block: "end" });
+    return p;
+  }
   p.textContent = texto;
   $("dice").appendChild(p);
   p.scrollIntoView({ block: "end" });
@@ -172,16 +213,27 @@ async function turno(texto) {
   // Decirlo Antes de que la persona se impaciente es la diferencia entre
   // "esta cargando" y "se ha colgado". El segundo lo sustituye cuando ya solo
   // queda generar.
+  if (!fusionYaVista()) fusion(true);
   const encendiendo = linea(t("encendiendo"), "espera");
   let esperando = null;
+  let tardando = null;
+  // Tres tramos, y cada uno dice algo que el anterior no podia decir todavia.
+  // A los cuatro segundos ya no esta encendiendo: esta generando. Al minuto,
+  // callarse seria dejar a la persona mirando una pantalla quieta sin saber
+  // si sigue vivo.
   const relevo = setTimeout(() => {
     encendiendo.remove();
     esperando = linea(t("pensando"), "espera");
   }, 4000);
+  const aviso = setTimeout(() => {
+    if (esperando) esperando.remove();
+    tardando = linea(t("tardando"), "espera");
+  }, 60000);
   const limpiar = () => {
-    clearTimeout(relevo);
+    clearTimeout(relevo); clearTimeout(aviso);
     encendiendo.remove();
     if (esperando) esperando.remove();
+    if (tardando) tardando.remove();
   };
   try {
     const r = await fetch("/api/charla", {
@@ -190,6 +242,7 @@ async function turno(texto) {
     });
     const d = await r.json();
     limpiar();
+    marcarFusionVista();
     if (r.ok) linea(d.texto);
     else linea(d.estado === "tarde" ? t("tarde") : t("fallo"), "malo");
   } catch {
@@ -244,6 +297,43 @@ if (!Reconocedor) {
     linea(e.error === "not-allowed" ? t("sin_micro") : t("sin_oir"), "malo");
   });
 }
+
+/* La primera carga sube 2-3 GB de disco a memoria. Se avisa UNA vez por
+ * dispositivo -- se recuerda en el propio navegador -- porque a la segunda ya
+ * no es noticia. Puntos y no barra: una barra falsa inventa un porcentaje que
+ * nadie mide, y este producto no fabrica sensores. */
+function fusion(encender) {
+  const caja = $("fusion");
+  if (!encender) { caja.hidden = true; return; }
+  $("fusion-texto").textContent = t("fundiendo");
+  caja.hidden = false;
+  let n = 0;
+  const id = setInterval(() => {
+    n = (n + 1) % 4;
+    $("puntos").textContent = ".".repeat(n);
+  }, 600);
+  caja.dataset.reloj = id;
+}
+function fusionYaVista() {
+  try { return localStorage.getItem("aurelius-fusion") === "si"; }
+  catch { return false; }
+}
+function marcarFusionVista() {
+  try { localStorage.setItem("aurelius-fusion", "si"); } catch { /* privado */ }
+  const caja = $("fusion");
+  if (caja.dataset.reloj) clearInterval(Number(caja.dataset.reloj));
+  fusion(false);
+}
+
+/* El ojo parpadea una vez por minuto. No en bucle: en Reposo la app tiene que
+ * parecer quieta, no viva. Es el unico movimiento que el blueprint del rack
+ * aprueba para una CPU ARM, y con su misma forma -- 1.2s, steps(2). */
+setInterval(() => {
+  const b = $("busto");
+  if (!b || b.classList.contains("piensa")) return;
+  b.classList.add("pestanea");
+  setTimeout(() => b.classList.remove("pestanea"), 1400);
+}, 60000);
 
 /* --- el Camino --------------------------------------------------------- */
 /* Los ocho peldaños salen del servidor, con su estado medido. Aqui NO se

@@ -17,6 +17,10 @@
   <p class="pulso" id="pulso" aria-live="polite">comprobando…</p>
 </div>
 
+<p class="fusion" id="fusion" hidden>
+  <span id="fusion-texto"></span><span class="puntos" id="puntos"></span>
+</p>
+
 <main class="dice" id="dice" aria-live="polite"></main>
 
 <div class="hablar-zona">
@@ -66,11 +70,18 @@
 
 <section class="cajon" id="cajon-frontera" aria-label="Frontera" hidden>
   <div class="asa"></div>
-  <h2>La frontera</h2>
-  <p class="nota">
-    Antes de que un texto salga, se tachan claves, rutas y direcciones. Lo que
-    se cuenta es la clase y la cantidad, nunca el texto encontrado.
-  </p>
+  <h2>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M 12 3 l 8 3 v5 c 0 5 -3.4 8.2 -8 10 c -4.6 -1.8 -8 -5 -8 -10 V 6 Z"></path>
+      <path d="M 9 12 l 2 2 l 4 -4"></path>
+    </svg>
+    <span id="titulo-frontera">La frontera</span>
+  </h2>
+  <div class="escudo-caja">
+    <p id="frontera-que"></p>
+    <p id="frontera-como"></p>
+  </div>
   <a class="enlace" href="/app.html">Abrir el panel completo →</a>
 </section>
 
