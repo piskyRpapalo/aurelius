@@ -380,7 +380,7 @@ Dual license, one file each — the text that governs is theirs, not this summar
 
 - Code: MIT — [LICENSE](LICENSE)
 - Prose and lore: CC BY-SA 4.0 — [LICENSE-PROSE](LICENSE-PROSE)
-- Sprites (`assets/*.png`): `NO_DATA` — see the note below.
+- Sprites (`assets/*.png`): CC BY-SA 4.0 — [LICENSE-PROSE](LICENSE-PROSE)
 
 **Scope of the MIT license.** This MIT license applies to all Python source
 code (`*.py`), shell scripts (`*.sh`), and configuration files in this
@@ -390,12 +390,15 @@ The prose, documentation, and lore (including but not limited to `README.md`
 and all `.md` files) are licensed separately under CC BY-SA 4.0 (see
 LICENSE-PROSE).
 
-**The sprites are the open question.** `ASSETS.md` states that they travel
-under "la licencia del repo: Apache-2.0". This repository has no Apache-2.0
-licence in it: `LICENSE` is MIT and `LICENSE-PROSE` is CC BY-SA 4.0. Until the
-author says which of the three actually governs `assets/*.png`, this line reads
-`NO_DATA` rather than guessing, because a licence invented in a README is worse
-than an absent one.
+**The sprites travel with the prose, not with the code.** `assets/*.png` were
+made by the author on their own machine: no stock bank, no third-party
+watermark, no inherited conditions. They are art, so they are licensed like the
+rest of the art here — CC BY-SA 4.0, the same file as the prose. Remix them,
+credit the source, share alike.
+
+Signed 2026-08-22. Until then this line read `NO_DATA`, because `ASSETS.md`
+claimed an Apache-2.0 licence that exists nowhere in this repository, and a
+licence invented in a README is worse than an absent one.
 
 This paragraph used to live at the bottom of `LICENSE` itself. It was moved
 here so that `LICENSE` holds the canonical MIT text and nothing else: GitHub

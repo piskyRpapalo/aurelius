@@ -9,9 +9,14 @@ contrato de animación que la cara está obligada a respetar.
 
 Los dos sprites fueron **generados por el Soberano** en su propio nodo. No
 provienen de un banco de imágenes, no llevan marca de agua ajena y no arrastran
-condiciones de terceros. Viajan bajo **la licencia del repo: CC BY-SA 4.0**, la
-misma que el código — quien clona el repo recibe la cara con los mismos
-derechos que recibe `memory.py`.
+condiciones de terceros. Viajan bajo **CC BY-SA 4.0**, la misma licencia que la prosa y el lore, y
+**no la del código**: `memory.py` es MIT y estos PNG no. Son arte, y se licencian
+como el resto del arte de esta casa — se remezclan citando la fuente y
+compartiendo igual.
+
+Firmado el 2026-08-22. Antes esta línea decía «la licencia del repo:
+Apache-2.0», que no existe en ningún fichero de este árbol, y despues «la misma
+que el código», que tampoco: el código es MIT.
 
 Se guardan en el árbol, no se descargan. Una cara que necesita ir a buscarse a
 sí misma a algún sitio no es una cara: es una dependencia con dibujos.

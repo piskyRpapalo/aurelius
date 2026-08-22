@@ -673,6 +673,54 @@ def t31():
     assert 'd.dataset.rama' in html, \
         "el nodo no declara si es tronco o parada: el CSS estaría adivinando"
 
+@caso("32 · un recuerdo no puede salirse del bloque de script")
+def t32():
+    """Lo unico que convierte un dato en codigo: cerrar el <script>.
+
+    Escrito el 2026-08-22 tras una revision externa que daba el fallo por
+    hecho. MEDIDO: no lo hay -- los recuerdos van en un JSON con `</script>`
+    ya escapado. La prueba se queda porque la propiedad estaba y no estaba
+    declarada, y una propiedad que nadie comprueba se pierde en el primer
+    refactor que "solo" cambia como se serializa.
+    """
+    ruta = os.path.join(tmp_dir(), "memory.db")
+    M.crear(ruta)
+    with M.abrir(ruta) as c:
+        M.escribir_engrama(c, what="fin</script><script>alert(1)</script>",
+                           why="<img src=x onerror=alert(1)>")
+    html, _ = generar(ruta)
+    cuerpo = html[html.index("var DATOS"):]
+    hasta = cuerpo.index("</script>")
+    assert "</script>" not in cuerpo[:hasta].replace("<\\/script>", ""), \
+        "un recuerdo cerro el bloque de script: eso es ejecucion, no dato"
+
+
+@caso("33 · la cara pinta con textContent, jamas con innerHTML")
+def t33():
+    """No basta con que el texto llegue entero: no debe PARSEARSE como html."""
+    fuente = open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                             "cara.py"), encoding="utf-8").read()
+    for forma in ("innerHTML", "insertAdjacentHTML", "document.write",
+                  "outerHTML"):
+        assert forma not in fuente, \
+            f"{forma} convertiria un recuerdo en html; se pinta con textContent"
+
+
+@caso("34 · comillas y barras no rompen el JSON de los recuerdos")
+def t34():
+    """Un JSON invalido deja la cara en blanco: todo o nada, sin aviso."""
+    ruta = os.path.join(tmp_dir(), "memory.db")
+    M.crear(ruta)
+    with M.abrir(ruta) as c:
+        M.escribir_engrama(c, what='dijo "hola" y \\ se fue', why="x")
+    html, _ = generar(ruta)
+    crudo = html[html.index("var DATOS = ") + len("var DATOS = "):]
+    crudo = crudo[:crudo.index("};") + 1]
+    datos = json.loads(crudo)
+    assert datos["engrams"][0]["what"] == 'dijo "hola" y \\ se fue', \
+        "el texto no sobrevivio entero al viaje por JSON"
+
+
 def main():
     fallos = 0
     print("── M2 · LA CARA " + "─" * 50)
