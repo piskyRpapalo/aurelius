@@ -1,0 +1,56 @@
+# Las 267 pruebas, en las cinco versiones que el propio producto declara.
+#
+# La lista NO se escribe aquí: sale de `interprete.py`, que es de donde la saca
+# el producto para avisarte si corres fuera de rango. Si viviera en los dos
+# sitios, el día que se pruebe una version nueva habría que acertar en dos
+# ficheros — y bastaría fallar en uno para que el aviso y la realidad se
+# separaran sin que nadie lo note.
+#
+# NO se instala un motor de inferencia, ni un stub que lo imite. Medido el
+# 2026-08-22: la tanda entera pasa con el PATH limpio, porque las suites de
+# conversación traen su propio motor sintético. Un stub aquí sugeriría que hace
+# falta algo que no hace falta.
+name: pruebas
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    strategy:
+      # Sin fail-fast: si 3.10 se rompe, sigue interesando saber si 3.14 aguanta.
+      # Media respuesta obliga a correr la tanda otra vez para ver la otra mitad.
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
+    name: python ${{ matrix.python }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: La máquina, antes que la cifra
+        run: |
+          python3 -V
+          echo "TMPDIR=${TMPDIR:-/tmp}"
+          df -hT "${TMPDIR:-/tmp}" | tail -1
+
+      - name: Sin dependencias, y se comprueba
+        # El producto es biblioteca estándar. Esto no es un adorno: es lo que
+        # hace que el ejecutable de PC quepa en 14 MB. Si un día entra una
+        # dependencia, que sea una decision y no un descubrimiento.
+        run: |
+          test ! -f requirements.txt || (echo "apareció requirements.txt" && exit 1)
+          test ! -f setup.py || (echo "apareció setup.py" && exit 1)
+
+      - name: La tanda
+        run: ./bin/pruebas
