@@ -23,3 +23,9 @@ aurelius-recuerdos.txt
 policies.json
 aurelius/
 piezas/
+aurelius.spec
+
+# El ejecutable empaquetado: 14 MB reconstruibles con
+# empaquetado/construir_pc.sh. Un binario en la historia la engorda para
+# siempre y no se audita leyendolo.
+dist/

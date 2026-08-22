@@ -50,6 +50,19 @@ case "$ORDEN" in
       exit 0
     fi
     mkdir -p "$(dirname "$BITACORA")"
+    # QUIEN LLAMA DECIDE LA FORMA. systemd con Type=simple vigila al proceso que
+    # lanza: si ese proceso se va a segundo plano y devuelve 0, systemd cree que
+    # el servicio murio limpiamente y lo reinicia. Medido en el Beelink: 23
+    # reinicios en bucle, cada diez segundos, con status=0 -- el peor sintoma,
+    # porque "salio bien" y "se cayo" se leian igual.
+    #
+    # `INVOCATION_ID` lo pone systemd y solo systemd. Con el, se corre en primer
+    # plano y se le entrega el proceso con `exec`, para que vigile al servidor y
+    # no a un envoltorio. Sin el, segundo plano como siempre.
+    if [ -n "${INVOCATION_ID:-}" ]; then
+      echo "[servicio] bajo systemd: primer plano, sin bifurcar"
+      exec python3 "$AQUI/bin/aurelius-pwa"
+    fi
     (setsid nohup python3 "$AQUI/bin/aurelius-pwa" >>"$BITACORA" 2>&1 </dev/null &)
     # Se espera y se COMPRUEBA. Un `&` que devuelve 0 solo dice que el shell
     # pudo bifurcar, no que el servidor esté escuchando.

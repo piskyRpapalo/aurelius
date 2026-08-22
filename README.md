@@ -27,6 +27,18 @@ Aurelius wakes up with no memory. Instead of pretending otherwise, it tells you
 what it does not have and asks you to help build it. What you write stays on
 your machine, in a single file, in your own words.
 
+## Two ways in
+
+**If you just want to use it** — no terminal, no setup:
+
+| | |
+|---|---|
+| **Computer** | one file, double-click it → [INSTALACION_PC.md](INSTALACION_PC.md) |
+| **Android** | Termux today, and why there is no APK yet → [INSTALACION_ANDROID.md](INSTALACION_ANDROID.md) |
+
+**If you want to read it, change it or audit it**, the rest of this file is for
+you: clone, run, and every claim below carries the machine that produced it.
+
 ## What it does
 
 - Starts in one of three honest states: **no schema**, **empty**, or **with data**. Those are three different things and it never confuses them.

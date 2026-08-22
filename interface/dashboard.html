@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6d5ae0">
+<title>Aurelius</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+
+<div class="retrato">
+  <div class="busto" id="busto" role="img"
+       aria-label="Busto de mármol con un ojo encendido"></div>
+  <h1 class="nombre">Aurelius</h1>
+  <p class="pulso" id="pulso" aria-live="polite">comprobando…</p>
+</div>
+
+<main class="dice" id="dice" aria-live="polite"></main>
+
+<div class="hablar-zona">
+  <button class="hablar" id="hablar" type="button">Hablar</button>
+  <form class="escribir" id="escribir">
+    <label class="sr" for="dicho">O escríbelo</label>
+    <input id="dicho" type="text" placeholder="…o escríbelo aquí" autocomplete="off">
+    <button type="submit" id="mandar">Dilo</button>
+  </form>
+</div>
+
+<nav class="tiradores">
+  <button type="button" data-cajon="memoria">Memoria</button>
+  <button type="button" data-cajon="frontera">Frontera</button>
+  <button type="button" data-cajon="ajustes">Ajustes</button>
+</nav>
+
+<div class="velo" id="velo"></div>
+
+<section class="cajon" id="cajon-memoria" aria-label="Memoria" hidden>
+  <div class="asa"></div>
+  <h2>Tu memoria</h2>
+  <div class="dato"><span>Recuerdos guardados</span><b id="m-turnos">—</b></div>
+  <div class="dato"><span>Consentidos para aprender</span><b id="m-consent">—</b></div>
+  <div class="dato"><span>Corregidos por ti</span><b id="m-corr">—</b></div>
+  <p class="nota">
+    Vive en un solo fichero de tu máquina. Puedes copiarlo y llevártelo.
+    Nada sale de aquí si tú no lo exportas.
+  </p>
+</section>
+
+<section class="cajon" id="cajon-frontera" aria-label="Frontera" hidden>
+  <div class="asa"></div>
+  <h2>La frontera</h2>
+  <p class="nota">
+    Antes de que un texto salga, se tachan claves, rutas y direcciones. Lo que
+    se cuenta es la clase y la cantidad, nunca el texto encontrado.
+  </p>
+  <a class="enlace" href="/app.html">Abrir el panel completo →</a>
+</section>
+
+<section class="cajon" id="cajon-ajustes" aria-label="Ajustes" hidden>
+  <div class="asa"></div>
+  <h2>Ajustes</h2>
+  <div class="dato"><span>Idioma</span><b id="a-idioma">—</b></div>
+  <div class="dato"><span>Cerebro</span><b id="a-motor">—</b></div>
+  <div class="dato"><span>Cuaderno de turnos</span><b id="a-captura">—</b></div>
+  <p class="nota" id="a-nota"></p>
+  <a class="enlace" href="/app.html">Cuaderno y consentimientos →</a>
+</section>
+
+<script src="/dashboard.js"></script>
+</body>
+</html>

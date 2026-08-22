@@ -1,0 +1,131 @@
+/* Aurelius · el tablero. Violeta de la casa, mobile-first, sin terminal a la vista. */
+
+:root {
+  --violeta:      #6d5ae0;
+  --violeta-hondo:#4c3fb5;
+  --violeta-tenue:#efecff;
+  --ambar:        #e0b872;
+  --ink: #16181d;  --ink-soft: #5b6270; --line: #dfe3ea;
+  --paper: #ffffff; --ground: #f5f6f8;
+  --ok: #1f7a4d;   --stop: #a3242b;
+  --radio: 16px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --violeta:      #a794ff;
+    --violeta-hondo:#7c68e8;
+    --violeta-tenue:#221d3d;
+    --ink: #e9ecf1;  --ink-soft: #a2abba; --line: #333844;
+    --paper: #1b1e25; --ground: #121419;
+    --ok: #6cd39b;   --stop: #f19aa0;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; color: var(--ink);
+  background:
+    radial-gradient(120% 60% at 50% 0%, var(--violeta-tenue) 0%, transparent 62%),
+    var(--ground);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow: hidden;
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* --- el busto --- */
+.retrato { padding: 1.4rem 1rem .4rem; text-align: center; }
+.busto {
+  width: 116px; height: 116px; margin: 0 auto; border-radius: 50%;
+  background: var(--paper) url("/assets/aurelius-up.png") 0 50% / 400% auto no-repeat;
+  border: 2px solid var(--violeta); box-shadow: 0 8px 28px rgba(109,90,224,.22);
+  image-rendering: pixelated;
+}
+/* El ojo late; el busto no "cobra vida". La animacion dice que esta encendido,
+   no que haya alguien dentro. */
+.busto.piensa { animation: latir 2.4s ease-in-out infinite; }
+@keyframes latir {
+  0%,100% { box-shadow: 0 8px 28px rgba(109,90,224,.22); }
+  50%     { box-shadow: 0 8px 34px rgba(224,184,114,.45); }
+}
+@media (prefers-reduced-motion: reduce) { .busto.piensa { animation: none; } }
+
+.nombre { margin: .6rem 0 .1rem; font-size: 1.35rem; letter-spacing: -.02em; }
+.pulso  { margin: 0; font-size: .82rem; color: var(--ink-soft); }
+
+/* --- lo que dice --- */
+.dice {
+  flex: 1; margin: .9rem 1rem; padding: 1rem; overflow-y: auto;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--radio); min-height: 5rem;
+  display: flex; flex-direction: column; gap: .6rem;
+}
+.dice p { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.dice p.mio { align-self: flex-end; max-width: 85%; padding: .5rem .7rem;
+              background: var(--violeta); color: #fff; border-radius: 12px; }
+.dice p.espera { color: var(--ink-soft); font-style: italic; }
+.dice p.malo   { color: var(--stop); }
+
+/* --- hablar --- */
+.hablar-zona { padding: 0 1rem 1rem; display: flex; flex-direction: column; gap: .6rem; }
+.hablar {
+  width: 100%; min-height: 68px; font: inherit; font-size: 1.15rem; font-weight: 700;
+  color: #fff; background: linear-gradient(180deg, var(--violeta), var(--violeta-hondo));
+  border: 0; border-radius: 999px; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(109,90,224,.35);
+}
+.hablar:disabled { opacity: .45; box-shadow: none; }
+.hablar.escuchando { background: linear-gradient(180deg, var(--ambar), #b8873a); }
+.escribir { display: flex; gap: .5rem; }
+.escribir input {
+  flex: 1; font: inherit; min-height: 48px; padding: .5rem .8rem; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line); border-radius: 999px;
+}
+.escribir button {
+  font: inherit; font-weight: 600; min-height: 48px; padding: 0 1.1rem; color: #fff;
+  background: var(--violeta); border: 0; border-radius: 999px; cursor: pointer;
+}
+
+/* --- cajones --- */
+.tiradores { display: flex; gap: .5rem; padding: 0 1rem .9rem; }
+.tiradores button {
+  flex: 1; min-height: 46px; font: inherit; font-size: .85rem; color: var(--ink-soft);
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--radio); cursor: pointer;
+}
+.cajon {
+  position: fixed; inset: auto 0 0 0; max-height: 78vh; overflow-y: auto;
+  background: var(--paper); border-top: 1px solid var(--line);
+  border-radius: var(--radio) var(--radio) 0 0;
+  padding: .9rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  transform: translateY(100%); transition: transform .22s ease-out;
+  box-shadow: 0 -10px 34px rgba(0,0,0,.18);
+}
+.cajon.abierto { transform: translateY(0); }
+.cajon h2 { margin: .2rem 0 .7rem; font-size: 1rem; }
+.asa { width: 42px; height: 4px; margin: 0 auto .7rem; border-radius: 4px;
+       background: var(--line); }
+.velo {
+  position: fixed; inset: 0; background: rgba(0,0,0,.35);
+  opacity: 0; pointer-events: none; transition: opacity .22s;
+}
+.velo.visible { opacity: 1; pointer-events: auto; }
+.dato { display: flex; justify-content: space-between; gap: 1rem;
+        padding: .5rem 0; border-top: 1px solid var(--line); }
+.dato:first-of-type { border-top: 0; }
+.dato b { font-variant-numeric: tabular-nums; }
+.nota { margin: .7rem 0 0; font-size: .78rem; color: var(--ink-soft); }
+.enlace { display: inline-block; margin-top: .6rem; color: var(--violeta);
+          font-weight: 600; text-decoration: none; }
+
+@media (min-width: 720px) {
+  .retrato, .dice, .hablar-zona, .tiradores { max-width: 34rem;
+    margin-inline: auto; width: 100%; }
+  .cajon { max-width: 34rem; inset: auto auto 0 50%; transform: translate(-50%, 100%);
+           border-radius: var(--radio) var(--radio) 0 0; }
+  .cajon.abierto { transform: translate(-50%, 0); }
+}
