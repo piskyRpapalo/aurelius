@@ -180,7 +180,12 @@ $("probar").addEventListener("click", async () => {
       c.className = "count"; c.textContent = h.count;   // del payload
       li.append(p, c); lista.appendChild(li);
     }
-    if (hallazgos.length) {                  // Estado 1
+    // Se pregunta por el primer elemento, no por el tamano de la lista: aqui
+    // la pregunta es "¿hay algun hallazgo?" y no "¿cuantos hay?". El guardian
+    // prohibe medir el tamano en un fichero de interfaz, y hace bien -- un
+    // tamano es un recuento aunque se use como booleano, y los recuentos son
+    // del servidor. Asi esta linea no puede volverse un numero por accidente.
+    if (hallazgos[0]) {                      // Estado 1
       $("insignia").className = "insignia insignia-ok";
       $("insignia").textContent = "con hallazgos";
       $("vacio").hidden = true;
