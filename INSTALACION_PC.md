@@ -48,6 +48,55 @@ La ventana negra dice qué pasó. Las dos cosas que suelen ocurrir:
 
 ---
 
+## ¿Cerraste todo y no sabes volver?
+
+Le pasó al propio autor. No es culpa tuya: hasta hoy no había forma de
+reabrirlo sin recordar un comando.
+
+### En el ordenador
+
+1. Busca **Aurelius** en el menú de aplicaciones. Si está, tócalo y ya.
+2. Si no está, abre una terminal:
+
+```
+cd ~/aurelius && bin/aurelius-servicio arranca
+```
+
+Te dirá `arrancado · http://127.0.0.1:8740`. Abre esa dirección en el
+navegador.
+
+### Si dice que el puerto está ocupado
+
+Quedó una copia anterior corriendo. **Ojo con esto**, porque tiene una trampa:
+el servidor se puede llamar de dos formas distintas según cómo lo arrancaste.
+
+```
+bin/aurelius-servicio para      # la forma limpia: para lo que haya
+```
+
+Y si aun así sigue ocupado, el que queda es el ejecutable empaquetado, que
+tiene otro nombre:
+
+```
+pkill -f aurelius-pwa           # el servidor lanzado desde el repo
+pkill -f 'dist/aurelius'        # el ejecutable de un solo fichero
+```
+
+**Un `pkill -f aurelius-pwa` a secas no caza al ejecutable.** Pasó cuatro
+veces durante el desarrollo: el proceso viejo seguía respondiendo, el nuevo
+moría al nacer, y todo parecía funcionar mientras se miraba la versión
+equivocada.
+
+### Cómo saber si está vivo
+
+```
+bin/aurelius-servicio estado
+```
+
+Dice el pid y si responde. Si dice `parado`, arráncalo.
+
+---
+
 ## Camino 2 · desde el código
 
 Para quien quiera leerlo, cambiarlo o auditarlo.

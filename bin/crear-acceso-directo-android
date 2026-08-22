@@ -1,0 +1,81 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# crear-acceso-directo-android · un icono, y Aurelius vuelve.
+#
+# EL PROBLEMA QUE RESUELVE, dicho por quien lo sufrio: cerraste Aurelius y no
+# sabes como volver. Le paso al autor del propio producto. Un comando que hay
+# que recordar no es una puerta: es una contrasena que nadie te dio.
+#
+# Esto crea un guion en ~/.shortcuts/ que arranca el servidor y abre el
+# navegador de una vez. Termux:Widget lo enseña como icono en la pantalla de
+# inicio.
+#
+# LO QUE NO HACE
+# * No instala Termux:Widget. Es una aplicacion, se instala desde F-Droid, y
+#   ningun guion puede concederse a si mismo una instalacion. Si no esta, se
+#   DICE y se explica -- no se falla en silencio ni se crea un icono que no
+#   va a aparecer en ningun sitio.
+# * No se impone. El instalador lo OFRECE; esto se corre a mano o se contesta
+#   que si. Quien no quiera icono no lo tiene.
+set -uo pipefail
+
+AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ATAJOS="$HOME/.shortcuts"
+ICONOS="$HOME/.shortcuts/icons"
+NOMBRE="Aurelius"
+PUERTO="${AURELIUS_PWA_PUERTO:-8740}"
+
+az()   { printf '\033[38;5;141m··\033[0m %s\n' "$1"; }
+nota() { printf '\033[38;5;103m   %s\033[0m\n' "$1"; }
+
+printf '\n\033[38;5;141mAURELIUS\033[0m · acceso directo\n\n'
+
+# --- ¿esta Termux:Widget? -------------------------------------------------
+# Se comprueba por el paquete instalado, no por la carpeta: la carpeta la
+# puede crear cualquiera, y entonces el icono se crea y no aparece nunca --
+# el peor resultado, porque parece que funciono.
+if command -v pm >/dev/null 2>&1 && \
+   pm list packages 2>/dev/null | grep -q "com.termux.widget"; then
+  WIDGET="si"
+else
+  WIDGET="no"
+fi
+
+az "Lo que hay"
+nota "producto  $AQUI"
+nota "atajos    $ATAJOS"
+if [ "$WIDGET" = "si" ]; then
+  nota "Termux:Widget instalado"
+else
+  nota "Termux:Widget NO instalado"
+fi
+
+# --- el guion del atajo ---------------------------------------------------
+mkdir -p "$ATAJOS" "$ICONOS"
+cat > "$ATAJOS/$NOMBRE" <<ATAJO
+#!/data/data/com.termux/files/usr/bin/bash
+# Generado por bin/crear-acceso-directo-android. Editable: es tuyo.
+cd "$AQUI" || exit 1
+bin/aurelius-servicio arranca || exit 1
+# El navegador se abre DESPUES de que el servidor responda -- eso lo garantiza
+# \`arranca\`, que no dice "arrancado" hasta comprobarlo. Abrirlo antes enseña
+# un error de conexion a quien no sabe que eso es normal.
+am start -a android.intent.action.VIEW -d "http://127.0.0.1:$PUERTO/" >/dev/null 2>&1
+ATAJO
+chmod +x "$ATAJOS/$NOMBRE"
+az "Atajo creado"
+nota "$ATAJOS/$NOMBRE"
+
+if [ "$WIDGET" = "no" ]; then
+  printf '\n\033[38;5;103mEl atajo esta escrito, pero todavia no hay icono.\033[0m\n\n'
+  printf '  Termux:Widget no esta instalado. Sin el, ~/.shortcuts existe y no\n'
+  printf '  lo enseña nadie. Para tener el icono:\n\n'
+  printf '    1. Instala Termux:Widget desde F-Droid\n'
+  printf '    2. Manten pulsada la pantalla de inicio → Widgets → Termux\n'
+  printf '    3. Elige "%s"\n\n' "$NOMBRE"
+  printf '  Mientras tanto, para reabrir Aurelius:\n'
+  printf '    cd %s && bin/aurelius-servicio arranca\n\n' "$AQUI"
+  exit 0
+fi
+
+printf '\n\033[38;5;141mListo.\033[0m Manten pulsada la pantalla de inicio →\n'
+printf '  Widgets → Termux → elige "%s".\n\n' "$NOMBRE"

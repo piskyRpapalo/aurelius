@@ -27,18 +27,27 @@ cd ~/aurelius && bash bin/instalar-android
 3. Cuando termine:
 
 ```
-python3 aurelius.py               # crear tu memoria
-bin/aurelius-servicio arranca     # la cara web
+python3 aurelius.py                  # crear tu memoria
+bin/crear-acceso-directo-android     # el atajo (opcional, recomendado)
+bin/aurelius-servicio arranca        # la cara web
 ```
 
 4. Abre el navegador del teléfono en **http://127.0.0.1:8740**
 
 ### El icono en la pantalla de inicio
 
-Con la cara abierta en Chrome: menú **⋮ → Añadir a pantalla de inicio**.
-Queda un icono que abre Aurelius a pantalla completa, sin barra de navegador.
-**Eso ya es un icono de verdad** — lo que no sustituye es el paso 3: si el
-servidor no está arrancado, el icono abre una página que no carga.
+Dos formas, y resuelven mitades distintas.
+
+**Un atajo que arranca todo.** `bin/crear-acceso-directo-android` escribe un
+guion que arranca el servidor **y** abre el navegador de una vez. Para verlo
+como icono hace falta **Termux:Widget** (F-Droid): mantén pulsada la pantalla
+de inicio → Widgets → Termux → elige *Aurelius*. Si Termux:Widget no está, el
+guion lo dice y explica qué hacer — no crea un icono que no va a aparecer.
+
+**Un atajo del navegador.** Con la cara abierta en Chrome: menú **⋮ → Añadir a
+pantalla de inicio**. Queda un icono que abre Aurelius a pantalla completa, sin
+barra de navegador. Lo que **no** hace es arrancar el servidor: si no está
+corriendo, el icono abre una página que no carga. Por eso existe la primera.
 
 ### Después de reiniciar el teléfono
 
@@ -48,6 +57,58 @@ Android no arranca Termux solo. Hay que abrir Termux y teclear
 Para evitarlo hace falta la aplicación **Termux:Boot** (F-Droid) y eximir a
 Termux de la optimización de batería. Las dos se hacen a mano, en los ajustes.
 Ningún guion puede concedérselas a sí mismo.
+
+---
+
+## ¿Cerraste todo y no sabes volver?
+
+Le pasó al propio autor. Hasta hoy no había forma de reabrirlo sin recordar un
+comando, y eso es una barrera para cualquiera que no lo haya construido.
+
+### Si creaste el acceso directo
+
+Toca el icono **Aurelius** en la pantalla de inicio. Arranca el servidor y abre
+el navegador de una vez. Si no lo creaste, ver §1.
+
+### Si no lo creaste
+
+1. Abre **Termux**.
+2. Escribe:
+
+```
+cd ~/aurelius && bin/aurelius-servicio arranca
+```
+
+3. Abre el navegador del teléfono en **http://127.0.0.1:8740**
+
+### Si dice que el puerto está ocupado
+
+Quedó una copia anterior corriendo:
+
+```
+bin/aurelius-servicio para
+```
+
+Y si aun así sigue ocupado:
+
+```
+pkill -f aurelius-pwa
+```
+
+### Cómo saber si está vivo
+
+```
+bin/aurelius-servicio estado
+```
+
+Dice el pid y si responde.
+
+### Después de reiniciar el teléfono
+
+Android no arranca Termux solo. O tocas el icono, o abres Termux y escribes el
+comando de arriba. Para que arranque solo hacen falta **Termux:Boot** y eximir
+a Termux de la optimización de batería — las dos se conceden desde los ajustes,
+a mano.
 
 ---
 

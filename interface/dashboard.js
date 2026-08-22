@@ -7,6 +7,53 @@
 
 const $ = (id) => document.getElementById(id);
 let hablando = false;
+let idioma = "es";
+
+/* Las dos columnas, como en textos.py del producto. La cara declaraba hablar
+ * los dos idiomas y las tenia incrustadas en castellano: el perfil decia `en`
+ * y el tablero seguia en español. Una traduccion que falta es una clave que
+ * falta, y aqui se ve de un vistazo. */
+const T = {
+  es: {
+    listo: "listo para hablar",
+    sin_cerebro: "puedo preguntar y recordar, todavía no conversar",
+    sin_servidor: "no alcanzo al servidor",
+    pensando: "pensando… esto puede tardar minutos",
+    tarde: "tardó más de la cuenta. Prueba con algo más corto.",
+    fallo: "no pude responder ahora mismo.",
+    sin_red: "no alcancé al servidor.",
+    sin_micro: "no me diste permiso para el micrófono.",
+    sin_oir: "no te oí bien. Prueba a escribirlo.",
+    hablar: "Hablar", escribir: "Escribir",
+    escuchando: "Escuchando… toca para parar",
+    nota_motor: "En un teléfono cada respuesta tarda minutos. No es que se haya colgado.",
+    nota_sin: "Sin cerebro instalado, Aurelius pregunta y recuerda pero no conversa.",
+    instalado: "instalado", sin_instalar: "sin instalar",
+    encendido: "encendido", apagado: "apagado",
+    dilo: "Dilo", memoria: "Memoria", frontera: "Frontera", ajustes: "Ajustes",
+    tu_memoria: "Tu memoria", la_frontera: "La frontera", los_ajustes: "Ajustes",
+  },
+  en: {
+    listo: "ready to talk",
+    sin_cerebro: "I can ask and remember, not converse yet",
+    sin_servidor: "cannot reach the server",
+    pensando: "thinking… this can take minutes",
+    tarde: "it took too long. Try something shorter.",
+    fallo: "I could not answer just now.",
+    sin_red: "I could not reach the server.",
+    sin_micro: "you did not give me microphone permission.",
+    sin_oir: "I did not hear you. Try writing it.",
+    hablar: "Talk", escribir: "Write",
+    escuchando: "Listening… tap to stop",
+    nota_motor: "On a phone each answer takes minutes. It has not frozen.",
+    nota_sin: "With no brain installed, Aurelius asks and remembers but does not converse.",
+    instalado: "installed", sin_instalar: "not installed",
+    encendido: "on", apagado: "off",
+    dilo: "Say it", memoria: "Memory", frontera: "Border", ajustes: "Settings",
+    tu_memoria: "Your memory", la_frontera: "The border", los_ajustes: "Settings",
+  },
+};
+const t = (clave) => (T[idioma] || T.es)[clave];
 
 /* --- cajones ----------------------------------------------------------- */
 const velo = $("velo");
@@ -46,22 +93,39 @@ async function pulso() {
   try {
     const r = await fetch("/api/estado");
     const d = await r.json();
-    $("pulso").textContent = d.motor
-      ? "listo para hablar"
-      : "puedo preguntar y recordar, todavía no conversar";
+    idioma = d.idioma === "en" ? "en" : "es";
+    document.documentElement.lang = idioma;
+    $("pulso").textContent = d.motor ? t("listo") : t("sin_cerebro");
+    $("hablar").textContent = hablando ? t("escuchando")
+      : (window.SpeechRecognition || window.webkitSpeechRecognition
+         ? t("hablar") : t("escribir"));
+    $("dicho").placeholder = idioma === "en" ? "…or write it here"
+                                             : "…o escríbelo aquí";
+    // Las etiquetas del marco tambien: estaban escritas en el HTML y por eso
+    // no cambiaban. Un tablero que declara hablar dos idiomas y solo traduce
+    // los mensajes esta a medio traducir, que se nota mas que no traducir.
+    $("mandar").textContent = t("dilo");
+    const rotulos = { memoria: "memoria", frontera: "frontera", ajustes: "ajustes" };
+    document.querySelectorAll("[data-cajon]").forEach((b) => {
+      b.textContent = t(rotulos[b.dataset.cajon]);
+    });
+    const titulos = { memoria: "tu_memoria", frontera: "la_frontera",
+                      ajustes: "los_ajustes" };
+    for (const [cual, clave] of Object.entries(titulos)) {
+      const h = document.querySelector("#cajon-" + cual + " h2");
+      if (h) h.textContent = t(clave);
+    }
     $("hablar").disabled = !d.motor;
     $("mandar").disabled = !d.motor;
     $("m-turnos").textContent = d.turnos.turnos;
     $("m-consent").textContent = d.turnos.consentidos;
     $("m-corr").textContent = d.turnos.corregidos;
     $("a-idioma").textContent = d.idioma === "en" ? "English" : "Español";
-    $("a-motor").textContent = d.motor ? "instalado" : "sin instalar";
-    $("a-captura").textContent = d.captura_activa ? "encendido" : "apagado";
-    $("a-nota").textContent = d.motor
-      ? "En un teléfono cada respuesta tarda minutos. No es que se haya colgado."
-      : "Sin cerebro instalado, Aurelius pregunta y recuerda pero no conversa.";
+    $("a-motor").textContent = d.motor ? t("instalado") : t("sin_instalar");
+    $("a-captura").textContent = d.captura_activa ? t("encendido") : t("apagado");
+    $("a-nota").textContent = d.motor ? t("nota_motor") : t("nota_sin");
   } catch {
-    $("pulso").textContent = "no alcanzo al servidor";
+    $("pulso").textContent = t("sin_servidor");
     $("hablar").disabled = true;
     $("mandar").disabled = true;
   }
@@ -83,7 +147,7 @@ async function turno(texto) {
   $("hablar").disabled = true;
   $("mandar").disabled = true;
   $("busto").classList.add("piensa");
-  const esperando = linea("pensando… esto puede tardar minutos", "espera");
+  const esperando = linea(t("pensando"), "espera");
   try {
     const r = await fetch("/api/charla", {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -92,12 +156,10 @@ async function turno(texto) {
     const d = await r.json();
     esperando.remove();
     if (r.ok) linea(d.texto);
-    else linea(d.estado === "tarde"
-      ? "tardó más de la cuenta. Prueba con algo más corto."
-      : "no pude responder ahora mismo.", "malo");
+    else linea(d.estado === "tarde" ? t("tarde") : t("fallo"), "malo");
   } catch {
     esperando.remove();
-    linea("no alcancé al servidor.", "malo");
+    linea(t("sin_red"), "malo");
   }
   $("busto").classList.remove("piensa");
   pulso();
@@ -115,11 +177,11 @@ $("escribir").addEventListener("submit", (e) => {
  * un boton "Hablar" que no escucha es peor que un boton que no esta. */
 const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!Reconocedor) {
-  $("hablar").textContent = "Escribir";
+  $("hablar").textContent = t("escribir");
   $("hablar").addEventListener("click", () => $("dicho").focus());
 } else {
   const oido = new Reconocedor();
-  oido.lang = "es-ES";
+  oido.lang = idioma === "en" ? "en-US" : "es-ES";
   oido.interimResults = false;
   oido.maxAlternatives = 1;
 
@@ -130,12 +192,12 @@ if (!Reconocedor) {
   oido.addEventListener("start", () => {
     hablando = true;
     $("hablar").classList.add("escuchando");
-    $("hablar").textContent = "Escuchando… toca para parar";
+    $("hablar").textContent = t("escuchando");
   });
   oido.addEventListener("end", () => {
     hablando = false;
     $("hablar").classList.remove("escuchando");
-    $("hablar").textContent = "Hablar";
+    $("hablar").textContent = t("hablar");
   });
   oido.addEventListener("result", (e) => {
     const dicho = e.results[0][0].transcript;
@@ -144,9 +206,7 @@ if (!Reconocedor) {
   });
   oido.addEventListener("error", (e) => {
     // Se dice cual fallo. "No se pudo" manda a mirar donde no es.
-    linea(e.error === "not-allowed"
-      ? "no me diste permiso para el micrófono."
-      : "no te oí bien. Prueba a escribirlo.", "malo");
+    linea(e.error === "not-allowed" ? t("sin_micro") : t("sin_oir"), "malo");
   });
 }
 

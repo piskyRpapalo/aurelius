@@ -57,4 +57,12 @@ snapshot.
 
 ## License
 
-Apache-2.0.
+CC BY-SA 4.0 — [LICENSE-PROSE](LICENSE-PROSE).
+
+Corregido el 2026-08-22. Esta linea decia `Apache-2.0`, y en este arbol no
+existe ninguna licencia Apache: `LICENSE` es MIT y `LICENSE-PROSE` es
+CC BY-SA 4.0.
+
+Se elige CC BY-SA 4.0 y no MIT por coherencia, no por gusto: el README ya
+licencia **todos** los `.md` bajo LICENSE-PROSE. Poner MIT aqui crearia la
+tercera version del mismo dato, que es como empezo este problema.

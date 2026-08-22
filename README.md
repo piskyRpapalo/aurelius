@@ -17,10 +17,13 @@
 </div>
 
 <div align="center">
-<img src="assets/tablero.png" width="270"
-     alt="The Aurelius dashboard on a phone: the marble bust in a violet ring, the name Aurelius, the line 'listo para hablar', an empty conversation area, a large violet Hablar button and a text field.">
+<img src="assets/tablero-en.png" width="250"
+     alt="The Aurelius dashboard in English on a phone: the marble bust in a violet ring, the name Aurelius, the line 'ready to talk', an empty conversation area, a large violet Talk button and a text field.">
+<img src="assets/tablero.png" width="250"
+     alt="The same dashboard in Spanish: 'listo para hablar', a Hablar button and the field '…o escríbelo aquí'.">
 <br>
-<sub>The face, running on a phone. / La cara, corriendo en un teléfono.</sub>
+<sub>The face, running on a phone — it speaks the language your memory declares.<br>
+La cara, corriendo en un teléfono — habla el idioma que declara tu memoria.</sub>
 </div>
 
 ---
@@ -29,8 +32,8 @@
 
 |  | English | Español |
 |---|---|---|
-| **Computer** | One file, double-click. → [INSTALACION_PC.md](INSTALACION_PC.md) | Un fichero, doble clic. → [INSTALACION_PC.md](INSTALACION_PC.md) |
-| **Android** | Termux, then an icon on your home screen. → [INSTALACION_ANDROID.md](INSTALACION_ANDROID.md) | Termux, y luego un icono en la pantalla de inicio. → [INSTALACION_ANDROID.md](INSTALACION_ANDROID.md) |
+| **Computer** | One file, double-click. → [INSTALL_PC.md](INSTALL_PC.md) | Un fichero, doble clic. → [INSTALACION_PC.md](INSTALACION_PC.md) |
+| **Android** | Termux, then an icon on your home screen. → [INSTALL_ANDROID.md](INSTALL_ANDROID.md) | Termux, y luego un icono en la pantalla de inicio. → [INSTALACION_ANDROID.md](INSTALACION_ANDROID.md) |
 
 There is no account, no sign-up and no server. Nothing to cancel later.
 

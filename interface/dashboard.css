@@ -88,6 +88,9 @@ body {
 .escribir button {
   font: inherit; font-weight: 600; min-height: 48px; padding: 0 1.1rem; color: #fff;
   background: var(--violeta); border: 0; border-radius: 999px; cursor: pointer;
+  /* El rotulo cambia de idioma y "Say it" es mas ancho que "Dilo": sin esto
+     partia en dos lineas. El boton se ajusta al texto, no al reves. */
+  white-space: nowrap; flex: none;
 }
 
 /* --- cajones --- */
