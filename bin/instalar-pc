@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+# instalar-pc · el icono, y saber volver.
+#
+# EL PROBLEMA QUE RESUELVE: cerraste Aurelius y no sabes reabrirlo. Le paso al
+# autor. Un comando que hay que recordar no es una puerta.
+#
+# CUBRE LAS DOS RUTAS, porque son dos personas distintas:
+#   · quien clono el repo  -> el icono arranca `bin/aurelius-servicio`
+#   · quien bajo el fichero -> el icono arranca `dist/aurelius`
+# Se detecta cual hay. Si estan las dos, manda el repo: es la puerta
+# documentada, y la que se actualiza con un `git pull`.
+#
+# LO QUE NO HACE
+# * No instala nada con sudo. Si falta `python3`, lo DICE y para: pedir una
+#   contrasena a mitad de un guion es como se cuelan las sorpresas.
+# * No arranca nada al terminar. Crea la puerta; entrar lo decides tu.
+set -uo pipefail
+
+AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+APPS="$HOME/.local/share/applications"
+ICONOS="$HOME/.local/share/icons/hicolor/256x256/apps"
+DESKTOP="$APPS/aurelius.desktop"
+PUERTO="${AURELIUS_PWA_PUERTO:-8740}"
+
+az()   { printf '\033[38;5;141m··\033[0m %s\n' "$1"; }
+nota() { printf '\033[38;5;103m   %s\033[0m\n' "$1"; }
+muere(){ printf '\n✗ %s\n' "$1" >&2; exit 1; }
+
+# --- desinstalar ----------------------------------------------------------
+if [ "${1:-}" = "--desinstalar" ]; then
+  printf '\n\033[38;5;141mAURELIUS\033[0m · quitando el acceso\n\n'
+  rm -f "$DESKTOP" "$ICONOS/aurelius.png"
+  command -v update-desktop-database >/dev/null 2>&1 && \
+    update-desktop-database "$APPS" 2>/dev/null || true
+  az "Quitado el icono y su entrada"
+  nota "$DESKTOP"
+  nota "TU MEMORIA NO SE TOCA: sigue en ~/.aurelius/memory.db"
+  nota "el producto tampoco: sigue en $AQUI"
+  printf '\n'
+  exit 0
+fi
+
+printf '\n\033[38;5;141mAURELIUS\033[0m · instalación en el escritorio\n\n'
+
+# --- 1 · lo que hay -------------------------------------------------------
+az "1 · Lo que hay"
+command -v python3 >/dev/null 2>&1 || muere "falta python3. Instalalo y vuelve; no lo hago yo con sudo."
+nota "python3  $(python3 -V 2>&1 | cut -d' ' -f2)"
+
+RUTA_LANZA=""
+MODO=""
+if [ -f "$AQUI/bin/aurelius-servicio" ] && [ -f "$AQUI/aurelius.py" ]; then
+  RUTA_LANZA="$AQUI/bin/aurelius-servicio"
+  MODO="repositorio"
+elif [ -x "$AQUI/dist/aurelius" ]; then
+  RUTA_LANZA="$AQUI/dist/aurelius"
+  MODO="ejecutable"
+else
+  muere "no encuentro ni el repositorio ni dist/aurelius en $AQUI"
+fi
+nota "modo     $MODO"
+nota "arranca  $RUTA_LANZA"
+
+# --- 2 · el icono ---------------------------------------------------------
+az "2 · El icono"
+mkdir -p "$ICONOS" "$APPS"
+if [ -f "$AQUI/empaquetado/aurelius.png" ]; then
+  cp "$AQUI/empaquetado/aurelius.png" "$ICONOS/aurelius.png"
+  nota "copiado de empaquetado/"
+else
+  nota "sin icono propio; el escritorio pondra el generico"
+fi
+
+# --- 3 · la entrada del menu ----------------------------------------------
+# El guion intermedio existe porque un .desktop no espera: si lanzara el
+# navegador directamente, se abriria antes de que el servidor respondiera y la
+# primera impresion del producto seria una pagina de error.
+LANZADOR="$HOME/.local/bin/aurelius-abrir"
+mkdir -p "$(dirname "$LANZADOR")"
+cat > "$LANZADOR" <<LANZA
+#!/usr/bin/env bash
+# Generado por bin/instalar-pc. Editable: es tuyo.
+cd "$AQUI" || exit 1
+LANZA
+if [ "$MODO" = "repositorio" ]; then
+  cat >> "$LANZADOR" <<'LANZA'
+bin/aurelius-servicio arranca || exit 1
+LANZA
+else
+  cat >> "$LANZADOR" <<LANZA
+"$AQUI/dist/aurelius" >/dev/null 2>&1 &
+for _ in \$(seq 1 40); do
+  sleep .25
+  curl -s -o /dev/null "http://127.0.0.1:$PUERTO/api/estado" 2>/dev/null && break
+done
+LANZA
+fi
+cat >> "$LANZADOR" <<LANZA
+xdg-open "http://127.0.0.1:$PUERTO/" >/dev/null 2>&1
+LANZA
+chmod +x "$LANZADOR"
+
+cat > "$DESKTOP" <<DESK
+[Desktop Entry]
+Type=Application
+Name=Aurelius
+Comment=Your memory, in one file you can carry
+Comment[es]=Tu memoria, en un fichero que puedes llevarte
+Exec=$LANZADOR
+Icon=aurelius
+Terminal=false
+Categories=Utility;
+Keywords=memory;privacy;offline;
+DESK
+chmod +x "$DESKTOP"
+command -v update-desktop-database >/dev/null 2>&1 && \
+  update-desktop-database "$APPS" 2>/dev/null || true
+az "3 · Entrada del menu"
+nota "$DESKTOP"
+
+# --- 4 · como volver ------------------------------------------------------
+printf '\n\033[38;5;141mListo.\033[0m\n\n'
+printf '  \033[1mPara abrirlo:\033[0m busca "Aurelius" en el menu de aplicaciones.\n\n'
+printf '  \033[1mSi cierras la ventana del navegador\033[0m, el servidor sigue vivo.\n'
+printf '  Vuelve a tocar el icono y se abre otra vez, sin arrancar un segundo.\n\n'
+printf '  \033[1mSi algo se queda colgado:\033[0m\n'
+printf '    %s/bin/aurelius-servicio estado\n' "$AQUI"
+printf '    %s/bin/aurelius-servicio para\n\n' "$AQUI"
+printf '  Y si el puerto sigue ocupado, el que queda es el ejecutable, que\n'
+printf '  tiene otro nombre:\n'
+printf '    pkill -f aurelius-pwa\n'
+printf '    pkill -f "dist/aurelius"\n\n'
+printf '  \033[1mPara quitar el icono:\033[0m  bin/instalar-pc --desinstalar\n'
+printf '  (no toca tu memoria ni el producto)\n\n'

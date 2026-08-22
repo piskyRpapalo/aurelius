@@ -97,6 +97,23 @@ Dice el pid y si responde. Si dice `parado`, arráncalo.
 
 ---
 
+## El icono en el menú de aplicaciones
+
+Si clonaste el repositorio, una línea deja Aurelius en el menú:
+
+```
+bin/instalar-pc
+```
+
+Crea el icono, y te dice por dónde volver si algo se cuelga. Cubre las dos
+rutas: si tienes el repositorio, el icono arranca desde él; si solo tienes el
+fichero descargado, arranca ese.
+
+Para quitarlo: `bin/instalar-pc --desinstalar`. **No toca tu memoria** ni el
+producto — solo el icono.
+
+---
+
 ## Camino 2 · desde el código
 
 Para quien quiera leerlo, cambiarlo o auditarlo.

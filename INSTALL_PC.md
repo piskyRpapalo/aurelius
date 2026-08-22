@@ -86,6 +86,23 @@ It gives the pid and whether it answers. If it says `parado`, start it.
 
 ---
 
+## The icon in your applications menu
+
+If you cloned the repository, one line puts Aurelius in the menu:
+
+```
+bin/instalar-pc
+```
+
+It creates the icon and tells you how to get back in if something hangs. It
+covers both paths: with the repository, the icon starts from it; with only the
+downloaded file, it starts that.
+
+To remove it: `bin/instalar-pc --desinstalar`. It **does not touch your
+memory** or the product — only the icon.
+
+---
+
 ## Path 2 · from the source
 
 For anyone who wants to read it, change it or audit it.
