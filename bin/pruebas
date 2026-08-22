@@ -137,7 +137,7 @@ AVISO_V="$(python3 -c 'import interprete; print((interprete.aviso() or "").split
 echo
 
 # El reparto. Si anades una suite, va aqui: es la unica lista.
-UNITTEST=(test_afinado test_captura test_descarga test_estado test_fuga test_guardrails
+UNITTEST=(test_afinado test_captura test_descarga test_pwa test_estado test_fuga test_guardrails
           test_interprete test_leitmotivs test_silencio test_voz_cyber)
 PROPIAS=(cara idioma manifest memory tono)
 

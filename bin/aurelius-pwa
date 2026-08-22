@@ -1,0 +1,235 @@
+#!/usr/bin/env python3
+"""aurelius-pwa · la cara premium, y los tres endpoints que necesita.
+
+sistema: solo biblioteca estándar. Sin dependencias.
+
+POR QUÉ EXISTE, Y POR QUÉ SIGUE FUERA DEL PRODUCTO
+---------------------------------------------------
+La cara de `cara.py` se abre con doble clic y no habla con nadie: esa es su
+gracia. Pero un chat de verdad necesita ida y vuelta, y eso pide que algo
+escuche. Igual que `aurelius-puente`, esto **vive en `bin/`, se arranca a mano,
+y ningún módulo del producto lo importa**. Un clon que lo tenga no lo ejecuta.
+
+LOS TRES ENDPOINTS, Y LA REGLA QUE COMPARTEN
+--------------------------------------------
+* `POST /api/frontera` · pasa el texto por el filtro y devuelve el payload
+  entero. **La interfaz nunca cuenta.** Los contadores que pinta salen de
+  `hallazgos`, tal como los devolvió `guardrails.preparar_envio`.
+* `POST /api/charla`   · un turno. Devuelve el texto y el id del turno.
+* `GET/POST /api/captura` · listar turnos, consentir y revocar de uno en uno.
+
+Y la que gobierna las tres: **si el filtro no puede terminar, no hay envío.**
+`EnvioBloqueado` sale como 409 y la interfaz apaga el botón. No hay ruta que
+mande texto sin filtro; no es una opción escondida, es que no existe.
+
+LO QUE NO HACE
+--------------
+* No escucha fuera de esta máquina salvo que se le diga por variable de
+  entorno, nunca por un valor escrito en el repo.
+* No consiente por nadie. `consent` lo sube una petición explícita, una por
+  turno, y se puede bajar igual.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+AQUI = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, AQUI)
+
+import memory as M                                          # noqa: E402
+import guardrails as G                                      # noqa: E402
+import captura as C                                         # noqa: E402
+import conversacion as _charla                              # noqa: E402
+import cara as _cara                                        # noqa: E402
+import casa as _casa                                        # noqa: E402
+
+BIND = os.environ.get("AURELIUS_PWA_BIND", "127.0.0.1")
+PUERTO = int(os.environ.get("AURELIUS_PWA_PUERTO", "8740"))
+LIMITE = 512 * 1024
+INTERFAZ = os.path.join(AQUI, "interface")
+
+ESTATICOS = {
+    "/": ("app.html", "text/html; charset=utf-8"),
+    "/app.html": ("app.html", "text/html; charset=utf-8"),
+    "/app.css": ("app.css", "text/css; charset=utf-8"),
+    "/app.js": ("app.js", "application/javascript; charset=utf-8"),
+    "/manifest.json": ("manifest.json", "application/manifest+json"),
+    "/sw.js": ("sw.js", "application/javascript; charset=utf-8"),
+}
+
+
+class PWA(BaseHTTPRequestHandler):
+
+    server_version = "aurelius-pwa"
+
+    def _json(self, codigo, cuerpo):
+        crudo = json.dumps(cuerpo, ensure_ascii=False).encode("utf-8")
+        self.send_response(codigo)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(crudo)))
+        self.end_headers()
+        self.wfile.write(crudo)
+
+    def _leer(self):
+        largo = int(self.headers.get("Content-Length") or 0)
+        if largo <= 0 or largo > LIMITE:
+            return None
+        try:
+            return json.loads(self.rfile.read(largo).decode("utf-8"))
+        except Exception:
+            return None
+
+    # --- estáticos ---------------------------------------------------------
+    def do_GET(self):
+        ruta = self.path.split("?")[0]
+        if ruta == "/api/captura":
+            return self._captura_listar()
+        if ruta == "/api/estado":
+            return self._estado()
+        pieza = ESTATICOS.get(ruta)
+        if not pieza:
+            return self._json(404, {"estado": "NO_DATA",
+                                    "motivo": "aquí no vive eso"})
+        try:
+            with open(os.path.join(INTERFAZ, pieza[0]), "rb") as fh:
+                crudo = fh.read()
+        except OSError as e:
+            return self._json(500, {"estado": "bloqueado",
+                                    "motivo": type(e).__name__})
+        self.send_response(200)
+        self.send_header("Content-Type", pieza[1])
+        self.send_header("Content-Length", str(len(crudo)))
+        self.end_headers()
+        self.wfile.write(crudo)
+
+    # --- api ---------------------------------------------------------------
+    def do_POST(self):
+        ruta = self.path.split("?")[0]
+        datos = self._leer()
+        if datos is None:
+            return self._json(400, {"estado": "bloqueado",
+                                    "motivo": "cuerpo ilegible o fuera de rango"})
+        if ruta == "/api/frontera":
+            return self._frontera(datos)
+        if ruta == "/api/charla":
+            return self._turno(datos)
+        if ruta == "/api/captura":
+            return self._captura_marcar(datos)
+        return self._json(404, {"estado": "NO_DATA", "motivo": "aquí no vive eso"})
+
+    def _estado(self):
+        with M.abrir(self.server.ruta_db) as c:
+            perfil = M.leer_perfil(c)
+            cuenta = C.recuento(c)
+        motor = _charla.motor_disponible()
+        return self._json(200, {
+            "estado": "ok",
+            "idioma": perfil.get("language", "es"),
+            "motor": bool(motor and self.server.modelo
+                          and os.path.isfile(self.server.modelo)),
+            "captura_activa": C.activa(perfil),
+            "turnos": cuenta,
+        })
+
+    def _frontera(self, datos):
+        """El filtro, y su payload entero. Fail-closed de verdad."""
+        texto = datos.get("texto") or ""
+        if not isinstance(texto, str):
+            return self._json(400, {"estado": "bloqueado", "motivo": "TypeError"})
+        try:
+            payload = G.preparar_envio(texto)
+        except G.EnvioBloqueado as e:
+            # Estado 4. No hay campo que permita mandar igualmente: si esta
+            # rama devolviera el texto, la interfaz tendria la tentacion, y un
+            # filtro caido no es lo mismo que un texto limpio.
+            return self._json(409, {"estado": "bloqueado", "motivo": str(e)})
+        return self._json(200, payload)
+
+    def _turno(self, datos):
+        dicho = (datos.get("texto") or "").strip()
+        if not dicho:
+            return self._json(400, {"estado": "bloqueado", "motivo": "vacío"})
+        ruta = self.server.ruta_db
+        with M.abrir(ruta) as c:
+            perfil = M.leer_perfil(c)
+            idioma = perfil.get("language", "es")
+            camino = _cara.progreso_camino(c, ruta)
+            motor = _charla.motor_llama(self.server.modelo)
+            if motor is None:
+                return self._json(503, {"estado": "bloqueado",
+                                        "motivo": "sin motor"})
+            try:
+                turno = _charla.turno(c, dicho, camino, motor=motor,
+                                      idioma=idioma)
+            except _charla.SeAgotoElTiempo as e:
+                return self._json(504, {"estado": "tarde", "motivo": str(e)})
+            except Exception as e:
+                return self._json(500, {"estado": "bloqueado",
+                                        "motivo": type(e).__name__})
+            tid = None
+            if C.activa(perfil):
+                tid = C.registrar(c, dicho, turno["texto"],
+                                  modelo=self.server.modelo or "NO_DATA",
+                                  idioma=idioma)
+        return self._json(200, {"estado": "ok", "texto": turno["texto"],
+                                "turno_id": tid})
+
+    def _captura_listar(self):
+        with M.abrir(self.server.ruta_db) as c:
+            C.asegurar(c)
+            filas = list(c.execute(
+                "select id, cuando, prompt, respuesta, consent, correccion "
+                "from turnos order by id desc limit 50"))
+            cuenta = C.recuento(c)
+        return self._json(200, {"estado": "ok", "recuento": cuenta, "turnos": [
+            {"id": f[0], "cuando": f[1], "prompt": f[2], "respuesta": f[3],
+             "consent": bool(f[4]), "correccion": f[5]} for f in filas]})
+
+    def _captura_marcar(self, datos):
+        """Consentir o revocar. UNO por petición: el carbono marca de uno en uno."""
+        tid = datos.get("id")
+        if not isinstance(tid, int):
+            return self._json(400, {"estado": "bloqueado", "motivo": "id"})
+        with M.abrir(self.server.ruta_db) as c:
+            if "correccion" in datos:
+                ok = C.corregir(c, tid, datos.get("correccion") or "",
+                                motivo=datos.get("motivo") or "NO_DATA")
+            else:
+                ok = C.consentir(c, tid, bool(datos.get("consent")),
+                                 motivo=datos.get("motivo") or "NO_DATA")
+            cuenta = C.recuento(c)
+        return self._json(200 if ok else 404,
+                          {"estado": "ok" if ok else "NO_DATA",
+                           "recuento": cuenta})
+
+    def log_message(self, formato, *args):
+        sys.stderr.write("[pwa] %s\n" % (formato % args))
+
+
+def main(argv=None):
+    import argparse
+    ap = argparse.ArgumentParser(description="Aurelius · la cara premium")
+    ap.add_argument("--db", default=os.path.expanduser("~/.aurelius/memory.db"))
+    ap.add_argument("--modelo", default=os.path.join(
+        str(_casa.raiz()), "modelos/qwen3-4b-instruct-2507-Q4_K_M.gguf"))
+    a = ap.parse_args(argv)
+
+    servidor = ThreadingHTTPServer((BIND, PUERTO), PWA)
+    servidor.ruta_db = a.db
+    servidor.modelo = a.modelo
+    print(f"[pwa] escuchando en {BIND}:{PUERTO} · memoria: {a.db}")
+    if BIND not in ("127.0.0.1", "::1", "localhost"):
+        print("[pwa] AVISO: no estás en loopback. Esto escucha fuera de esta "
+              "máquina, y eso es una decisión, no un descuido.")
+    try:
+        servidor.serve_forever()
+    except KeyboardInterrupt:
+        print("\n[pwa] cerrado")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

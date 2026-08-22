@@ -1,0 +1,160 @@
+/* Aurelius · cara premium. Mobile-first, los tokens de privacy_toggle.css. */
+
+:root {
+  --ink: #16181d;  --ink-soft: #5b6270; --line: #dfe3ea;
+  --paper: #ffffff; --ground: #f5f6f8;
+  --ok: #1f7a4d;   --ok-soft: #e7f4ed;
+  --warn: #8a5b00; --warn-soft: #fdf3e0;
+  --stop: #a3242b; --stop-soft: #fbeced;
+  --acento: #6d5ae0;
+  --radio: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e9ecf1;  --ink-soft: #a2abba; --line: #333844;
+    --paper: #1b1e25; --ground: #121419;
+    --ok: #6cd39b;   --ok-soft: #17301f;
+    --warn: #e0b872; --warn-soft: #2e2515;
+    --stop: #f19aa0; --stop-soft: #331a1c;
+    --acento: #a794ff;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  display: flex; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-text-size-adjust: 100%;
+}
+.sr {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.barra { padding: .9rem 1rem .3rem; }
+.barra h1 { margin: 0; font-size: 1.15rem; letter-spacing: -.01em; }
+.estado { margin: .15rem 0 0; font-size: .8rem; color: var(--ink-soft); }
+
+.pestanas {
+  display: flex; gap: .35rem; padding: .5rem 1rem .6rem;
+  border-bottom: 1px solid var(--line);
+}
+.pestanas button {
+  flex: 1; padding: .55rem .4rem; font: inherit; font-size: .88rem;
+  color: var(--ink-soft); background: transparent;
+  border: 1px solid transparent; border-radius: var(--radio); cursor: pointer;
+  /* 44px de alto minimo: un objetivo tactil mas pequeno se falla con el pulgar */
+  min-height: 44px;
+}
+.pestanas button[aria-selected="true"] {
+  color: var(--ink); background: var(--paper); border-color: var(--line);
+  font-weight: 600;
+}
+
+.carril { flex: 1; overflow: hidden; position: relative; }
+.panel {
+  position: absolute; inset: 0; overflow-y: auto;
+  padding: 1rem; display: flex; flex-direction: column; gap: .8rem;
+  -webkit-overflow-scrolling: touch;
+}
+.panel[hidden] { display: none; }
+
+/* --- hilo --- */
+.hilo { list-style: none; margin: 0; padding: 0; display: flex;
+        flex-direction: column; gap: .55rem; flex: 1; }
+.hilo li {
+  max-width: 88%; padding: .6rem .75rem; border-radius: var(--radio);
+  background: var(--paper); border: 1px solid var(--line);
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.hilo li.mio { align-self: flex-end; background: var(--acento); color: #fff;
+               border-color: transparent; }
+.hilo li.espera { color: var(--ink-soft); font-style: italic; }
+.hilo li.malo { border-color: var(--stop); color: var(--stop); }
+
+.redactar { display: flex; gap: .5rem; align-items: flex-end; }
+textarea {
+  flex: 1; font: inherit; padding: .6rem .7rem; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--radio); resize: vertical; min-height: 44px;
+}
+button.enviar, button.probar {
+  font: inherit; font-weight: 600; min-height: 44px; padding: .6rem 1rem;
+  color: #fff; background: var(--acento); border: 0;
+  border-radius: var(--radio); cursor: pointer;
+}
+button:disabled { opacity: .5; cursor: not-allowed; }
+.pie { margin: 0; font-size: .78rem; color: var(--ink-soft); }
+
+/* --- frontera --- */
+.tarjeta {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--radio); padding: .9rem; display: flex;
+  flex-direction: column; gap: .7rem;
+}
+.tarjeta.is-off { opacity: .82; }
+.tarjeta.is-blocked { border-color: var(--stop); }
+.fila-switch { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.switch {
+  position: relative; width: 40px; height: 24px; flex: none; padding: 0;
+  background: var(--line); border: 0; border-radius: 999px; cursor: pointer;
+}
+.switch i {
+  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  background: var(--paper); border-radius: 50%; transition: transform .15s;
+}
+.switch.is-on { background: var(--ok); }
+.switch.is-on i { transform: translateX(16px); }
+.switch-label { font-weight: 600; }
+.insignia { margin-left: auto; padding: .18rem .5rem; border-radius: 999px;
+            font-size: .75rem; font-weight: 600; }
+.insignia-ok   { background: var(--ok-soft);   color: var(--ok); }
+.insignia-warn { background: var(--warn-soft); color: var(--warn); }
+.insignia-stop { background: var(--stop-soft); color: var(--stop); }
+
+.hallazgos { list-style: none; margin: 0; padding: 0; }
+.hallazgos li {
+  display: flex; justify-content: space-between; gap: 1rem;
+  padding: .45rem 0; border-top: 1px solid var(--line);
+}
+.hallazgos li:first-child { border-top: 0; }
+.policy { font-family: ui-monospace, monospace; font-size: .85rem; }
+.count { font-variant-numeric: tabular-nums; font-weight: 600; }
+.vacio { margin: 0; color: var(--ink-soft); }
+.bloqueado { margin: 0; color: var(--stop); font-weight: 600; }
+.payload-caja summary { font-size: .8rem; color: var(--ink-soft); cursor: pointer; }
+.payload {
+  margin: .5rem 0 0; padding: .6rem; overflow-x: auto;
+  background: var(--ground); border: 1px solid var(--line);
+  border-radius: 8px; font-size: .78rem;
+}
+
+/* --- cuaderno --- */
+.turnos { list-style: none; margin: 0; padding: 0; display: flex;
+          flex-direction: column; gap: .6rem; }
+.turnos li {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--radio); padding: .7rem; display: flex;
+  flex-direction: column; gap: .4rem;
+}
+.turnos .p { font-size: .85rem; color: var(--ink-soft); overflow-wrap: anywhere; }
+.turnos .r { overflow-wrap: anywhere; }
+.acciones { display: flex; gap: .5rem; align-items: center; }
+.acciones button {
+  font: inherit; font-size: .82rem; min-height: 40px; padding: .35rem .75rem;
+  border-radius: 999px; border: 1px solid var(--line);
+  background: transparent; color: var(--ink); cursor: pointer;
+}
+.acciones button.si  { border-color: var(--ok);   color: var(--ok); }
+.acciones button.no  { border-color: var(--stop); color: var(--stop); }
+.marca { margin-left: auto; font-size: .75rem; font-weight: 600; }
+.marca.si { color: var(--ok); }
+.marca.no { color: var(--ink-soft); }
+
+@media (min-width: 720px) {
+  .barra, .pestanas, .panel { max-width: 44rem; margin-inline: auto; width: 100%; }
+}

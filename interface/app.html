@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121419">
+<title>Aurelius</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<header class="barra">
+  <h1>Aurelius</h1>
+  <p class="estado" id="estado" aria-live="polite">comprobando…</p>
+</header>
+
+<nav class="pestanas" role="tablist">
+  <button role="tab" aria-selected="true"  data-panel="chat">Hablar</button>
+  <button role="tab" aria-selected="false" data-panel="frontera">Frontera</button>
+  <button role="tab" aria-selected="false" data-panel="captura">Cuaderno</button>
+</nav>
+
+<main id="carril" class="carril">
+
+  <!-- hablar -->
+  <section class="panel" id="panel-chat" aria-label="Hablar">
+    <ol class="hilo" id="hilo" aria-live="polite"></ol>
+    <form class="redactar" id="form-chat">
+      <label class="sr" for="dicho">Lo que dices</label>
+      <textarea id="dicho" rows="2" placeholder="Escribe tu respuesta…"></textarea>
+      <button class="enviar" id="enviar" type="submit">Dilo</button>
+    </form>
+    <p class="pie" id="pie-chat">
+      Cada turno tarda minutos en un teléfono. No es que se haya colgado.
+    </p>
+  </section>
+
+  <!-- frontera -->
+  <section class="panel" id="panel-frontera" aria-label="Frontera" hidden>
+    <div class="tarjeta" id="tarjeta-frontera">
+      <div class="fila-switch">
+        <button class="switch is-on" id="switch" role="switch"
+                aria-checked="true" aria-label="Redacción"><i></i></button>
+        <span class="switch-label" id="switch-label">Redacción activa</span>
+        <span class="insignia insignia-ok" id="insignia">sin medir</span>
+      </div>
+
+      <label class="sr" for="prueba">Texto a comprobar</label>
+      <textarea id="prueba" rows="3"
+        placeholder="Pega aquí lo que quieras comprobar antes de que salga…"></textarea>
+      <button class="probar" id="probar" type="button">Pasar por el filtro</button>
+
+      <ul class="hallazgos" id="hallazgos"></ul>
+      <p class="vacio" id="vacio" hidden></p>
+      <p class="bloqueado" id="bloqueado" hidden></p>
+
+      <p class="pie">
+        Lo de arriba nunca es el texto encontrado: clase y cantidad, nada más.
+        Los números vienen del payload — esta interfaz no cuenta.
+      </p>
+      <details class="payload-caja">
+        <summary>El payload, tal cual llegó</summary>
+        <pre class="payload" id="payload">(sin llamada todavía)</pre>
+      </details>
+    </div>
+  </section>
+
+  <!-- cuaderno -->
+  <section class="panel" id="panel-captura" aria-label="Cuaderno" hidden>
+    <p class="pie" id="recuento">…</p>
+    <p class="pie">
+      Un turno capturado no es un turno consentido. Nada entra en un
+      entrenamiento hasta que lo marcas tú, de uno en uno, y se puede retirar.
+    </p>
+    <ul class="turnos" id="turnos"></ul>
+  </section>
+
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
