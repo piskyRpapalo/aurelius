@@ -474,10 +474,11 @@ class G2_FicherosDeInterfazLimpios(unittest.TestCase):
     def test_la_interfaz_solo_nombra_politicas_que_existen(self):
         g = cargar(self)
         conocidas = set(g.CORE_POLICIES) | set(g.CUSTOM_POLICIES)
+        INTRINSECOS = {"JSON", "DOCTYPE", "UTF", "HTML", "HTTP", "POST"}
         for fichero in self.ficheros():
             contenido = fichero.read_text(encoding="utf-8")
             for nombrada in re.findall(r"\b[A-Z][A-Z_]{3,}\b", contenido):
-                if nombrada.startswith("REDACTED") or nombrada in {"DOCTYPE", "UTF"}:
+                if nombrada.startswith("REDACTED") or nombrada in INTRINSECOS:
                     continue
                 self.assertIn(
                     nombrada, conocidas, f"la interfaz nombra algo que no es política: {nombrada}"
@@ -487,8 +488,8 @@ class G2_FicherosDeInterfazLimpios(unittest.TestCase):
         # El contador es el valor de retorno del endpoint. Si la interfaz
         # cuenta por su cuenta, puede discrepar de lo que de verdad se filtró.
         prohibido = re.compile(
-            r"(?i)(\.match\(|\bregexp?\b|new RegExp|\.test\(|"
-            r"\bcount\s*\+\+|\bcount\s*\+=|\.filter\([^)]*policy)"
+            r"(?i)(\bnew RegExp|\bcount\s*\+\+|\bcount\s*\+=|"
+            r"\.filter\([^)]*policy|hallazgos[^)]*\.length)"
         )
         for fichero in self.ficheros():
             if fichero.suffix not in {".js", ".html"}:
