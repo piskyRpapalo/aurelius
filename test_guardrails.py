@@ -501,6 +501,63 @@ class G2_FicherosDeInterfazLimpios(unittest.TestCase):
             )
 
 
+class BC_TokensDeProveedor(unittest.TestCase):
+    """Anadidos el 2026-08-22: Stripe, SendGrid, Twilio, Discord.
+
+    Van dentro de API_KEY, que es CORE, y no como politicas custom: las custom
+    se apagan desde la configuracion, y un token de Stripe no es menos grave
+    que uno de AWS. Los tokens de proveedor viven todos en la clase que no se
+    puede apagar.
+
+    Los fixtures se componen en ejecucion, como en test_frontera.py: la guardia
+    de higiene no exime NUNCA la regla TOKEN-PROVEEDOR, y hace bien.
+    """
+
+    DEBEN_REDACTARSE = [
+        ("Stripe live", "sk_" + "live_" + "aBcDeF1234567890xyz"),
+        ("Stripe test", "sk_" + "test_" + "51H8aBcDeF1234567890"),
+        ("Stripe restringida", "rk_" + "live_" + "aBcDeF1234567890xyz"),
+        ("SendGrid", "SG." + "aBcDeF1234567890abcdef" + "."
+                    + "xYz9876543210abcdefghijklmnopqrstuvwxyz1234"),
+        ("Twilio SID", "AC" + "0123456789abcdef0123456789abcdef"),
+        ("Twilio clave", "SK" + "fedcba9876543210fedcba9876543210"),
+        ("Discord", "MT" + "AwNzI0NjQzOTk1NzE2NDU4Ng" + ".Gh3xYz"
+                   + ".aBcDeFgHiJkLmNoPqRsTuVwXyZ12"),
+    ]
+
+    # Un filtro que marca de mas se apaga, y entonces no filtra nada. Estas
+    # importan tanto como las de arriba.
+    NO_DEBEN = [
+        ("frase con SK y AC sueltos", "el barco SK va al puerto AC de noche"),
+        ("iniciales", "SG es una isla y SK una marca de tornillos"),
+        ("hex demasiado corto", "AC0123456789abcdef"),
+        ("palabra que empieza por sk", "skate, skyline, sketch"),
+    ]
+
+    def test_los_tokens_de_proveedor_se_redactan(self):
+        g = cargar(self)
+        for nombre, token in self.DEBEN_REDACTARSE:
+            with self.subTest(proveedor=nombre):
+                texto, hallazgos = g.redactar_salida(f"mi clave es {token} y ya")
+                self.assertTrue(hallazgos, f"{nombre} paso sin redactar")
+                self.assertNotIn(token, texto,
+                                 f"{nombre} sigue entero en la salida")
+
+    def test_no_se_marca_texto_inocente(self):
+        g = cargar(self)
+        for nombre, texto in self.NO_DEBEN:
+            with self.subTest(caso=nombre):
+                _, hallazgos = g.redactar_salida(texto)
+                self.assertEqual(hallazgos, [],
+                                 f"falso positivo en {nombre}: {hallazgos}")
+
+    def test_siguen_siendo_core_y_no_se_pueden_apagar(self):
+        """Si un dia pasaran a custom, esta prueba lo dice antes que un incidente."""
+        g = cargar(self)
+        self.assertIn("API_KEY", g.CORE_POLICIES)
+        self.assertNotIn("API_KEY", g.CUSTOM_POLICIES)
+
+
 class BB_NombresDeClaveConPrefijo(unittest.TestCase):
     """TANDA B · hallazgo de la verificación manual, no de la tanda A.
 

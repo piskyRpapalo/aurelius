@@ -69,6 +69,16 @@ PATRONES_CORE = {
         r"|\bxox[abprs]-[A-Za-z0-9\-]{10,}"
         r"|\bAKIA[0-9A-Z]{12,}"
         r"|\bAIza[A-Za-z0-9_\-]{20,}"
+        # Anadidos el 2026-08-22. Van AQUI, dentro de API_KEY, y no como
+        # politicas nuevas en CUSTOM: las custom se pueden apagar desde la
+        # configuracion, y un token de Stripe no es menos grave que uno de AWS.
+        # Los tokens de proveedor viven todos en la misma clase que no se apaga.
+        r"|\bsk_(?:live|test)_[A-Za-z0-9]{16,}"      # Stripe
+        r"|\brk_(?:live|test)_[A-Za-z0-9]{16,}"      # Stripe · clave restringida
+        r"|\bSG\.[A-Za-z0-9_\-]{16,}\.[A-Za-z0-9_\-]{16,}"   # SendGrid
+        r"|\bSK[0-9a-f]{32}\b"                      # Twilio
+        r"|\bAC[0-9a-f]{32}\b"                      # Twilio · SID de cuenta
+        r"|\b(?:MT|NT|OT)[A-Za-z0-9_\-]{22,}\.[A-Za-z0-9_\-]{6,}\.[A-Za-z0-9_\-]{25,}"  # Discord
     ),
     "ASSIGNED_SECRET": (
         # El nombre real casi nunca es la palabra sola: es `aws_secret_access_key`.

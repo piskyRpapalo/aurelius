@@ -1,0 +1,45 @@
+# Empaquetado opcional. El producto NO lo necesita para funcionar: la
+# instalacion documentada sigue siendo `git clone` y `python3 aurelius.py`, y
+# eso no ha cambiado.
+#
+# Esto existe para quien quiera `pip install -e .` y tener el comando en el
+# PATH. Sin dependencias: si algun dia aparece una linea en `dependencies`, la
+# prueba de CI que vigila que no haya requirements.txt no la vera, asi que la
+# lista se queda vacia a proposito y con este aviso al lado.
+
+[project]
+name = "aurelius"
+version = "1.0.0"
+description = "Your memory, in one file you can carry. It starts empty, and says so."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+keywords = ["local-first", "privacy", "sqlite", "offline", "memory"]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/piskyRpapalo/aurelius"
+
+[project.scripts]
+aurelius = "aurelius:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = [
+    "aurelius", "afinado", "captura", "cara", "caracter", "casa",
+    "conversacion", "corredor", "descarga", "estado", "fuga", "fusible",
+    "guardrails", "hilos", "interprete", "lore", "manifest", "memory",
+    "narrador", "oido", "silencio", "textos", "tono", "traza", "voz",
+]
