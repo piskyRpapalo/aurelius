@@ -32,6 +32,10 @@ const T = {
     encendido: "encendido", apagado: "apagado",
     dilo: "Dilo", memoria: "Memoria", frontera: "Frontera", ajustes: "Ajustes",
     tu_memoria: "Tu memoria", la_frontera: "La frontera", los_ajustes: "Ajustes",
+    camino: "El Camino", el_camino: "El Camino",
+    camino_intro: "Ocho peldaños. Esto es dónde estás de verdad — medido, no supuesto.",
+    hecho: "hecho", empezado: "empezado", sin_empezar: "sin empezar",
+    no_medible: "no medible desde aquí",
   },
   en: {
     listo: "ready to talk",
@@ -51,6 +55,10 @@ const T = {
     encendido: "on", apagado: "off",
     dilo: "Say it", memoria: "Memory", frontera: "Border", ajustes: "Settings",
     tu_memoria: "Your memory", la_frontera: "The border", los_ajustes: "Settings",
+    camino: "The Path", el_camino: "The Path",
+    camino_intro: "Eight rungs. This is where you actually are — measured, not assumed.",
+    hecho: "done", empezado: "started", sin_empezar: "not started",
+    no_medible: "not measurable from here",
   },
 };
 const t = (clave) => (T[idioma] || T.es)[clave];
@@ -65,6 +73,7 @@ function abrir(cual) {
   });
   velo.classList.add("visible");
   if (cual === "memoria" || cual === "ajustes") pulso();
+  if (cual === "camino") cargarCamino();
 }
 function cerrar() {
   document.querySelectorAll(".cajon").forEach((c) => {
@@ -96,21 +105,20 @@ async function pulso() {
     idioma = d.idioma === "en" ? "en" : "es";
     document.documentElement.lang = idioma;
     $("pulso").textContent = d.motor ? t("listo") : t("sin_cerebro");
-    $("hablar").textContent = hablando ? t("escuchando")
-      : (window.SpeechRecognition || window.webkitSpeechRecognition
-         ? t("hablar") : t("escribir"));
+    rotulo();
     $("dicho").placeholder = idioma === "en" ? "…or write it here"
                                              : "…o escríbelo aquí";
     // Las etiquetas del marco tambien: estaban escritas en el HTML y por eso
     // no cambiaban. Un tablero que declara hablar dos idiomas y solo traduce
     // los mensajes esta a medio traducir, que se nota mas que no traducir.
-    $("mandar").textContent = t("dilo");
-    const rotulos = { memoria: "memoria", frontera: "frontera", ajustes: "ajustes" };
+    $("mandar").setAttribute("aria-label", t("dilo"));
+    const rotulos = { memoria: "memoria", frontera: "frontera",
+                      camino: "camino", ajustes: "ajustes" };
     document.querySelectorAll("[data-cajon]").forEach((b) => {
       b.textContent = t(rotulos[b.dataset.cajon]);
     });
     const titulos = { memoria: "tu_memoria", frontera: "la_frontera",
-                      ajustes: "los_ajustes" };
+                      camino: "el_camino", ajustes: "los_ajustes" };
     for (const [cual, clave] of Object.entries(titulos)) {
       const h = document.querySelector("#cajon-" + cual + " h2");
       if (h) h.textContent = t(clave);
@@ -129,6 +137,16 @@ async function pulso() {
     $("hablar").disabled = true;
     $("mandar").disabled = true;
   }
+}
+
+/* El rotulo del boton grande se calcula en UN sitio. Estaba en cuatro -- al
+ * arrancar, al escuchar, al parar y al no haber reconocimiento -- y cada uno
+ * escribia su cadena. Cuatro sitios que dicen lo mismo son cuatro sitios donde
+ * se puede quedar uno sin traducir. */
+function rotulo() {
+  const hay = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const r = $("rotulo-hablar");
+  if (r) r.textContent = hablando ? t("escuchando") : (hay ? t("hablar") : t("escribir"));
 }
 
 /* --- decir ------------------------------------------------------------- */
@@ -177,7 +195,7 @@ $("escribir").addEventListener("submit", (e) => {
  * un boton "Hablar" que no escucha es peor que un boton que no esta. */
 const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!Reconocedor) {
-  $("hablar").textContent = t("escribir");
+  rotulo();
   $("hablar").addEventListener("click", () => $("dicho").focus());
 } else {
   const oido = new Reconocedor();
@@ -192,12 +210,12 @@ if (!Reconocedor) {
   oido.addEventListener("start", () => {
     hablando = true;
     $("hablar").classList.add("escuchando");
-    $("hablar").textContent = t("escuchando");
+    rotulo();
   });
   oido.addEventListener("end", () => {
     hablando = false;
     $("hablar").classList.remove("escuchando");
-    $("hablar").textContent = t("hablar");
+    rotulo();
   });
   oido.addEventListener("result", (e) => {
     const dicho = e.results[0][0].transcript;
@@ -208,6 +226,36 @@ if (!Reconocedor) {
     // Se dice cual fallo. "No se pudo" manda a mirar donde no es.
     linea(e.error === "not-allowed" ? t("sin_micro") : t("sin_oir"), "malo");
   });
+}
+
+/* --- el Camino --------------------------------------------------------- */
+/* Los ocho peldaños salen del servidor, con su estado medido. Aqui NO se
+ * decide si algo esta hecho: se pinta lo que el producto midio. Un tablero que
+ * calculara el progreso por su cuenta podria discrepar del fichero, y entonces
+ * la persona ve una cosa y su memoria dice otra. */
+async function cargarCamino() {
+  try {
+    const r = await fetch("/api/camino");
+    const d = await r.json();
+    $("camino-intro").textContent = t("camino_intro");
+    const ul = $("camino");
+    ul.replaceChildren();
+    for (const p of d.peldanos) {
+      const li = document.createElement("li");
+      li.dataset.rama = p.rama;
+      li.dataset.hecho = p.estado;
+      const id = document.createElement("span");
+      id.className = "peldano"; id.textContent = p.id;
+      const nombre = document.createElement("span");
+      nombre.textContent = p.nombre;
+      const como = document.createElement("span");
+      como.className = "como"; como.textContent = t(p.estado) || p.estado;
+      li.append(id, nombre, como);
+      ul.appendChild(li);
+    }
+  } catch {
+    $("camino-intro").textContent = t("sin_servidor");
+  }
 }
 
 if ("serviceWorker" in navigator) {

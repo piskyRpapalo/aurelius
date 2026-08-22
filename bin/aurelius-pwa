@@ -94,6 +94,8 @@ class PWA(BaseHTTPRequestHandler):
             return self._captura_listar()
         if ruta == "/api/estado":
             return self._estado()
+        if ruta == "/api/camino":
+            return self._camino()
         if ruta.startswith("/assets/"):
             return self._asset(ruta[len("/assets/"):])
         pieza = ESTATICOS.get(ruta)
@@ -168,6 +170,35 @@ class PWA(BaseHTTPRequestHandler):
             "captura_activa": C.activa(perfil),
             "turnos": cuenta,
         })
+
+    def _camino(self):
+        """Los ocho peldanos, medidos. No estaba expuesto en ninguna ruta.
+
+        `progreso_camino` existia y se usaba DENTRO del turno; nada lo sacaba
+        a la cara. El Camino vivia solo en el HTML que genera `cara.py`, que
+        esta puerta no sirve -- asi que desde el tablero no habia forma de
+        verlo. No estaba escondido: no estaba conectado.
+
+        Los nombres salen de `cara.CAMINO`, que es de donde los saca el
+        producto. Si vivieran aqui tambien, el dia que cambie uno habria que
+        acertar en dos sitios.
+        """
+        with M.abrir(self.server.ruta_db) as c:
+            perfil = M.leer_perfil(c)
+            idioma = perfil.get("language", "es")
+            camino = _cara.progreso_camino(c, self.server.ruta_db)
+        nombres = dict(_cara.CAMINO.get(idioma, _cara.CAMINO["es"]))
+        nucleo = set(camino.get("nucleo", ()))
+        peldanos = [
+            {"id": clave,
+             "nombre": nombres.get(clave, clave),
+             "estado": camino["estado"].get(clave, "sin_empezar"),
+             "rama": "nucleo" if clave in nucleo else "opcional"}
+            for clave, _ in _cara.CAMINO.get(idioma, _cara.CAMINO["es"])
+        ]
+        return self._json(200, {"estado": "ok", "idioma": idioma,
+                                "peldanos": peldanos,
+                                "cifras": camino.get("cifras", {})})
 
     def _frontera(self, datos):
         """El filtro, y su payload entero. Fail-closed de verdad."""

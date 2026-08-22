@@ -20,17 +20,33 @@
 <main class="dice" id="dice" aria-live="polite"></main>
 
 <div class="hablar-zona">
-  <button class="hablar" id="hablar" type="button">Hablar</button>
+  <button class="hablar" id="hablar" type="button">
+    <svg id="icono-hablar" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <rect x="9" y="2" width="6" height="11" rx="3"></rect>
+      <path d="M 5 11 a7 7 0 0 0 14 0"></path>
+      <line x1="12" y1="18" x2="12" y2="22"></line>
+    </svg>
+    <span class="rotulo-boton" id="rotulo-hablar">Hablar</span>
+  </button>
   <form class="escribir" id="escribir">
     <label class="sr" for="dicho">O escríbelo</label>
     <input id="dicho" type="text" placeholder="…o escríbelo aquí" autocomplete="off">
-    <button type="submit" id="mandar">Dilo</button>
+    <button type="submit" id="mandar" aria-label="Dilo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M 4 4 L 20 12 L 4 20 l 3 -8 Z"></path>
+        <path d="M 7 12 h13"></path>
+      </svg>
+    </button>
   </form>
 </div>
 
 <nav class="tiradores">
   <button type="button" data-cajon="memoria">Memoria</button>
   <button type="button" data-cajon="frontera">Frontera</button>
+  <button type="button" data-cajon="camino">El Camino</button>
   <button type="button" data-cajon="ajustes">Ajustes</button>
 </nav>
 
@@ -56,6 +72,13 @@
     se cuenta es la clase y la cantidad, nunca el texto encontrado.
   </p>
   <a class="enlace" href="/app.html">Abrir el panel completo →</a>
+</section>
+
+<section class="cajon" id="cajon-camino" aria-label="El Camino" hidden>
+  <div class="asa"></div>
+  <h2>El Camino</h2>
+  <p class="nota" id="camino-intro"></p>
+  <ul class="camino" id="camino"></ul>
 </section>
 
 <section class="cajon" id="cajon-ajustes" aria-label="Ajustes" hidden>

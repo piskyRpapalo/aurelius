@@ -23,6 +23,8 @@ ATAJOS="$HOME/.shortcuts"
 ICONOS="$HOME/.shortcuts/icons"
 NOMBRE="Aurelius"
 PUERTO="${AURELIUS_PWA_PUERTO:-8740}"
+# La ruta real de bash en este telefono, no una suposicion.
+BASH="$(command -v bash)"
 
 az()   { printf '\033[38;5;141m··\033[0m %s\n' "$1"; }
 nota() { printf '\033[38;5;103m   %s\033[0m\n' "$1"; }
@@ -52,10 +54,22 @@ fi
 # --- el guion del atajo ---------------------------------------------------
 mkdir -p "$ATAJOS" "$ICONOS"
 cat > "$ATAJOS/$NOMBRE" <<ATAJO
-#!/data/data/com.termux/files/usr/bin/bash
+#!$BASH
 # Generado por bin/crear-acceso-directo-android. Editable: es tuyo.
-cd "$AQUI" || exit 1
-bin/aurelius-servicio arranca || exit 1
+#
+# POR QUE SE LLAMA A \`bash\` Y NO AL GUION DIRECTAMENTE.
+# bin/aurelius-servicio empieza por \`#!/usr/bin/env bash\`, y en Termux NO
+# EXISTE /usr/bin/env. En una sesion interactiva funciona igual porque Termux
+# carga \`libtermux-exec\` por LD_PRELOAD y reescribe el shebang al vuelo --
+# pero el widget no lo lleva, y ahi el shebang falla.
+#
+# El sintoma engaña: la shell dice "aurelius-servicio: not found" cuando el
+# fichero ESTA. Lo que no esta es su interprete. Medido en el Doogee el
+# 2026-08-22.
+#
+# Llamando a bash con la ruta absoluta, el shebang deja de importar.
+"$BASH" "$AQUI/bin/aurelius-servicio" arranca || exit 1
+
 # El navegador se abre DESPUES de que el servidor responda -- eso lo garantiza
 # \`arranca\`, que no dice "arrancado" hasta comprobarlo. Abrirlo antes enseña
 # un error de conexion a quien no sabe que eso es normal.

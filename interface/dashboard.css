@@ -4,6 +4,8 @@
   --violeta:      #6d5ae0;
   --violeta-hondo:#4c3fb5;
   --violeta-tenue:#efecff;
+  --halo-alto:    #ddd6ff;
+  --halo-bajo:    #eae5ff;
   --ambar:        #e0b872;
   --ink: #16181d;  --ink-soft: #5b6270; --line: #dfe3ea;
   --paper: #ffffff; --ground: #f5f6f8;
@@ -15,6 +17,8 @@
     --violeta:      #a794ff;
     --violeta-hondo:#7c68e8;
     --violeta-tenue:#221d3d;
+    --halo-alto:    #241d47;
+    --halo-bajo:    #191532;
     --ink: #e9ecf1;  --ink-soft: #a2abba; --line: #333844;
     --paper: #1b1e25; --ground: #121419;
     --ok: #6cd39b;   --stop: #f19aa0;
@@ -25,8 +29,13 @@
 html, body { height: 100%; }
 body {
   margin: 0; color: var(--ink);
+  /* El violeta deja de ser solo el boton. Tres capas: un halo arriba donde
+     esta el busto, un rescoldo abajo donde estan los mandos, y el suelo. Muy
+     suave a proposito -- si el fondo compite con el texto, se lee peor y la
+     cara deja de ser una cara para ser un poster. */
   background:
-    radial-gradient(120% 60% at 50% 0%, var(--violeta-tenue) 0%, transparent 62%),
+    radial-gradient(130% 55% at 50% -5%,  var(--halo-alto) 0%, transparent 68%),
+    radial-gradient(120% 45% at 50% 105%, var(--halo-bajo) 0%, transparent 70%),
     var(--ground);
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   display: flex; flex-direction: column;
@@ -39,20 +48,38 @@ body {
 
 /* --- el busto --- */
 .retrato { padding: 1.4rem 1rem .4rem; text-align: center; }
+/* Cuatro fotogramas en una tira: marmol entero, grietas, maquinaria, y
+   fragmentos sueltos. La tira mide 1024x341, o sea cuatro de 256 -- por eso
+   400% de ancho y pasos de 4. No hace falta canvas: `steps(4)` salta de
+   fotograma a fotograma sin interpolar, que es justo lo que pide un sprite.
+   Interpolando se veria un desliz continuo, que es el error clasico. */
 .busto {
   width: 116px; height: 116px; margin: 0 auto; border-radius: 50%;
   background: var(--paper) url("/assets/aurelius-up.png") 0 50% / 400% auto no-repeat;
   border: 2px solid var(--violeta); box-shadow: 0 8px 28px rgba(109,90,224,.22);
   image-rendering: pixelated;
 }
-/* El ojo late; el busto no "cobra vida". La animacion dice que esta encendido,
-   no que haya alguien dentro. */
-.busto.piensa { animation: latir 2.4s ease-in-out infinite; }
+/* En reposo se queda en el primer fotograma: el marmol entero. El busto se
+   abre solo cuando esta pensando -- la animacion dice que algo esta pasando
+   ahi dentro, y cuando no pasa nada, no dice nada. Una cara que se agita sin
+   motivo es un adorno; esta es un indicador. */
+.busto.piensa {
+  animation: abrirse 1.6s steps(4) infinite,
+             latir   2.4s ease-in-out infinite;
+}
+@keyframes abrirse {
+  from { background-position:    0% 50%; }
+  to   { background-position: -400% 50%; }
+}
 @keyframes latir {
   0%,100% { box-shadow: 0 8px 28px rgba(109,90,224,.22); }
   50%     { box-shadow: 0 8px 34px rgba(224,184,114,.45); }
 }
-@media (prefers-reduced-motion: reduce) { .busto.piensa { animation: none; } }
+/* Quien pidio menos movimiento no recibe un busto agitandose. Se queda el
+   latido del borde, que informa igual y no se mueve. */
+@media (prefers-reduced-motion: reduce) {
+  .busto.piensa { animation: latir 2.4s ease-in-out infinite; }
+}
 
 .nombre { margin: .6rem 0 .1rem; font-size: 1.35rem; letter-spacing: -.02em; }
 .pulso  { margin: 0; font-size: .82rem; color: var(--ink-soft); }
@@ -79,6 +106,14 @@ body {
   box-shadow: 0 6px 20px rgba(109,90,224,.35);
 }
 .hablar:disabled { opacity: .45; box-shadow: none; }
+.hablar, .escribir button {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+}
+/* El icono hereda el color del texto: una sola fuente de verdad para el tema
+   claro y el oscuro, y nada que resincronizar. */
+.hablar svg, .escribir button svg { width: 1.35em; height: 1.35em; flex: none; }
+.escribir button svg { width: 1.2em; height: 1.2em; }
+.rotulo-boton { font-weight: 700; }
 .hablar.escuchando { background: linear-gradient(180deg, var(--ambar), #b8873a); }
 .escribir { display: flex; gap: .5rem; }
 .escribir input {
@@ -120,6 +155,27 @@ body {
 .dato { display: flex; justify-content: space-between; gap: 1rem;
         padding: .5rem 0; border-top: 1px solid var(--line); }
 .dato:first-of-type { border-top: 0; }
+
+/* --- el Camino --- */
+.camino { list-style: none; margin: .2rem 0 0; padding: 0; }
+.camino li {
+  display: grid; grid-template-columns: 2.6rem 1fr auto; align-items: center;
+  gap: .6rem; padding: .5rem 0; border-top: 1px solid var(--line);
+}
+.camino li:first-child { border-top: 0; }
+.peldano {
+  font-family: ui-monospace, monospace; font-size: .78rem; font-weight: 700;
+  text-align: center; padding: .18rem 0; border-radius: 6px;
+  background: var(--ground); color: var(--ink-soft);
+  border-left: 3px solid var(--line);
+}
+/* El tronco y las paradas se distinguen sin leer una palabra: el nucleo lleva
+   el violeta de la casa; lo opcional, el cobre. Es la misma regla que la cara. */
+.camino li[data-rama="nucleo"]   .peldano { border-left-color: var(--violeta); }
+.camino li[data-rama="opcional"] .peldano { border-left-color: var(--ambar); }
+.camino li[data-hecho="hecho"]     .peldano { background: var(--violeta); color: #fff; }
+.camino li[data-hecho="empezado"]  .peldano { color: var(--violeta); }
+.camino .como { font-size: .78rem; color: var(--ink-soft); }
 .dato b { font-variant-numeric: tabular-nums; }
 .nota { margin: .7rem 0 0; font-size: .78rem; color: var(--ink-soft); }
 .enlace { display: inline-block; margin-top: .6rem; color: var(--violeta);
