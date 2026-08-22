@@ -15,7 +15,9 @@ from __future__ import annotations
 import argparse
 import os
 import shutil
+import sqlite3
 import sys
+from datetime import datetime
 import hashlib
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -491,6 +493,81 @@ def respaldo(ruta, destino=None):
 
 
 
+def restaurar(ruta, origen, confirmar=None):
+    """Devuelve una copia a su sitio. Simetrica de --backup, y desconfiada.
+
+    `memory.restaurar` existe desde antes y JAMAS pisa un fichero: restaura
+    hacia una ruta nueva. Esa decision no se toca -- es la que impide que una
+    copia mala sustituya a una memoria buena. Lo que falta y se anade aqui es
+    el paso humano: resguardar lo que hay, preguntar, y solo entonces mover.
+
+    El orden importa y es el inverso del respaldo: primero se COMPRUEBA la
+    copia, despues se resguarda lo vivo, y al final se sustituye. Una
+    restauracion que borra la unica copia buena es exactamente el accidente
+    del que dice proteger.
+    """
+    ruta = os.path.abspath(os.path.expanduser(ruta))
+    origen = os.path.abspath(os.path.expanduser(origen))
+    if origen == ruta:
+        print("NOT RESTORED · the backup and your memory are the same file",
+              file=sys.stderr)
+        return 2
+
+    # 1 · la copia, leida entera, ANTES de tocar nada
+    provisional = ruta + ".comprobando"
+    for sobra in (provisional, provisional + "-wal", provisional + "-shm"):
+        if os.path.exists(sobra):
+            os.remove(sobra)
+    try:
+        _, rec_copia = M.restaurar(origen, provisional)
+    except (FileNotFoundError, FileExistsError, M.RespaldoNoVerificado,
+            sqlite3.DatabaseError) as e:
+        print(f"NOT RESTORED · {e}", file=sys.stderr)
+        return 2
+
+    est_actual, rec_actual = M.estado(ruta)
+    print(f"Backup:        {rec_copia['engrams']} memories, "
+          f"{rec_copia['links']} links, {rec_copia['profile']} profile entries")
+    if est_actual == "SIN_ESQUEMA":
+        print("Your memory:   nothing here yet")
+    else:
+        print(f"Your memory:   {rec_actual.get('engrams', 0)} memories "
+              f"— this is what gets replaced")
+
+    # 2 · el si de la persona. Sin el, no se toca nada y la copia se limpia.
+    preguntar = confirmar if confirmar is not None else _teclado(print)
+    print("\nThis replaces your current memory. A copy of it is kept beside "
+          "it first.")
+    dicho = preguntar("Type the word restore to go ahead: ") if callable(preguntar) else preguntar
+    if (dicho or "").strip().lower() not in ("restore", "restaurar"):
+        for sobra in (provisional, provisional + "-wal", provisional + "-shm"):
+            if os.path.exists(sobra):
+                os.remove(sobra)
+        print("Nothing was replaced.")
+        return 1
+
+    # 3 · resguardar lo vivo y sustituir
+    guardado = None
+    if est_actual != "SIN_ESQUEMA":
+        marca = datetime.now().strftime("%Y%m%d-%H%M%S")
+        guardado = f"{ruta}.antes-de-restaurar-{marca}"
+        try:
+            M.respaldar(ruta, guardado)
+        except Exception as e:
+            print(f"NOT RESTORED · could not set your memory aside "
+                  f"({type(e).__name__}); nothing was replaced", file=sys.stderr)
+            return 2
+    os.replace(provisional, ruta)
+    for sufijo in ("-wal", "-shm"):
+        for base in (ruta,):
+            if os.path.exists(base + sufijo):
+                os.remove(base + sufijo)
+    print(f"Restored: {ruta}")
+    if guardado:
+        print(f"  what was there is at {os.path.basename(guardado)} — "
+              f"delete it when you are sure")
+    return 0
+
 SALIDAS_EXPLICITAS = ("/salir", "/exit", "/quit")
 
 
@@ -753,6 +830,8 @@ def main():
                     help="hablar con el cerebro local, si lo hay")
     ap.add_argument("--registro", action="store_true",
                     help="qué cruzó la frontera y qué se frenó")
+    ap.add_argument("--restore", metavar="FILE",
+                    help="put a backup back in place (asks first)")
     ap.add_argument("--backup", nargs="?", const="", metavar="FILE",
                     help="verified copy of the whole memory, WAL included")
     a = ap.parse_args()
@@ -770,6 +849,8 @@ def main():
         print(nota, file=sys.stderr)
 
     est, rec = M.estado(a.db)
+    if a.restore:
+        return restaurar(a.db, a.restore)
     if a.backup is not None:
         if est == "SIN_ESQUEMA":
             return _sin_memoria()
